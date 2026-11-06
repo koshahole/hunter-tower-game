@@ -34,12 +34,29 @@ export default function PetSanctuary({
 
     setTimeout(() => {
       const pet = rollPetGacha();
-      setSummonedPet(pet);
-      setSummoning(false);
+      const isOwnedBefore = state.ownedPets.includes(pet.id);
+      const currentLevelBefore = state.petLevels?.[pet.id] || 1;
+
       onUnlockPet(pet.id);
+      setSummonedPet({
+        ...pet,
+        isDuplicate: isOwnedBefore,
+        newLevel: isOwnedBefore ? Math.min(20, currentLevelBefore + 1) : 1,
+        isMaxCompensation: currentLevelBefore >= 20
+      });
+      setSummoning(false);
       sounds.playLevelUp();
       hapticNotification('success');
-      onShowToast(`ВЫБИТ ПИТОМЕЦ: ${pet.name}! 🎉`, 'success');
+
+      if (isOwnedBefore) {
+        if (currentLevelBefore >= 20) {
+          onShowToast(`ДУБЛИКАТ ${pet.name}! ПОЛУЧЕНО 50 💎 И 500 🪙!`, 'stars');
+        } else {
+          onShowToast(`ДУБЛИКАТ! ${pet.name.toUpperCase()} УЛУЧШЕН ДО УР. ${currentLevelBefore + 1}! ✨`, 'stars');
+        }
+      } else {
+        onShowToast(`НОВЫЙ ПИТОМЕЦ: ${pet.name}! 🎉`, 'success');
+      }
 
       confetti({
         particleCount: 80,
@@ -266,16 +283,31 @@ export default function PetSanctuary({
               {summonedPet.avatar}
             </div>
 
-            <span className="bg-black text-white px-2.5 py-0.5 font-arcade text-[9px] uppercase mb-1">
-              {summonedPet.rarityName} СПУТНИК!
-            </span>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="bg-black text-white px-2.5 py-0.5 font-arcade text-[9px] uppercase">
+                {summonedPet.rarityName} СПУТНИК
+              </span>
+              {summonedPet.isDuplicate ? (
+                <span className="bg-neo-pink text-white border border-black px-2 py-0.5 font-arcade text-[9px] uppercase">
+                  ДУБЛИКАТ: УР. {summonedPet.newLevel}!
+                </span>
+              ) : (
+                <span className="bg-neo-lime text-black border border-black px-2 py-0.5 font-arcade text-[9px] uppercase">
+                  НОВЫЙ!
+                </span>
+              )}
+            </div>
 
             <h2 className="font-arcade text-lg text-black uppercase mb-1">
               {summonedPet.name}
             </h2>
 
             <p className="text-xs font-bold text-slate-800 mb-4 break-words">
-              {summonedPet.description}
+              {summonedPet.isDuplicate 
+                ? (summonedPet.isMaxCompensation 
+                    ? 'Питомец уже 20 уровня! Начислена компенсация 50 Кристаллов Бездны и 500 Золота.' 
+                    : `Уровень питомца повышен до ${summonedPet.newLevel}! Все бонусы усилены на +15%.`)
+                : summonedPet.description}
             </p>
 
             <button
@@ -286,7 +318,7 @@ export default function PetSanctuary({
               }}
               className="w-full py-3 bg-neo-pink text-white border-3 border-black font-arcade text-xs shadow-brutal active:translate-x-[2px] active:translate-y-[2px] uppercase"
             >
-              ВЗЯТЬ В СПУТНИКИ!
+              {summonedPet.isDuplicate ? 'ПРОДОЛЖИТЬ' : 'ВЗЯТЬ В СПУТНИКИ!'}
             </button>
           </div>
         </div>

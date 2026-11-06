@@ -25,7 +25,8 @@ export default function Battle({
   floor, 
   activePetId, 
   initialHp,
-  potions = 2,
+  potions = 1,
+  runArtifacts = [],
   onUsePotion,
   onRunEnd, 
   onFloorCleared, 
@@ -51,10 +52,22 @@ export default function Battle({
 
   const activePet = PETS.find(p => p.id === activePetId);
 
+  // Computed gold reward with all active buffs applied
+  const finalGoldReward = Math.floor(monster.goldReward * (playerStats.goldMultiplier || 1.0));
+
   useEffect(() => {
     const newMonster = generateMonster(floor);
-    setMonster(newMonster);
-    setMonsterGhostHp(newMonster.maxHp);
+
+    // Relic effect: Infernal Bomb burns 20% monster HP at battle start
+    const hasBomb = runArtifacts?.some(a => a.id === 'infernal_bomb');
+    let startHp = newMonster.maxHp;
+    if (hasBomb) {
+      const burn = Math.floor(newMonster.maxHp * 0.2);
+      startHp = Math.max(1, newMonster.maxHp - burn);
+    }
+
+    setMonster({ ...newMonster, hp: startHp });
+    setMonsterGhostHp(startHp);
     setBattleState('fighting');
     setIsAttacking(false);
     setIsDefending(false);
@@ -65,6 +78,13 @@ export default function Battle({
     setCombo(0);
     setCombatLog([`РАУНД НАЧАТ! ЭТАЖ ${floor}: ${newMonster.name}`]);
     setSkills(SKILLS.map(s => ({ ...s, currentCd: 0 })));
+
+    if (hasBomb) {
+      setTimeout(() => {
+        addFloatingText(`💣 -${Math.floor(newMonster.maxHp * 0.2)}`, 'crit', false);
+        addLog(`💣 ОГНЕННАЯ БОМБА СЖИГАЕТ 20% HP ВРАГА!`);
+      }, 300);
+    }
   }, [floor]);
 
   useEffect(() => {
@@ -124,6 +144,15 @@ export default function Battle({
     setIsMonsterHurt(true);
     setTimeout(() => setIsMonsterHurt(false), 250);
 
+    // Relic: Vampiric Chalice gives 15% lifesteal on basic attacks
+    const hasChalice = runArtifacts?.some(a => a.id === 'vampiric_chalice');
+    if (hasChalice) {
+      const vHeal = Math.max(1, Math.floor(damage * 0.15));
+      const healedHp = Math.min(playerStats.maxHp, playerHp + vHeal);
+      setPlayerHp(healedHp);
+      addFloatingText(`+${vHeal} HP`, 'heal', true);
+    }
+
     const newMonsterHp = Math.max(0, monster.hp - damage);
     setMonster(prev => ({ ...prev, hp: newMonsterHp }));
     addLog(`ВЫ НАНЕСЛИ ${damage} УРОНА! ${isCrit ? '💥 КРИТИЧЕСКИЙ УДАР!' : ''}`);
@@ -149,7 +178,11 @@ export default function Battle({
     const nextCombo = combo + 1;
     setCombo(nextCombo);
 
-    let damage = Math.floor(playerStats.atk * skill.multiplier * (1 + (nextCombo - 1) * 0.05));
+    // Relic: Thunder Core amps lightning strike by 50%
+    const isThunderCore = skill.id === 'thunder_strike' && runArtifacts?.some(a => a.id === 'thunder_core');
+    const skillMultiplier = isThunderCore ? skill.multiplier * 1.5 : skill.multiplier;
+
+    let damage = Math.floor(playerStats.atk * skillMultiplier * (1 + (nextCombo - 1) * 0.05));
     const isCrit = Math.random() * 100 < (playerStats.critChance + (skill.critBonus || 0));
 
     if (isCrit) {
@@ -315,7 +348,7 @@ export default function Battle({
         <div className="flex items-center gap-1.5 shrink-0">
           <div className="flex items-center gap-1 bg-neo-yellow border-2 border-black px-2 py-0.5 shadow-brutal-sm font-arcade text-xs text-black">
             <span>🪙</span>
-            <span>+{monster.goldReward}</span>
+            <span>+{finalGoldReward}</span>
           </div>
           {monster.crystalReward > 0 && (
             <div className="flex items-center gap-1 bg-neo-cyan border-2 border-black px-2 py-0.5 shadow-brutal-sm font-arcade text-xs text-black">
@@ -444,12 +477,21 @@ export default function Battle({
           isPlayerHurt ? 'bg-red-200 animate-shake' : ''
         }`}>
           <div className="flex justify-between items-center mb-1 gap-2">
-            <div className="flex items-center gap-1.5 min-w-0">
+            <div className="flex items-center gap-1.5 min-w-0 overflow-x-auto scrollbar-none">
               <span className="font-arcade text-xs text-black uppercase shrink-0">ОХОТНИК</span>
               {activePet && (
                 <span className="bg-neo-yellow text-black border-2 border-black px-1.5 py-0.2 font-arcade text-[10px] shrink-0">
                   {activePet.avatar} {activePet.name}
                 </span>
+              )}
+              {runArtifacts && runArtifacts.length > 0 && (
+                <div className="flex items-center gap-1 shrink-0">
+                  {runArtifacts.map((art, idx) => (
+                    <span key={idx} title={art.name} className="text-xs bg-slate-100 border border-black px-1 shadow-brutal-sm">
+                      {art.icon}
+                    </span>
+                  ))}
+                </div>
               )}
             </div>
             <div className="font-arcade text-xs text-neo-pink shrink-0">
@@ -542,22 +584,35 @@ export default function Battle({
               НАГРАДЫ ДОБАВЛЕНЫ:
             </p>
 
-            <div className="flex items-center justify-center gap-4 bg-white border-3 border-black p-2.5 w-full mb-4 shadow-brutal-sm">
-              <div className="flex items-center gap-1.5 font-arcade text-base text-black">
-                <span>🪙</span>
-                <span>+{monster.goldReward}</span>
+            <div className="flex flex-col items-center justify-center gap-1.5 bg-white border-3 border-black p-2.5 w-full mb-4 shadow-brutal-sm">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5 font-arcade text-base text-black">
+                  <span>🪙</span>
+                  <span>+{finalGoldReward}</span>
+                </div>
+                {monster.crystalReward > 0 && (
+                  <div className="flex items-center gap-1.5 font-arcade text-base text-neo-purple">
+                    <span>💎</span>
+                    <span>+{monster.crystalReward}</span>
+                  </div>
+                )}
               </div>
-              {monster.crystalReward > 0 && (
-                <div className="flex items-center gap-1.5 font-arcade text-base text-neo-purple">
-                  <span>💎</span>
-                  <span>+{monster.crystalReward}</span>
+              {(playerStats.goldMultiplier || 1.0) > 1.0 && (
+                <div className="bg-neo-yellow border border-black px-2 py-0.5 text-[9px] font-black text-black">
+                  🔥 БАФФ ЗОЛОТА: +{Math.round(((playerStats.goldMultiplier || 1.0) - 1) * 100)}%
                 </div>
               )}
             </div>
 
             <div className="flex flex-col gap-2 w-full">
               <button
-                onClick={() => onFloorCleared({ gold: monster.goldReward, crystals: monster.crystalReward, floor, remainingHp: playerHp })}
+                onClick={() => onFloorCleared({ 
+                  gold: finalGoldReward, 
+                  crystals: monster.crystalReward, 
+                  floor, 
+                  remainingHp: playerHp,
+                  isBoss: monster.isBoss
+                })}
                 className="w-full py-3 bg-neo-pink text-white border-3 border-black font-arcade text-sm shadow-brutal active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2 uppercase transition-all"
               >
                 <span>СЛЕД. ЭТАЖ ({floor + 1})</span>

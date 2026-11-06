@@ -1,14 +1,13 @@
-// Persistent Storage with 5-minute Energy Refill & Customization
+// Persistent Storage with 3-minute Energy Refill & Cross-Device CloudStorage
+const STORAGE_KEY = 'aether_tower_save_v4';
 
-const STORAGE_KEY = 'aether_tower_save_v3';
-
-// 5 minutes in milliseconds
-export const ENERGY_REFILL_MS = 5 * 60 * 1000;
+// 3 minutes in milliseconds (180 seconds)
+export const ENERGY_REFILL_MS = 3 * 60 * 1000;
 
 export const DEFAULT_STATE = {
   // Currencies
-  gold: 250,
-  crystals: 30,
+  gold: 40,
+  crystals: 5,
   souls: 0,
   totalRebirths: 0,
 
@@ -16,7 +15,7 @@ export const DEFAULT_STATE = {
   maxFloor: 1,
   currentFloor: 1,
 
-  // Energy System (5 min refill)
+  // Energy System (3 min refill)
   energy: 5,
   maxEnergy: 5,
   lastEnergyRefill: Date.now(),
@@ -50,9 +49,10 @@ export const DEFAULT_STATE = {
   },
   activePetId: 'green_slime',
 
-  // Battle consumable
-  potions: 2,
+  // Battle consumable & inventory
+  potions: 1,
   reviveTokens: 0,
+  artifacts: [], // Permanent or run relics
   vip: false,
   sound: true,
 
@@ -62,12 +62,13 @@ export const DEFAULT_STATE = {
     monstersKilled: 0,
     bossesKilled: 0,
     highestFloorCleared: 1,
-  }
+  },
+  lastSavedAt: Date.now()
 };
 
 export function loadGameState() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('hunter_academy_save_v2');
+    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('aether_tower_save_v3');
     if (!raw) return DEFAULT_STATE;
     const parsed = JSON.parse(raw);
     return {
@@ -84,11 +85,52 @@ export function loadGameState() {
   }
 }
 
+let cloudSaveTimer = null;
+
 export function saveGameState(state) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    const enriched = {
+      ...state,
+      lastSavedAt: Date.now()
+    };
+    const jsonStr = JSON.stringify(enriched);
+    localStorage.setItem(STORAGE_KEY, jsonStr);
+
+    // Cross-Device Sync: save to Telegram CloudStorage
+    if (typeof window !== 'undefined' && window.Telegram?.WebApp?.CloudStorage) {
+      if (cloudSaveTimer) clearTimeout(cloudSaveTimer);
+      cloudSaveTimer = setTimeout(() => {
+        try {
+          window.Telegram.WebApp.CloudStorage.setItem('hunter_cloud_save', jsonStr, (err) => {
+            if (err) console.warn('Telegram CloudStorage save failed:', err);
+          });
+        } catch (e) {
+          console.warn('CloudStorage setItem error:', e);
+        }
+      }, 600);
+    }
   } catch (e) {
     console.error('Error saving state:', e);
+  }
+}
+
+// Check Telegram CloudStorage on startup to sync across phone and desktop
+export function loadFromCloudStorage(onStateLoaded) {
+  if (typeof window !== 'undefined' && window.Telegram?.WebApp?.CloudStorage) {
+    try {
+      window.Telegram.WebApp.CloudStorage.getItem('hunter_cloud_save', (err, value) => {
+        if (!err && value) {
+          try {
+            const parsed = JSON.parse(value);
+            if (parsed && typeof parsed === 'object') {
+              onStateLoaded(parsed);
+            }
+          } catch {}
+        }
+      });
+    } catch (e) {
+      console.warn('CloudStorage getItem failed:', e);
+    }
   }
 }
 

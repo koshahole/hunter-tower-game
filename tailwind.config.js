@@ -7,10 +7,10 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        arcade: ['"Bungee"', 'cursive'],
-        display: ['"Bungee"', 'cursive'],
-        sans: ['"Space Grotesk"', 'sans-serif'],
-        ui: ['"Space Grotesk"', 'sans-serif'],
+        arcade: ['"Bungee"', 'Impact', '"Arial Black"', '-apple-system', 'sans-serif'],
+        display: ['"Bungee"', 'Impact', '"Arial Black"', '-apple-system', 'sans-serif'],
+        sans: ['"Space Grotesk"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+        ui: ['"Space Grotesk"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
       },
       colors: {
         neo: {

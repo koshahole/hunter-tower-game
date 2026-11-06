@@ -53,7 +53,7 @@ export default function Hub({
   const handleStart = () => {
     if (state.energy <= 0) {
       hapticNotification('warning');
-      onShowToast('НЕТ ЭНЕРГИИ! КУПИ В ЗВЕЗДАХ ИЛИ ЖДИ 5 МИН! ⚡', 'warning');
+      onShowToast('НЕТ ЭНЕРГИИ! КУПИ В ЗВЕЗДАХ ИЛИ ЖДИ 3 МИН! ⚡', 'warning');
       onOpenStarsShop();
       return;
     }
@@ -64,7 +64,7 @@ export default function Hub({
 
   const handleInvite = () => {
     hapticImpact('medium');
-    shareInviteLink('HunterAcademyBot', user.id);
+    shareInviteLink('my_hunter_tower_bot', user.id);
     onShowToast('ССЫЛКА ПРИГЛАШЕНИЯ СКОПИРОВАНА! 🔥', 'success');
   };
 
@@ -237,6 +237,14 @@ export default function Hub({
             <div className="text-[9px] font-black uppercase">УВОРОТ</div>
             <div className="font-arcade text-sm mt-0.5">{playerStats.dodgeChance}%</div>
           </div>
+        </div>
+
+        {/* Real-time Gold Buff Badge */}
+        <div className="mt-2 bg-neo-yellow border-2 border-black py-1 px-2 text-[10px] sm:text-xs font-black uppercase flex items-center justify-center gap-1.5 shadow-brutal-sm">
+          <span>🪙 ВСЕ БАФФЫ К ЗОЛОТУ:</span>
+          <span className="font-arcade text-neo-pink text-xs">
+            +{Math.round(((playerStats.goldMultiplier || 1.0) - 1) * 100)}%
+          </span>
         </div>
       </div>
 

@@ -8,14 +8,16 @@ import ReviveModal from './components/ReviveModal';
 import RebirthModal from './components/RebirthModal';
 import LeaderboardModal from './components/LeaderboardModal';
 import ProfileModal from './components/ProfileModal';
+import BossRelicModal from './components/BossRelicModal';
 import Toast from './components/Toast';
 
-import { loadGameState, saveGameState, calculateEnergy } from './utils/storage';
+import { loadGameState, saveGameState, calculateEnergy, loadFromCloudStorage } from './utils/storage';
 import { initTelegram, getUserInfo, hapticImpact } from './utils/telegram';
-import { UPGRADES } from './data/upgrades';
+import { UPGRADES, getTotalStatBonus } from './data/upgrades';
 import { PETS, getPetStats, rollPetGacha } from './data/pets';
 import { getRankByMaxFloor } from './data/ranks';
 import { REBIRTH_PERKS } from './data/rebirth';
+import { rollBossRelics } from './data/artifacts';
 import { Swords, Shield, Sparkles, Star, Trophy, Home } from 'lucide-react';
 
 export default function App() {
@@ -28,6 +30,8 @@ export default function App() {
   const [view, setView] = useState('hub');
   const [activeTab, setActiveTab] = useState('tower');
   const [runHp, setRunHp] = useState(null);
+  const [runArtifacts, setRunArtifacts] = useState([]);
+  const [relicChoice, setRelicChoice] = useState(null);
   const [reviveModal, setReviveModal] = useState({ isOpen: false, onConfirm: null });
   const [isRebirthOpen, setIsRebirthOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
@@ -42,9 +46,24 @@ export default function App() {
 
   useEffect(() => {
     initTelegram();
+    // Cross-Device Sync: fetch from Telegram CloudStorage
+    loadFromCloudStorage((cloudState) => {
+      setState(prev => {
+        const isCloudNewer = (cloudState.lastSavedAt || 0) > (prev.lastSavedAt || 0) ||
+                             (cloudState.maxFloor || 1) > (prev.maxFloor || 1) ||
+                             (cloudState.stats?.totalRuns || 0) > (prev.stats?.totalRuns || 0);
+        if (isCloudNewer) {
+          showToast('ПРОГРЕСС СИНХРОНИЗИРОВАН С ДРУГОГО УСТРОЙСТВА! ☁️', 'success');
+          const merged = { ...prev, ...cloudState };
+          const withEnergy = calculateEnergy(merged);
+          return { ...merged, ...withEnergy };
+        }
+        return prev;
+      });
+    });
   }, []);
 
-  // Update timer cycle every second to keep 5-min countdown accurate
+  // Update timer cycle every second to keep 3-min countdown accurate
   useEffect(() => {
     const interval = setInterval(() => {
       setState(prev => {
@@ -73,11 +92,27 @@ export default function App() {
 
     UPGRADES.forEach(u => {
       const level = state.upgrades[u.id] || 0;
-      if (u.statKey === 'atk') baseAtk += level * u.statBonus;
-      if (u.statKey === 'maxHp') baseHp += level * u.statBonus;
-      if (u.statKey === 'critChance') critChance += level * u.statBonus;
-      if (u.statKey === 'dodgeChance') dodgeChance += level * u.statBonus;
-      if (u.statKey === 'goldBonus') goldMultiplier += level * u.statBonus;
+      if (u.statKey === 'atk') baseAtk += getTotalStatBonus(u.id, level);
+      if (u.statKey === 'maxHp') baseHp += getTotalStatBonus(u.id, level);
+      if (u.statKey === 'critChance') critChance += getTotalStatBonus(u.id, level);
+      if (u.statKey === 'dodgeChance') dodgeChance += getTotalStatBonus(u.id, level);
+      if (u.statKey === 'goldBonus') goldMultiplier += getTotalStatBonus(u.id, level);
+    });
+
+    // Apply active run artifacts bonuses
+    runArtifacts.forEach(art => {
+      if (art.effectType === 'atk') baseAtk += art.value;
+      if (art.effectType === 'maxHp') baseHp += art.value;
+      if (art.effectType === 'critChance') critChance += art.value;
+      if (art.effectType === 'dodgeChance') dodgeChance += art.value;
+      if (art.effectType === 'goldBonus') goldMultiplier += art.value;
+      if (art.effectType === 'allStats') {
+        baseAtk = Math.floor(baseAtk * 1.2);
+        baseHp = Math.floor(baseHp * 1.2);
+        critChance += 8;
+        dodgeChance += 8;
+        goldMultiplier += 0.20;
+      }
     });
 
     const activePet = PETS.find(p => p.id === state.activePetId);
@@ -117,7 +152,7 @@ export default function App() {
       dodgeChance: Math.min(55, Math.round(dodgeChance)),
       goldMultiplier
     };
-  }, [state.upgrades, state.activePetId, state.petLevels, state.maxFloor, state.rebirthPerks, state.vip]);
+  }, [state.upgrades, state.activePetId, state.petLevels, state.maxFloor, state.rebirthPerks, state.vip, runArtifacts]);
 
   const handleStartRun = (startFloor = 1) => {
     setState(prev => ({
@@ -126,18 +161,18 @@ export default function App() {
       currentFloor: startFloor
     }));
     setRunHp(playerStats.maxHp);
+    setRunArtifacts([]);
     setView('battle');
   };
 
-  const handleFloorCleared = ({ gold, crystals, floor, remainingHp }) => {
-    const totalGold = Math.floor(gold * playerStats.goldMultiplier);
+  const handleFloorCleared = ({ gold, crystals, floor, remainingHp, isBoss }) => {
     const healBonus = Math.floor(playerStats.maxHp * 0.25);
     const nextHp = Math.min(playerStats.maxHp, (remainingHp || playerStats.maxHp) + healBonus);
     setRunHp(nextHp);
 
     setState(prev => ({
       ...prev,
-      gold: prev.gold + totalGold,
+      gold: prev.gold + gold,
       crystals: prev.crystals + crystals,
       currentFloor: floor + 1,
       maxFloor: Math.max(prev.maxFloor, floor + 1),
@@ -148,14 +183,41 @@ export default function App() {
         bossesKilled: floor % 10 === 0 ? (prev.stats?.bossesKilled || 0) + 1 : (prev.stats?.bossesKilled || 0)
       }
     }));
+
+    // Trigger Boss Relic choice after defeating a boss (10, 20, 30...)
+    if (isBoss || floor % 10 === 0) {
+      const offered = rollBossRelics(runArtifacts.map(a => a.id));
+      setRelicChoice({
+        isOpen: true,
+        relics: offered
+      });
+    }
   };
 
-  const handleRunEnd = ({ gold, crystals, floor }) => {
-    const totalGold = Math.floor(gold * playerStats.goldMultiplier);
+  const handleSelectRelic = (relic) => {
+    setRunArtifacts(prev => [...prev, relic]);
+    setRelicChoice(null);
+
+    if (relic.effectType === 'potions') {
+      setState(prev => ({ ...prev, potions: prev.potions + (relic.value || 2) }));
+      showToast(`+${relic.value || 2} ЗЕЛЬЯ ЖИЗНИ В ИНВЕНТАРЬ! 🧪`, 'success');
+    } else if (relic.effectType === 'revive') {
+      setState(prev => ({ ...prev, reviveTokens: (prev.reviveTokens || 0) + 1 }));
+      showToast('ПОЛУЧЕНО ПЕРО ВОЗРОЖДЕНИЯ! 🪶', 'stars');
+    } else if (relic.effectType === 'maxHp') {
+      setRunHp(prev => (prev || playerStats.maxHp) + (relic.value || 120));
+      showToast(`РЕЛИКВИЯ: +${relic.value} HP И ПОЛНЫЙ ОТХИЛ! 🛡️`, 'success');
+    } else {
+      showToast(`РЕЛИКВИЯ АКТИВИРОВАНА: ${relic.name.toUpperCase()}! 👑`, 'stars');
+    }
+  };
+
+  const handleRunEnd = ({ gold = 0, crystals = 0, floor }) => {
     setRunHp(null);
+    setRunArtifacts([]);
     setState(prev => ({
       ...prev,
-      gold: prev.gold + totalGold,
+      gold: prev.gold + gold,
       crystals: prev.crystals + crystals,
       maxFloor: Math.max(prev.maxFloor, floor),
       currentFloor: 1,
@@ -184,14 +246,39 @@ export default function App() {
   };
 
   const handleUnlockPet = (petId) => {
-    setState(prev => ({
-      ...prev,
-      ownedPets: Array.from(new Set([...prev.ownedPets, petId])),
-      petLevels: {
-        ...prev.petLevels,
-        [petId]: prev.petLevels?.[petId] || 1
+    setState(prev => {
+      const isAlreadyOwned = prev.ownedPets.includes(petId);
+      const currentLvl = prev.petLevels?.[petId] || 1;
+
+      if (isAlreadyOwned) {
+        if (currentLvl >= 20) {
+          // Max level compensation
+          return {
+            ...prev,
+            crystals: prev.crystals + 50,
+            gold: prev.gold + 500
+          };
+        } else {
+          return {
+            ...prev,
+            petLevels: {
+              ...prev.petLevels,
+              [petId]: currentLvl + 1
+            }
+          };
+        }
       }
-    }));
+
+      // First time unlock
+      return {
+        ...prev,
+        ownedPets: [...prev.ownedPets, petId],
+        petLevels: {
+          ...prev.petLevels,
+          [petId]: 1
+        }
+      };
+    });
   };
 
   const handleUpgradePet = (petId, goldCost, crystalCost) => {
@@ -306,6 +393,7 @@ export default function App() {
             playerStats={playerStats}
             activePetId={state.activePetId}
             potions={state.potions}
+            runArtifacts={runArtifacts}
             onUsePotion={() => setState(prev => ({ ...prev, potions: Math.max(0, prev.potions - 1) }))}
             onFloorCleared={handleFloorCleared}
             onRunEnd={handleRunEnd}
@@ -388,6 +476,14 @@ export default function App() {
           onBuyPerk={handleBuySoulPerk}
           onClose={() => setIsRebirthOpen(false)}
           onShowToast={showToast}
+        />
+      )}
+
+      {/* Boss Relic Selection Modal */}
+      {relicChoice?.isOpen && (
+        <BossRelicModal
+          relics={relicChoice.relics}
+          onSelectRelic={handleSelectRelic}
         />
       )}
 

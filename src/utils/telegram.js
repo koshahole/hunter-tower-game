@@ -199,7 +199,7 @@ export async function openStarsInvoice(itemOrId, onPaid, onFailed) {
 
 // Share invite link to Telegram
 export function shareInviteLink(botUsername, userId) {
-  const link = `https://t.me/${botUsername || 'HunterAcademy_bot'}?start=ref_${userId}`;
+  const link = `https://t.me/${botUsername || 'my_hunter_tower_bot'}?start=ref_${userId}`;
   const text = `🔥 Попробуй пройти 100 этажей в Академии Охотников! Я уже прокачиваю ранг, залетай:`;
   const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`;
   

@@ -149,8 +149,8 @@ export function generateMonster(floor) {
 
   if (isBoss) {
     const bossData = BOSSES[floor] || BOSSES[100];
-    const baseHp = Math.floor(120 * Math.pow(1.08, floor) * bossData.hpMultiplier);
-    const baseAtk = Math.floor(18 * Math.pow(1.06, floor) * bossData.atkMultiplier);
+    const baseHp = Math.floor(150 * Math.pow(1.085, floor) * (bossData.hpMultiplier || 3.0));
+    const baseAtk = Math.floor(18 * Math.pow(1.062, floor) * (bossData.atkMultiplier || 1.4));
 
     return {
       name: bossData.name,
@@ -161,10 +161,10 @@ export function generateMonster(floor) {
       maxHp: baseHp,
       hp: baseHp,
       atk: baseAtk,
-      def: Math.floor(baseAtk * 0.25),
+      def: Math.floor(baseAtk * 0.2),
       specialSkill: bossData.specialSkill,
       dialog: bossData.dialog,
-      goldReward: bossData.goldReward,
+      goldReward: Math.floor(bossData.goldReward * (1 + (floor / 100))),
       crystalReward: bossData.crystalReward,
     };
   }
@@ -174,10 +174,13 @@ export function generateMonster(floor) {
   const pool = REGULAR_MONSTERS.filter(m => m.tier <= tier);
   const template = pool[Math.floor(Math.random() * pool.length)] || pool[0];
 
-  const baseHp = Math.floor(45 * Math.pow(1.075, floor));
-  const baseAtk = Math.floor(8 * Math.pow(1.055, floor));
-  const gold = Math.floor(15 * Math.pow(1.06, floor) + Math.random() * 10);
-  const crystals = Math.random() < 0.35 ? Math.max(1, Math.floor(floor / 10)) : 0;
+  // Progressive Roguelite Monster Scaling:
+  // Floor 1-4: warmup (~55-80 HP, 10-15 Atk)
+  // Floor 5-9: serious threat (~100-160 HP, 18-26 Atk)
+  const baseHp = Math.floor(54 * Math.pow(1.082, floor - 1) + floor * 5);
+  const baseAtk = Math.floor(10 * Math.pow(1.062, floor - 1) + Math.floor(floor * 0.9));
+  const gold = Math.floor(16 * Math.pow(1.055, floor) + 8 + Math.random() * 6);
+  const crystals = Math.random() < 0.35 ? Math.max(1, Math.floor(floor / 8)) : 0;
 
   return {
     name: `${template.name} [Этаж ${floor}]`,

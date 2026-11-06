@@ -1,20 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Trophy, X, Crown } from 'lucide-react';
-import { MOCK_LEADERS_ALL_TIME, MOCK_LEADERS_WEEKLY } from '../data/leaderboard';
+import { MOCK_LEADERS_ALL_TIME, MOCK_LEADERS_WEEKLY, syncLeaderboard } from '../data/leaderboard';
 
 export default function LeaderboardModal({ state, user, onClose }) {
   const [tab, setTab] = useState('all');
+  const [leaders, setLeaders] = useState(MOCK_LEADERS_ALL_TIME);
 
-  const leaders = tab === 'all' ? MOCK_LEADERS_ALL_TIME : MOCK_LEADERS_WEEKLY;
+  useEffect(() => {
+    if (tab === 'weekly') {
+      setLeaders(MOCK_LEADERS_WEEKLY);
+      return;
+    }
+
+    // Sync real player record to live leaderboard
+    const playerData = {
+      id: user.id || 777,
+      name: state.hunterName || user.name || 'Охотник',
+      title: state.hunterTitle || 'Искатель Башни',
+      avatar: state.hunterAvatar || '🧙‍♂️',
+      maxFloor: state.maxFloor || 1,
+      souls: state.souls || 0,
+      vip: Boolean(state.vip)
+    };
+
+    syncLeaderboard(playerData).then(liveList => {
+      if (liveList && liveList.length > 0) {
+        setLeaders(liveList);
+      }
+    });
+  }, [tab, state.maxFloor, state.souls, state.hunterName, state.hunterAvatar, state.hunterTitle, state.vip, user.id, user.name]);
 
   const playerFloor = state.maxFloor || 1;
-  let playerRank = 9;
-  for (let i = 0; i < leaders.length; i++) {
-    if (playerFloor >= leaders[i].maxFloor) {
-      playerRank = i + 1;
-      break;
-    }
-  }
+  const playerRankItem = leaders.find(l => l.id === user.id || l.name === (state.hunterName || user.name));
+  const playerRank = playerRankItem ? playerRankItem.rank : 1;
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-3 animate-fadeIn font-sans select-none">

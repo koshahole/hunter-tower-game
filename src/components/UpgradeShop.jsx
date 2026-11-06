@@ -1,5 +1,5 @@
 import React from 'react';
-import { UPGRADES, getUpgradeCost } from '../data/upgrades';
+import { UPGRADES, getUpgradeCost, getTotalStatBonus, getNextLevelBonus } from '../data/upgrades';
 import { sounds } from '../audio/soundEffects';
 import { hapticImpact, hapticNotification } from '../utils/telegram';
 
@@ -14,7 +14,7 @@ export default function UpgradeShop({ state, onBuyUpgrade, onShowToast }) {
           <span>АРСЕНАЛ ОХОТНИКА</span>
         </h2>
         <p className="text-[11px] font-bold text-slate-700 mt-0.5 uppercase">
-          БАЗОВАЯ ПРОКАЧКА ЛАГЕРЯ — ПЕРМАНЕНТНАЯ СИЛА!
+          ПРОГРЕССИВНАЯ ПРОКАЧКА — КАЖДЫЙ УРОВЕНЬ ДАЕТ ЕЩЁ БОЛЬШЕ!
         </p>
 
         {/* Currency Pill */}
@@ -36,6 +36,19 @@ export default function UpgradeShop({ state, onBuyUpgrade, onShowToast }) {
           const { gold, crystals } = getUpgradeCost(upgrade, currentLevel);
           const canAfford = state.gold >= gold && state.crystals >= crystals;
 
+          const currentTotal = getTotalStatBonus(upgrade.id, currentLevel);
+          const nextBonus = getNextLevelBonus(upgrade.id, currentLevel);
+
+          const formatBonus = (val) => {
+            if (upgrade.statKey === 'goldBonus') return `+${Math.round(val * 100)}%`;
+            return `+${val} ${upgrade.unit}`;
+          };
+
+          const formatNextStep = (val) => {
+            if (upgrade.statKey === 'goldBonus') return `+${Math.round(val * 100)}%`;
+            return `+${val}`;
+          };
+
           const handleBuy = () => {
             if (isMax) {
               onShowToast('УЖЕ НА МАКСИМУМЕ!', 'info');
@@ -49,7 +62,7 @@ export default function UpgradeShop({ state, onBuyUpgrade, onShowToast }) {
             sounds.playLevelUp();
             hapticNotification('success');
             onBuyUpgrade(upgrade.id, gold, crystals);
-            onShowToast(`${upgrade.name.toUpperCase()} -> УР. ${currentLevel + 1}!`, 'success');
+            onShowToast(`${upgrade.name.toUpperCase()} -> УР. ${currentLevel + 1}! (${formatNextStep(nextBonus)})`, 'success');
           };
 
           return (
@@ -71,7 +84,20 @@ export default function UpgradeShop({ state, onBuyUpgrade, onShowToast }) {
                       УР. {currentLevel}
                     </span>
                   </div>
-                  <div className="text-xs font-bold text-slate-700 mt-0.5 break-words line-clamp-2">
+
+                  {/* Current Bonus and Next Accelerating Step */}
+                  <div className="flex items-center gap-2 mt-1 text-[11px] font-black">
+                    <span className="text-black bg-slate-100 border border-black px-1.5 py-0.2">
+                      Всего: {formatBonus(currentTotal)}
+                    </span>
+                    {!isMax && (
+                      <span className="text-neo-pink bg-pink-50 border border-neo-pink px-1.5 py-0.2">
+                        След: {formatNextStep(nextBonus)}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="text-[10px] font-bold text-slate-600 mt-1 break-words line-clamp-1">
                     {upgrade.description}
                   </div>
                 </div>
@@ -87,7 +113,7 @@ export default function UpgradeShop({ state, onBuyUpgrade, onShowToast }) {
                   <button
                     onClick={handleBuy}
                     disabled={!canAfford}
-                    className={`flex flex-col items-center justify-center min-w-[85px] py-1.5 px-2.5 border-3 border-black font-arcade text-xs shadow-brutal active:translate-x-[1px] active:translate-y-[1px] ${
+                    className={`flex flex-col items-center justify-center min-w-[85px] py-2 px-2.5 border-3 border-black font-arcade text-xs shadow-brutal active:translate-x-[1px] active:translate-y-[1px] ${
                       canAfford
                         ? 'bg-neo-lime text-black'
                         : 'bg-slate-200 text-slate-500 shadow-none cursor-not-allowed'
