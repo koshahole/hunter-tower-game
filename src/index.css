@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  body {
+    background-color: #FFE600;
+    color: #000000;
+    overflow-x: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    font-family: 'Space Grotesk', -apple-system, sans-serif;
+  }
+}
+
+/* Halftone dot pattern background */
+.bg-comic-dots {
+  background-image: radial-gradient(#000000 12%, transparent 12%);
+  background-position: 0 0, 10px 10px;
+  background-size: 16px 16px;
+}
+
+/* Custom retro scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #FFE600;
+  border-left: 2px solid #000;
+}
+::-webkit-scrollbar-thumb {
+  background: #000000;
+  border-radius: 0px;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Telegram safe area insets */
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
+}
+.pt-safe {
+  padding-top: max(env(safe-area-inset-top, 0px), 8px);
+}

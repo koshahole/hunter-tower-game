@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bungee&family=Space+Grotesk:wght@900&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 512px;
+      height: 512px;
+      overflow: hidden;
+      background: #FFE600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Bungee', cursive, sans-serif;
+    }
+
+    .container {
+      width: 512px;
+      height: 512px;
+      position: relative;
+      background: #FFE600;
+      border: 12px solid #000000;
+      overflow: hidden;
+    }
+
+    /* Halftone dot pattern */
+    .halftone {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(#000000 15%, transparent 15%);
+      background-size: 16px 16px;
+      opacity: 0.25;
+      pointer-events: none;
+    }
+
+    /* Top Badge */
+    .top-badge {
+      position: absolute;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) rotate(-2deg);
+      background: #FF3399;
+      color: #FFFFFF;
+      border: 4px solid #000000;
+      box-shadow: 5px 5px 0px #000000;
+      padding: 6px 18px;
+      font-size: 19px;
+      letter-spacing: 1px;
+      white-space: nowrap;
+      z-index: 20;
+    }
+
+    /* Bottom Badge */
+    .bottom-badge {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) rotate(1.5deg);
+      background: #000000;
+      color: #FFE600;
+      border: 4px solid #FFFFFF;
+      box-shadow: 5px 5px 0px #000000;
+      padding: 6px 20px;
+      font-size: 18px;
+      letter-spacing: 1px;
+      white-space: nowrap;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .bottom-badge .highlight {
+      color: #00F0FF;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Halftone dots background -->
+    <div class="halftone"></div>
+
+    <!-- Comic Action Burst Lines (SVG) -->
+    <svg width="512" height="512" viewBox="0 0 512 512" style="position: absolute; inset: 0;">
+      <defs>
+        <!-- Gradients -->
+        <linearGradient id="bladeGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#FFFFFF"/>
+          <stop offset="50%" stop-color="#E2E8F0"/>
+          <stop offset="100%" stop-color="#94A3B8"/>
+        </linearGradient>
+        <linearGradient id="bladeGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#00F0FF"/>
+          <stop offset="60%" stop-color="#38BDF8"/>
+          <stop offset="100%" stop-color="#0284C7"/>
+        </linearGradient>
+        <linearGradient id="neonGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#FF3399"/>
+          <stop offset="100%" stop-color="#B026FF"/>
+        </linearGradient>
+        <linearGradient id="goldCrown" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#FFF066"/>
+          <stop offset="50%" stop-color="#FFE600"/>
+          <stop offset="100%" stop-color="#F59E0B"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Comic Background Action Rays -->
+      <g opacity="0.35">
+        <polygon points="256,256 0,40 40,0" fill="#000000"/>
+        <polygon points="256,256 472,0 512,40" fill="#000000"/>
+        <polygon points="256,256 512,472 472,512" fill="#000000"/>
+        <polygon points="256,256 40,512 0,472" fill="#000000"/>
+        <polygon points="256,256 220,0 292,0" fill="#000000"/>
+        <polygon points="256,256 512,220 512,292" fill="#000000"/>
+        <polygon points="256,256 220,512 292,512" fill="#000000"/>
+        <polygon points="256,256 0,220 0,292" fill="#000000"/>
+      </g>
+
+      <!-- Dynamic Diagonal Brutal Slash Block Behind Hero -->
+      <polygon points="60,180 470,110 450,330 40,400" fill="#39FF14" stroke="#000000" stroke-width="8" stroke-linejoin="round"/>
+      <polygon points="66,186 476,116 456,336 46,406" fill="none" stroke="#000000" stroke-width="8" opacity="0.3"/>
+
+      <!-- Inner Speed Lines -->
+      <line x1="80" y1="210" x2="440" y2="150" stroke="#000000" stroke-width="5" stroke-dasharray="16 12"/>
+      <line x1="90" y1="360" x2="420" y2="300" stroke="#000000" stroke-width="5" stroke-dasharray="24 16"/>
+
+      <!-- DUAL CROSSED HUNTER BLADES (Shadows) -->
+      <g transform="translate(6, 6)" opacity="0.9">
+        <!-- Blade 1 Shadow (Top-Left to Bottom-Right) -->
+        <polygon points="120,90 145,80 395,395 365,420 335,405 270,330 150,150" fill="#000000"/>
+        <!-- Blade 2 Shadow (Top-Right to Bottom-Left) -->
+        <polygon points="392,90 367,80 117,395 147,420 177,405 242,330 362,150" fill="#000000"/>
+      </g>
+
+      <!-- DUAL CROSSED HUNTER BLADES -->
+      <!-- Left Blade (Cyan Energy Blade) -->
+      <g>
+        <polygon points="120,90 145,80 395,395 365,420 335,405 270,330 150,150" fill="url(#bladeGrad2)" stroke="#000000" stroke-width="6" stroke-linejoin="round"/>
+        <line x1="135" y1="95" x2="360" y2="380" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+        <!-- Hilt/Guard -->
+        <rect x="330" y="380" width="60" height="16" transform="rotate(40 360 388)" fill="#000000" rx="3"/>
+        <circle cx="375" cy="405" r="9" fill="#FF3399" stroke="#000000" stroke-width="4"/>
+      </g>
+
+      <!-- Right Blade (Steel Blade with Pink Edge) -->
+      <g>
+        <polygon points="392,90 367,80 117,395 147,420 177,405 242,330 362,150" fill="url(#bladeGrad1)" stroke="#000000" stroke-width="6" stroke-linejoin="round"/>
+        <line x1="377" y1="95" x2="152" y2="380" stroke="#FF3399" stroke-width="4" stroke-linecap="round"/>
+        <!-- Hilt/Guard -->
+        <rect x="122" y="380" width="60" height="16" transform="rotate(-40 152 388)" fill="#000000" rx="3"/>
+        <circle cx="137" cy="405" r="9" fill="#00F0FF" stroke="#000000" stroke-width="4"/>
+      </g>
+
+      <!-- CENTRAL SHADOW HUNTER HERO HEAD / HOOD -->
+      <!-- Heavy Drop Shadow -->
+      <g transform="translate(8, 8)">
+        <!-- Hood Silhouette Shadow -->
+        <path d="M 256,120 C 180,120 160,190 155,270 C 150,330 180,380 256,410 C 332,380 362,330 357,270 C 352,190 332,120 256,120 Z" fill="#000000"/>
+        <!-- Spiky Cowl Collars Shadow -->
+        <polygon points="150,310 110,380 180,385" fill="#000000"/>
+        <polygon points="362,310 402,380 332,385" fill="#000000"/>
+      </g>
+
+      <!-- Hunter Outer Cowl / Cloak -->
+      <path d="M 256,120 C 180,120 160,190 155,270 C 150,330 180,380 256,410 C 332,380 362,330 357,270 C 352,190 332,120 256,120 Z" 
+            fill="#121826" stroke="#000000" stroke-width="8" stroke-linejoin="round"/>
+
+      <!-- Spiky Shoulder Guards -->
+      <polygon points="150,310 110,380 180,385" fill="#FF3399" stroke="#000000" stroke-width="7" stroke-linejoin="round"/>
+      <polygon points="362,310 402,380 332,385" fill="#FF3399" stroke="#000000" stroke-width="7" stroke-linejoin="round"/>
+
+      <!-- Inner Cowl Shadow -->
+      <path d="M 256,145 C 200,145 185,200 180,265 C 175,315 200,355 256,380 C 312,355 337,315 332,265 C 327,200 312,145 256,145 Z" 
+            fill="#050811" stroke="#000000" stroke-width="6"/>
+
+      <!-- Cyber-Ninja Mask / Lower Face Plate -->
+      <polygon points="210,290 256,370 302,290 285,260 227,260" 
+               fill="#1E293B" stroke="#000000" stroke-width="6" stroke-linejoin="round"/>
+      <!-- Mask vent slits -->
+      <line x1="240" y1="295" x2="272" y2="295" stroke="#00F0FF" stroke-width="4" stroke-linecap="round"/>
+      <line x1="244" y1="310" x2="268" y2="310" stroke="#00F0FF" stroke-width="4" stroke-linecap="round"/>
+      <line x1="250" y1="325" x2="262" y2="325" stroke="#00F0FF" stroke-width="4" stroke-linecap="round"/>
+
+      <!-- GLOWING ANIME / SOLO-LEVELING HUNTER EYES -->
+      <!-- Left Eye -->
+      <g>
+        <polygon points="190,225 240,240 200,248" fill="#00F0FF" stroke="#000000" stroke-width="3"/>
+        <line x1="175" y1="215" x2="242" y2="240" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+        <!-- Lightning streak from eye -->
+        <polyline points="190,225 160,210 170,195 140,180" fill="none" stroke="#00F0FF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+
+      <!-- Right Eye -->
+      <g>
+        <polygon points="322,225 272,240 312,248" fill="#00F0FF" stroke="#000000" stroke-width="3"/>
+        <line x1="337" y1="215" x2="270" y2="240" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+        <!-- Lightning streak from eye -->
+        <polyline points="322,225 352,210 342,195 372,180" fill="none" stroke="#00F0FF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+
+      <!-- GOLDEN S-RANK SOVEREIGN CROWN -->
+      <g transform="translate(256, 115) scale(1.15)">
+        <!-- Shadow -->
+        <polygon points="-45,0 -35,-32 -10,-12 0,-42 10,-12 35,-32 45,0" fill="#000000" transform="translate(4, 4)"/>
+        <!-- Crown Base -->
+        <polygon points="-45,0 -35,-32 -10,-12 0,-42 10,-12 35,-32 45,0" fill="url(#goldCrown)" stroke="#000000" stroke-width="6" stroke-linejoin="round"/>
+        <rect x="-42" y="0" width="84" height="12" fill="#000000" rx="3"/>
+        <!-- Crown Jewels -->
+        <circle cx="0" cy="-22" r="5" fill="#FF3399" stroke="#000000" stroke-width="2"/>
+        <circle cx="-25" cy="-18" r="4" fill="#00F0FF" stroke="#000000" stroke-width="2"/>
+        <circle cx="25" cy="-18" r="4" fill="#00F0FF" stroke="#000000" stroke-width="2"/>
+      </g>
+
+      <!-- COMIC RETRO SPARKLES & STARS -->
+      <!-- Top Left Sparkle -->
+      <g transform="translate(60, 80)">
+        <polygon points="0,-16 5,-5 16,0 5,5 0,16 -5,5 -16,0 -5,-5" fill="#FF3399" stroke="#000000" stroke-width="4"/>
+      </g>
+      <!-- Top Right Star -->
+      <g transform="translate(440, 80)">
+        <polygon points="0,-20 6,-6 20,0 6,6 0,20 -6,6 -20,0 -6,-6" fill="#00F0FF" stroke="#000000" stroke-width="4"/>
+      </g>
+      <!-- Mid Left Sparkle -->
+      <g transform="translate(45, 270)">
+        <circle cx="0" cy="0" r="10" fill="#FFE600" stroke="#000000" stroke-width="4"/>
+      </g>
+      <!-- Mid Right Sparkle -->
+      <g transform="translate(465, 270)">
+        <polygon points="0,-14 4,-4 14,0 4,4 0,14 -4,4 -14,0 -4,-4" fill="#39FF14" stroke="#000000" stroke-width="4"/>
+      </g>
+    </svg>
+
+    <!-- Comic Badges -->
+    <div class="top-badge">⚔️ АКАДЕМИЯ ОХОТНИКОВ ⚔️</div>
+    <div class="bottom-badge">
+      <span>БАШНЯ</span>
+      <span class="highlight">100 ЭТАЖЕЙ</span>
+      <span>★ S-RANK</span>
+    </div>
+  </div>
+</body>
+</html>
