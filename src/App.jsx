@@ -14,7 +14,7 @@ import Toast from './components/Toast';
 
 import { loadGameState, saveGameState, calculateEnergy, loadFromCloudStorage } from './utils/storage';
 import { initTelegram, getUserInfo, hapticImpact } from './utils/telegram';
-import { EQUIPMENT_CATALOG, getItemStats, rollEquipmentDrop } from './data/equipment';
+import { EQUIPMENT_CATALOG, EQUIPMENT_BY_ID, getItemStats, rollEquipmentDrop, getSalvageValue } from './data/equipment';
 import { PETS, getPetStats, rollPetGacha } from './data/pets';
 import { getRankByMaxFloor } from './data/ranks';
 import { REBIRTH_PERKS } from './data/rebirth';
@@ -105,13 +105,14 @@ export default function App() {
     let dodgeChance = 3;
     let vampirism = 0;
     let goldMultiplier = 1.0;
+    let crystalMultiplier = 1.0;
 
     // 1. Equipment Stats (from 4 equipped slots)
     const equipped = state.equipped || {};
     const levels = state.equipmentLevels || {};
     Object.values(equipped).forEach(itemId => {
       if (!itemId) return;
-      const itemTemplate = EQUIPMENT_CATALOG[itemId];
+      const itemTemplate = EQUIPMENT_CATALOG.find(it => it.id === itemId) || EQUIPMENT_CATALOG[itemId];
       if (!itemTemplate) return;
       const lvl = levels[itemId] || 1;
       const stats = getItemStats(itemTemplate, lvl);
@@ -120,8 +121,10 @@ export default function App() {
       if (stats.maxHp) baseHp += stats.maxHp;
       if (stats.critChance) critChance += stats.critChance;
       if (stats.dodgeChance) dodgeChance += stats.dodgeChance;
-      if (stats.vampirism) vampirism += stats.vampirism;
+      if (stats.vampirism) vampirism += (stats.vampirism > 1 ? stats.vampirism : Math.round(stats.vampirism * 100));
+      if (stats.goldBonus) goldMultiplier += stats.goldBonus;
       if (stats.goldMultiplier) goldMultiplier += stats.goldMultiplier;
+      if (stats.crystalBonus) crystalMultiplier += stats.crystalBonus;
     });
 
     // 2. Apply active run artifacts bonuses
@@ -131,13 +134,18 @@ export default function App() {
       if (art.effectType === 'critChance') critChance += art.value;
       if (art.effectType === 'dodgeChance') dodgeChance += art.value;
       if (art.effectType === 'goldBonus') goldMultiplier += art.value;
-      if (art.effectType === 'vampirism') vampirism += Math.round(art.value * 100);
+      if (art.effectType === 'doubleCrystals' || art.id === 'fortune_clover') crystalMultiplier *= (art.value || 2);
+      if (art.effectType === 'vampirism') {
+        const val = art.value > 1 ? art.value : Math.round(art.value * 100);
+        vampirism += val;
+      }
       if (art.effectType === 'allStats') {
         baseAtk = Math.floor(baseAtk * 1.2);
         baseHp = Math.floor(baseHp * 1.2);
         critChance += 8;
         dodgeChance += 8;
         goldMultiplier += 0.20;
+        crystalMultiplier += 0.20;
       }
     });
 
@@ -147,11 +155,12 @@ export default function App() {
       if (activePet) {
         const petLvl = state.petLevels?.[activePet.id] || 1;
         const petBuffs = getPetStats(activePet, petLvl);
-        baseHp = Math.floor(baseHp * (1 + petBuffs.hpBonus));
-        baseAtk = Math.floor(baseAtk * (1 + petBuffs.atkBonus));
-        critChance += petBuffs.critBonus;
-        dodgeChance += petBuffs.dodgeBonus;
-        goldMultiplier += petBuffs.goldBonus;
+        if (petBuffs.hpBonus) baseHp = Math.floor(baseHp * (1 + petBuffs.hpBonus));
+        if (petBuffs.atkBonus) baseAtk = Math.floor(baseAtk * (1 + petBuffs.atkBonus));
+        if (petBuffs.critBonus) critChance += petBuffs.critBonus;
+        if (petBuffs.dodgeBonus) dodgeChance += petBuffs.dodgeBonus;
+        if (petBuffs.goldBonus) goldMultiplier += petBuffs.goldBonus;
+        if (petBuffs.crystalBonus) crystalMultiplier += petBuffs.crystalBonus;
       }
     }
 
@@ -175,6 +184,7 @@ export default function App() {
     // 6. VIP Permanent Buff
     if (state.vip) {
       goldMultiplier += 0.25;
+      crystalMultiplier += 0.25;
     }
 
     return {
@@ -182,8 +192,9 @@ export default function App() {
       atk: Math.max(5, baseAtk),
       critChance: Math.min(80, Math.round(critChance)),
       dodgeChance: Math.min(55, Math.round(dodgeChance)),
-      vampirism: Math.min(40, Math.round(vampirism)),
-      goldMultiplier
+      vampirism: Math.min(60, Math.round(vampirism)),
+      goldMultiplier: Math.round(goldMultiplier * 100) / 100,
+      crystalMultiplier: Math.round(crystalMultiplier * 100) / 100
     };
   }, [state.equipped, state.equipmentLevels, state.activePetId, state.petLevels, state.maxFloor, state.rebirthPerks, state.vip, runArtifacts]);
 
@@ -242,10 +253,12 @@ export default function App() {
       const levels = { ...(prev.equipmentLevels || {}) };
 
       droppedEquipment.forEach(item => {
-        if (!inv.includes(item.id)) {
+        if (inv.includes(item.id)) {
+          // Duplicate rule: increment level (+1)
+          const curLvl = levels[item.id] || 1;
+          levels[item.id] = Math.min(20, curLvl + 1);
+        } else {
           inv.push(item.id);
-        }
-        if (!levels[item.id]) {
           levels[item.id] = 1;
         }
       });
@@ -323,8 +336,14 @@ export default function App() {
       const levels = { ...(prev.equipmentLevels || {}) };
 
       droppedEquipment.forEach(item => {
-        if (!inv.includes(item.id)) inv.push(item.id);
-        if (!levels[item.id]) levels[item.id] = 1;
+        if (inv.includes(item.id)) {
+          // Duplicate rule: increment level (+1)
+          const curLvl = levels[item.id] || 1;
+          levels[item.id] = Math.min(20, curLvl + 1);
+        } else {
+          inv.push(item.id);
+          levels[item.id] = 1;
+        }
       });
 
       return {
@@ -382,6 +401,36 @@ export default function App() {
         }
       };
     });
+  };
+
+  const handleSalvageItem = (itemOrId) => {
+    const template = typeof itemOrId === 'object' && itemOrId
+      ? itemOrId
+      : (EQUIPMENT_BY_ID?.[itemOrId] || EQUIPMENT_CATALOG.find(it => it.id === itemOrId));
+    if (!template) return;
+
+    const crystalsYield = getSalvageValue(template.rarity);
+
+    setState(prev => {
+      const inv = (prev.inventory || []).filter(id => id !== template.id);
+      const equipped = { ...(prev.equipped || {}) };
+      if (equipped[template.slot] === template.id) {
+        equipped[template.slot] = null;
+      }
+      const levels = { ...(prev.equipmentLevels || {}) };
+      delete levels[template.id];
+
+      return {
+        ...prev,
+        inventory: inv,
+        equipped,
+        equipmentLevels: levels,
+        crystals: (prev.crystals || 0) + crystalsYield
+      };
+    });
+
+    sounds.playCoin();
+    showToast(`ПРЕДМЕТ РАЗОБРАН: +${crystalsYield} 💎!`, 'stars');
   };
 
   const handleEquipPet = (petId) => {
@@ -483,20 +532,32 @@ export default function App() {
   const handleStarsPurchaseSuccess = (action) => {
     if (action === 'gear_chest') {
       const forceRarity = Math.random() < 0.6 ? 'epic' : 'legendary';
-      const dropped = rollEquipmentDrop(state.maxFloor || 1, forceRarity);
+      const dropped = rollEquipmentDrop(Math.max(30, state.maxFloor || 1), forceRarity);
       if (dropped) {
+        let isDup = false;
+        let newLvl = 1;
         setState(prev => {
           const inv = prev.inventory || [];
-          const newInv = inv.includes(dropped.id) ? inv : [...inv, dropped.id];
+          isDup = inv.includes(dropped.id);
+          const newInv = isDup ? inv : [...inv, dropped.id];
           const levels = { ...(prev.equipmentLevels || {}) };
-          if (!levels[dropped.id]) levels[dropped.id] = 1;
+          if (isDup) {
+            newLvl = Math.min(20, (levels[dropped.id] || 1) + 1);
+            levels[dropped.id] = newLvl;
+          } else {
+            levels[dropped.id] = 1;
+          }
           return {
             ...prev,
             inventory: newInv,
             equipmentLevels: levels
           };
         });
-        showToast(`ИЗ СУНДУКА БЕЗДНЫ ВЫПАЛО: ${dropped.name.toUpperCase()}! 👑`, 'stars');
+        if (isDup) {
+          showToast(`ДУБЛИКАТ: ${dropped.name.toUpperCase()} УЛУЧШЕН ДО +${newLvl}! 👑`, 'stars');
+        } else {
+          showToast(`ИЗ СУНДУКА БЕЗДНЫ ВЫПАЛО: ${dropped.name.toUpperCase()}! 👑`, 'stars');
+        }
       }
     } else if (action === 'smith_pack') {
       setState(prev => ({
@@ -507,9 +568,14 @@ export default function App() {
       showToast('НАБОР КУЗНЕЦА: +5,000 🪙 И +100 💎!', 'stars');
     } else if (action === 'egg') {
       const pet = rollPetGacha();
+      const isDuplicate = (state.ownedPets || []).includes(pet.id);
       handleUnlockPet(pet.id);
       handleEquipPet(pet.id);
-      showToast(`ВЫЛУПИЛСЯ: ${pet.name.toUpperCase()}! ЭКИПИРОВАН!`, 'stars');
+      if (isDuplicate) {
+        showToast(`ДУБЛИКАТ: ${pet.name.toUpperCase()} ПОВЫСИЛ УРОВЕНЬ! 🐾`, 'stars');
+      } else {
+        showToast(`ВЫЛУПИЛСЯ: ${pet.name.toUpperCase()}! ЭКИПИРОВАН! 🐾`, 'stars');
+      }
     } else if (action === 'energy') {
       setState(prev => ({ ...prev, energy: prev.maxEnergy }));
       showToast('ЭНЕРГИЯ ВОССТАНОВЛЕНА НА МАКСИМУМ!', 'success');
@@ -584,6 +650,7 @@ export default function App() {
                 runArtifacts={runArtifacts}
                 onEquipItem={handleEquipItem}
                 onUpgradeItem={handleUpgradeItem}
+                onSalvageItem={handleSalvageItem}
                 onShowToast={showToast}
               />
             )}

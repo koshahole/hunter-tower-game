@@ -139,13 +139,14 @@ export default function Battle({
 
   // Switch to next monster in pack or trigger floor victory
   const handleMonsterDefeated = () => {
-    // 1. Tally bounty from this monster
-    const monsterGold = Math.floor(currentMonster.goldReward * (playerStats.goldMultiplier || 1.0));
-    const monsterCrystals = currentMonster.crystalReward || 0;
+    // 1. Tally bounty from this monster with proper multipliers
+    const monsterGold = Math.max(1, Math.floor(currentMonster.goldReward * (playerStats.goldMultiplier || 1.0)));
+    const baseCrystals = currentMonster.crystalReward || 0;
+    const monsterCrystals = baseCrystals > 0 ? Math.max(1, Math.floor(baseCrystals * (playerStats.crystalMultiplier || 1.0))) : 0;
 
     let newDropped = [...droppedItems];
     if (currentMonster.dropEquipment) {
-      const item = rollEquipmentDrop(floor);
+      const item = rollEquipmentDrop(floor, { isBoss: currentMonster.isBoss, isLeader: currentMonster.isLeader });
       newDropped.push(item);
       addFloatingText(`🎁 ${item.name}!`, 'crit', false);
       addLog(`🎁 ВЫБИТ ПРЕДМЕТ: ${item.name.toUpperCase()}!`);
@@ -210,11 +211,10 @@ export default function Battle({
     setIsMonsterHurt(true);
     setTimeout(() => setIsMonsterHurt(false), 250);
 
-    // Vampirism from equipment & Relic Chalice
-    const hasChalice = runArtifacts?.some(a => a.id === 'vampiric_chalice');
-    const totalVamp = (playerStats.vampirism || 0) + (hasChalice ? 0.15 : 0);
-    if (totalVamp > 0) {
-      const vHeal = Math.max(1, Math.floor(damage * totalVamp));
+    // Vampirism from equipment & Relics (playerStats.vampirism is standardized in percentage 0..100)
+    const vampPercent = playerStats.vampirism || 0;
+    if (vampPercent > 0) {
+      const vHeal = Math.max(1, Math.floor(damage * (vampPercent / 100)));
       const healedHp = Math.min(playerStats.maxHp, playerHp + vHeal);
       setPlayerHp(healedHp);
       addFloatingText(`+${vHeal} HP`, 'heal', true);

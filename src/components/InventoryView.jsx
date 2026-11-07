@@ -10,7 +10,8 @@ import {
   X,
   ArrowUpCircle,
   Feather,
-  Info
+  Info,
+  Trash2
 } from 'lucide-react';
 import {
   EQUIPMENT_CATALOG,
@@ -20,7 +21,8 @@ import {
   getItemStats,
   getItemNextLevelGain,
   getEquipmentUpgradeCost,
-  formatStatText
+  formatStatText,
+  getSalvageValue
 } from '../data/equipment';
 import { sounds } from '../audio/soundEffects';
 import { hapticImpact, hapticNotification } from '../utils/telegram';
@@ -30,6 +32,7 @@ export default function InventoryView({
   runArtifacts = [],
   onEquipItem,
   onUpgradeItem,
+  onSalvageItem,
   onShowToast
 }) {
   const [filterSlot, setFilterSlot] = useState('all');
@@ -492,6 +495,26 @@ export default function InventoryView({
                   УЖЕ НАДЕТО В СЛОТ {SLOTS[selectedItem.template.slot]?.name.toUpperCase()}
                 </div>
               )}
+
+              {/* Salvage / Dismantle Button (1/3/10/30 Crystals) */}
+              <button
+                onClick={() => {
+                  hapticImpact('heavy');
+                  if (onSalvageItem) {
+                    onSalvageItem(selectedItem.template);
+                  }
+                  setSelectedItem(null);
+                }}
+                className="w-full py-2 bg-neo-cyan hover:bg-cyan-300 text-black border-3 border-black font-arcade text-xs shadow-brutal active:translate-x-[1px] active:translate-y-[1px] flex items-center justify-between uppercase transition-all"
+              >
+                <span className="flex items-center gap-1.5">
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>РАЗОБРАТЬ</span>
+                </span>
+                <span className="font-arcade text-xs font-black">
+                  +{getSalvageValue(selectedItem.template.rarity)} 💎
+                </span>
+              </button>
             </div>
 
           </div>

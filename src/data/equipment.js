@@ -1,6 +1,10 @@
 // Equipment & Inventory System for Hunter Tower
 // 4 Slots: Weapon, Armor, Helmet, Accessory
-// Rarities: common, rare, epic, legendary
+// Total 400 Equipment Items (100 per slot: 25 Common, 25 Rare, 25 Epic, 25 Legendary)
+import { WEAPONS } from './equipment/weapons';
+import { ARMORS } from './equipment/armors';
+import { HELMETS } from './equipment/helmets';
+import { ACCESSORIES } from './equipment/accessories';
 
 export const RARITIES = {
   common: {
@@ -42,220 +46,38 @@ export const RARITIES = {
 };
 
 export const SLOTS = {
-  weapon: { id: 'weapon', name: 'Оружие', icon: '⚔️' },
-  armor: { id: 'armor', name: 'Броня', icon: '🛡️' },
-  helmet: { id: 'helmet', name: 'Шлем', icon: '🪖' },
-  accessory: { id: 'accessory', name: 'Амулет', icon: '💍' },
+  weapon: {
+    id: 'weapon',
+    name: 'Оружие',
+    icon: '⚔️',
+    description: 'Увеличивает урон и шанс критического удара',
+  },
+  armor: {
+    id: 'armor',
+    name: 'Броня',
+    icon: '🛡️',
+    description: 'Увеличивает здоровье и шанс уклонения',
+  },
+  helmet: {
+    id: 'helmet',
+    name: 'Шлем',
+    icon: '🪖',
+    description: 'Баланс здоровья, защиты и боевой мощи',
+  },
+  accessory: {
+    id: 'accessory',
+    name: 'Амулет',
+    icon: '💍',
+    description: 'Особые эффекты: бонус золота, вампиризм и кристаллы',
+  },
 };
 
+// All 400 equipment items combined
 export const EQUIPMENT_ITEMS = [
-  // --- WEAPONS ---
-  {
-    id: 'rusty_dagger',
-    name: 'Простой Меч',
-    slot: 'weapon',
-    rarity: 'common',
-    icon: '🗡️',
-    description: 'Базовый меч начинающего охотника. Прост в обращении, но надежен в бою.',
-    baseStats: { atk: 12, critChance: 2 },
-    growth: { atk: 3, critChance: 0.3 },
-  },
-  {
-    id: 'hunter_blade',
-    name: 'Клинок Охотника',
-    slot: 'weapon',
-    rarity: 'common',
-    icon: '⚔️',
-    description: 'Стандартный клинок выпускника Академии Охотников.',
-    baseStats: { atk: 18, critChance: 4 },
-    growth: { atk: 4.5, critChance: 0.4 },
-  },
-  {
-    id: 'abyss_scythe',
-    name: 'Коса Бездны',
-    slot: 'weapon',
-    rarity: 'rare',
-    icon: '⛏️',
-    description: 'Жнет врагов темной энергией и восстанавливает здоровье.',
-    baseStats: { atk: 32, critChance: 6, vampirism: 0.04 },
-    growth: { atk: 7.5, critChance: 0.5, vampirism: 0.005 },
-  },
-  {
-    id: 'dragon_slayer',
-    name: 'Меч Драконоборца',
-    slot: 'weapon',
-    rarity: 'epic',
-    icon: '🗡️🔥',
-    description: 'Закален в сердце вулкана, обладает сокрушительной силой.',
-    baseStats: { atk: 58, critChance: 10, maxHp: 160 },
-    growth: { atk: 13, critChance: 0.8, maxHp: 32 },
-  },
-  {
-    id: 'shadow_monarch_blade',
-    name: 'Клинок Теневого Монарха',
-    slot: 'weapon',
-    rarity: 'legendary',
-    icon: '👑🗡️',
-    description: 'Легендарное оружие повелителя теней с безумной силой атаки.',
-    baseStats: { atk: 95, critChance: 15, vampirism: 0.08 },
-    growth: { atk: 22, critChance: 1.1, vampirism: 0.008 },
-  },
-
-  // --- ARMOR ---
-  {
-    id: 'cloth_tunic',
-    name: 'Тканевая Туника',
-    slot: 'armor',
-    rarity: 'common',
-    icon: '🥋',
-    description: 'Легкая походная одежда начинающего искателя приключений.',
-    baseStats: { maxHp: 65, dodgeChance: 2 },
-    growth: { maxHp: 22, dodgeChance: 0.3 },
-  },
-  {
-    id: 'leather_vest',
-    name: 'Кожаный Жилет',
-    slot: 'armor',
-    rarity: 'common',
-    icon: '🦺',
-    description: 'Плотный жилет из шкур пещерных монстров.',
-    baseStats: { maxHp: 110, dodgeChance: 4 },
-    growth: { maxHp: 30, dodgeChance: 0.4 },
-  },
-  {
-    id: 'vanguard_chainmail',
-    name: 'Кольчуга Авангарда',
-    slot: 'armor',
-    rarity: 'rare',
-    icon: '🛡️',
-    description: 'Надежная стальная защита штурмовых отрядов.',
-    baseStats: { maxHp: 200, dodgeChance: 6 },
-    growth: { maxHp: 52, dodgeChance: 0.6 },
-  },
-  {
-    id: 'titan_cuirass',
-    name: 'Титановая Кираса',
-    slot: 'armor',
-    rarity: 'epic',
-    icon: '🦾',
-    description: 'Тяжелая непробиваемая броня из чистейшего титана.',
-    baseStats: { maxHp: 380, dodgeChance: 8 },
-    growth: { maxHp: 90, dodgeChance: 0.7 },
-  },
-  {
-    id: 'abyss_lord_armor',
-    name: 'Доспех Владыки Бездны',
-    slot: 'armor',
-    rarity: 'legendary',
-    icon: '👑🖤',
-    description: 'Поглощает удары монстров и дарует несокрушимую стойкость.',
-    baseStats: { maxHp: 700, dodgeChance: 12, vampirism: 0.05 },
-    growth: { maxHp: 160, dodgeChance: 1.0, vampirism: 0.005 },
-  },
-
-  // --- HELMETS ---
-  {
-    id: 'scout_band',
-    name: 'Повязка Следопыта',
-    slot: 'helmet',
-    rarity: 'common',
-    icon: '🥷',
-    description: 'Обостряет зрение и внимание в темных коридорах Башни.',
-    baseStats: { maxHp: 35, atk: 4 },
-    growth: { maxHp: 12, atk: 1.5 },
-  },
-  {
-    id: 'iron_sallet',
-    name: 'Железный Салад',
-    slot: 'helmet',
-    rarity: 'common',
-    icon: '⛑️',
-    description: 'Базовый металлический шлем для защиты от падающих камней.',
-    baseStats: { maxHp: 60, atk: 6 },
-    growth: { maxHp: 18, atk: 2.2 },
-  },
-  {
-    id: 'assassin_cowl',
-    name: 'Капюшон Ассасина',
-    slot: 'helmet',
-    rarity: 'rare',
-    icon: '🥷🌑',
-    description: 'Скрывает лицо и повышает критическую точность ударов.',
-    baseStats: { maxHp: 120, atk: 14, critChance: 5 },
-    growth: { maxHp: 30, atk: 4.0, critChance: 0.5 },
-  },
-  {
-    id: 'paladin_helm',
-    name: 'Шлем Паладина',
-    slot: 'helmet',
-    rarity: 'epic',
-    icon: '✨🪖',
-    description: 'Освящен рунами защиты, повышает здоровье и боевой дух.',
-    baseStats: { maxHp: 260, atk: 25, dodgeChance: 5 },
-    growth: { maxHp: 60, atk: 7.0, dodgeChance: 0.6 },
-  },
-  {
-    id: 'monarch_crown',
-    name: 'Корона Монарха',
-    slot: 'helmet',
-    rarity: 'legendary',
-    icon: '👑⚡',
-    description: 'Венец истинного властителя Башни: дает колоссальные бонусы.',
-    baseStats: { maxHp: 460, atk: 50, critChance: 10, dodgeChance: 7 },
-    growth: { maxHp: 105, atk: 12.0, critChance: 0.8, dodgeChance: 0.6 },
-  },
-
-  // --- ACCESSORIES ---
-  {
-    id: 'copper_pendant',
-    name: 'Медный Кулон',
-    slot: 'accessory',
-    rarity: 'common',
-    icon: '🥉',
-    description: 'Простой талисман, приносящий немного удачи и золота.',
-    baseStats: { goldBonus: 0.08, critChance: 2 },
-    growth: { goldBonus: 0.02, critChance: 0.3 },
-  },
-  {
-    id: 'silver_ring',
-    name: 'Серебряный Перстень',
-    slot: 'accessory',
-    rarity: 'common',
-    icon: '💍',
-    description: 'Перстень с гравировкой гильдии искателей сокровищ.',
-    baseStats: { goldBonus: 0.12, atk: 7 },
-    growth: { goldBonus: 0.025, atk: 2.2 },
-  },
-  {
-    id: 'greed_talisman',
-    name: 'Амулет Алчности',
-    slot: 'accessory',
-    rarity: 'rare',
-    icon: '🪙📿',
-    description: 'Притягивает звонкие монеты со всех поверженных врагов.',
-    baseStats: { goldBonus: 0.30, critChance: 5 },
-    growth: { goldBonus: 0.045, critChance: 0.5 },
-  },
-  {
-    id: 'vampire_signet',
-    name: 'Печать Вампира',
-    slot: 'accessory',
-    rarity: 'epic',
-    icon: '🩸💍',
-    description: 'Впитывает жизненную силу врагов с каждым нанесенным ударом.',
-    baseStats: { vampirism: 0.08, atk: 22, maxHp: 130 },
-    growth: { vampirism: 0.008, atk: 5.5, maxHp: 32 },
-  },
-  {
-    id: 'ring_of_eternity',
-    name: 'Перстень Вечности',
-    slot: 'accessory',
-    rarity: 'legendary',
-    icon: '🌟💍',
-    description: 'Древнейший реликт богов: дарует богатство, силу и вампиризм.',
-    baseStats: { goldBonus: 0.50, atk: 45, maxHp: 270, vampirism: 0.10, critChance: 8 },
-    growth: { goldBonus: 0.06, atk: 10, maxHp: 60, vampirism: 0.01, critChance: 0.8 },
-  },
+  ...WEAPONS,
+  ...ARMORS,
+  ...HELMETS,
+  ...ACCESSORIES
 ];
 
 export const EQUIPMENT_CATALOG = [...EQUIPMENT_ITEMS];
@@ -269,6 +91,18 @@ export const EQUIPMENT_BY_ID = EQUIPMENT_ITEMS.reduce((acc, item) => {
 }, {});
 
 export const MAX_ENHANCE_LEVEL = 20;
+
+// Salvage values strictly per spec: 1 / 3 / 10 / 30 Crystals
+export const SALVAGE_VALUES = {
+  common: 1,
+  rare: 3,
+  epic: 10,
+  legendary: 30
+};
+
+export function getSalvageValue(rarity) {
+  return SALVAGE_VALUES[rarity] || 1;
+}
 
 // Calculate stats for a given item at level (level >= 1)
 export function getItemStats(itemTemplate, level = 1) {
@@ -287,7 +121,7 @@ export function getItemStats(itemTemplate, level = 1) {
 
     if (key === 'critChance' || key === 'dodgeChance') {
       result[key] = Math.round(total * 10) / 10;
-    } else if (key === 'goldBonus' || key === 'vampirism') {
+    } else if (key === 'goldBonus' || key === 'crystalBonus' || key === 'vampirism') {
       result[key] = Math.round(total * 1000) / 1000;
     } else {
       result[key] = Math.round(total);
@@ -335,39 +169,93 @@ export function formatStatText(key, value) {
       return `+${Math.round(value * 100)}% Вампиризма`;
     case 'goldBonus':
       return `+${Math.round(value * 100)}% Золота`;
+    case 'crystalBonus':
+      return `+${Math.round(value * 100)}% Кристаллов`;
     default:
       return `+${value}`;
   }
 }
 
-// Drop generator for defeating monsters or opening chests
-export function rollEquipmentDrop(floor = 1, forceRarity = null) {
-  let rarity = forceRarity;
+// Floor odds table strictly from ЗАДАЧА.txt
+export function getLootOddsForFloor(floor) {
+  if (floor < 10) return { common: 100, rare: 0, epic: 0, legendary: 0 };
+  if (floor < 20) return { common: 85, rare: 15, epic: 0, legendary: 0 };
+  if (floor < 30) return { common: 70, rare: 25, epic: 5, legendary: 0 };
+  if (floor < 40) return { common: 55, rare: 33, epic: 10, legendary: 2 };
+  if (floor < 50) return { common: 45, rare: 35, epic: 17, legendary: 3 };
+  if (floor < 60) return { common: 35, rare: 35, epic: 25, legendary: 5 };
+  if (floor < 70) return { common: 25, rare: 33, epic: 33, legendary: 9 };
+  if (floor < 80) return { common: 15, rare: 30, epic: 40, legendary: 15 };
+  if (floor < 90) return { common: 10, rare: 25, epic: 45, legendary: 20 };
+  return { common: 5, rare: 20, epic: 50, legendary: 25 };
+}
 
-  if (!rarity) {
+export function upgradeRarityTier(rarity) {
+  if (rarity === 'common') return 'rare';
+  if (rarity === 'rare') return 'epic';
+  if (rarity === 'epic') return 'legendary';
+  return 'legendary';
+}
+
+// Drop generator with floor tiered tables and boss rarity guarantees
+export function rollEquipmentDrop(floor = 1, options = {}) {
+  // Support both rollEquipmentDrop(floor, forceRarity) and rollEquipmentDrop(floor, { isBoss, isLeader, forceRarity })
+  const opts = typeof options === 'string' ? { forceRarity: options } : (options || {});
+  const { isBoss = false, isLeader = false, forceRarity = null } = opts;
+
+  let chosenRarity = forceRarity;
+
+  if (!chosenRarity) {
+    const odds = getLootOddsForFloor(floor);
     const roll = Math.random() * 100;
-    // Higher floors increase chance for rare/epic/legendary
-    const legendaryChance = Math.min(12, 1 + floor * 0.1);
-    const epicChance = Math.min(28, 5 + floor * 0.25);
-    const rareChance = Math.min(45, 18 + floor * 0.35);
 
-    if (roll < legendaryChance) {
-      rarity = 'legendary';
-    } else if (roll < legendaryChance + epicChance) {
-      rarity = 'epic';
-    } else if (roll < legendaryChance + epicChance + rareChance) {
-      rarity = 'rare';
+    if (roll < odds.legendary) {
+      chosenRarity = 'legendary';
+    } else if (roll < odds.legendary + odds.epic) {
+      chosenRarity = 'epic';
+    } else if (roll < odds.legendary + odds.epic + odds.rare) {
+      chosenRarity = 'rare';
     } else {
-      rarity = 'common';
+      chosenRarity = 'common';
+    }
+
+    // Boss bonus: guarantees +1 rarity above base floor tier
+    if (isBoss) {
+      if (floor >= 80) {
+        chosenRarity = 'legendary';
+      } else if (floor >= 30) {
+        // Boss 30+ guarantees at least Epic
+        if (chosenRarity === 'common' || chosenRarity === 'rare') chosenRarity = 'epic';
+      } else if (floor >= 10) {
+        // Boss 10+ guarantees at least Rare
+        if (chosenRarity === 'common') chosenRarity = 'rare';
+      } else {
+        chosenRarity = upgradeRarityTier(chosenRarity);
+      }
+    } else if (isLeader && Math.random() < 0.35) {
+      chosenRarity = upgradeRarityTier(chosenRarity);
     }
   }
 
-  const pool = EQUIPMENT_CATALOG.filter(it => it.rarity === rarity);
-  if (pool.length === 0) return EQUIPMENT_CATALOG[0];
+  // Strict Safety Check:
+  // Legendary NEVER drops before floor 30!
+  if (floor < 30 && chosenRarity === 'legendary') {
+    chosenRarity = floor >= 20 ? 'epic' : (floor >= 10 ? 'rare' : 'common');
+  }
+  // Epic NEVER drops before floor 15!
+  if (floor < 15 && chosenRarity === 'epic') {
+    chosenRarity = floor >= 10 ? 'rare' : 'common';
+  }
+  // First run 1-9 only gives Common
+  if (floor < 10) {
+    chosenRarity = 'common';
+  }
+
+  let pool = EQUIPMENT_ITEMS.filter(it => it.rarity === chosenRarity);
+  if (pool.length === 0) {
+    pool = EQUIPMENT_ITEMS.filter(it => it.rarity === 'common');
+  }
 
   const picked = pool[Math.floor(Math.random() * pool.length)];
-  return {
-    ...picked,
-    instanceId: `${picked.id}_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-  };
+  return { ...picked };
 }
