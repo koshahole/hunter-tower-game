@@ -133,9 +133,24 @@ const server = http.createServer(async (req, res) => {
   res.end(JSON.stringify({ error: 'Not found' }));
 });
 
-server.listen(HTTP_PORT, () => {
-  console.log(`📡 Локальный сервер инвойсов Stars запущен на http://localhost:${HTTP_PORT}`);
+let currentPort = HTTP_PORT;
+function startServer(port) {
+  server.listen(port, () => {
+    console.log(`📡 Локальный сервер инвойсов Stars запущен на http://localhost:${port}`);
+  });
+}
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    currentPort += 1;
+    console.warn(`⚠️ Порт ${currentPort - 1} занят, пробую запустить HTTP на ${currentPort}...`);
+    startServer(currentPort);
+  } else {
+    console.error('HTTP server error:', err);
+  }
 });
+
+startServer(HTTP_PORT);
 
 // 1. Pre-checkout query handler (Mandatory for Telegram Stars)
 bot.on('pre_checkout_query', async (ctx) => {
