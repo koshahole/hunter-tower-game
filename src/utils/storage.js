@@ -27,15 +27,17 @@ export const DEFAULT_STATE = {
   hunterAvatar: '🧙‍♂️',
   hunterTitle: 'Искатель Башни',
 
-  // Clean Start: No initial gear - player must earn equipment in the Tower
+  // Clean Start: One simple sword at the start, zero initial armor/pets
   equipped: {
-    weapon: null,
+    weapon: 'rusty_dagger',
     armor: null,
     helmet: null,
     accessory: null,
   },
-  equipmentLevels: {},
-  inventory: [],
+  equipmentLevels: {
+    rusty_dagger: 1,
+  },
+  inventory: ['rusty_dagger'],
 
   // Rebirth Perks
   rebirthPerks: {
@@ -97,20 +99,32 @@ export function loadGameState() {
     if (!raw) return DEFAULT_STATE;
     const parsed = JSON.parse(raw);
 
+    const inventory = Array.isArray(parsed.inventory) && parsed.inventory.length > 0
+      ? parsed.inventory
+      : ['rusty_dagger'];
+
     const equipped = {
-      weapon: null,
+      weapon: 'rusty_dagger',
       armor: null,
       helmet: null,
       accessory: null,
       ...(parsed.equipped || {})
+    };
+    if (!equipped.weapon && inventory.includes('rusty_dagger')) {
+      equipped.weapon = 'rusty_dagger';
+    }
+
+    const equipmentLevels = {
+      rusty_dagger: 1,
+      ...(parsed.equipmentLevels || {})
     };
 
     return {
       ...DEFAULT_STATE,
       ...parsed,
       equipped,
-      equipmentLevels: { ...(parsed.equipmentLevels || {}) },
-      inventory: Array.isArray(parsed.inventory) ? parsed.inventory : [],
+      equipmentLevels,
+      inventory,
       rebirthPerks: { ...DEFAULT_STATE.rebirthPerks, ...(parsed.rebirthPerks || {}) },
       ownedPets: Array.isArray(parsed.ownedPets) ? parsed.ownedPets : [],
       petLevels: { ...(parsed.petLevels || {}) },

@@ -309,15 +309,15 @@ export default function App() {
 
     const tracker = runTrackerRef.current;
     tracker.reachedFloor = floor;
-    if (gold > tracker.goldEarned) tracker.goldEarned = gold;
-    if (crystals > tracker.crystalsEarned) tracker.crystalsEarned = crystals;
+    tracker.goldEarned += gold;
+    tracker.crystalsEarned += crystals;
     droppedEquipment.forEach(item => {
       if (!tracker.itemsFound.some(it => it.id === item.id)) {
         tracker.itemsFound.push(item);
       }
     });
 
-    // Save final stats and inventory from end-of-run items
+    // Save final stats, inventory from end-of-run items, and credit floor bounty to player balance
     setState(prev => {
       const inv = [...(prev.inventory || [])];
       const levels = { ...(prev.equipmentLevels || {}) };
@@ -329,6 +329,8 @@ export default function App() {
 
       return {
         ...prev,
+        gold: prev.gold + gold,
+        crystals: prev.crystals + crystals,
         inventory: inv,
         equipmentLevels: levels,
         currentFloor: 1,
@@ -668,7 +670,6 @@ export default function App() {
           onConfirmRevive={reviveModal.onConfirm}
           onCancel={() => {
             setReviveModal({ isOpen: false, onConfirm: null });
-            handleRunEnd({ gold: 0, crystals: 0, floor: state.currentFloor });
           }}
           onShowToast={showToast}
         />

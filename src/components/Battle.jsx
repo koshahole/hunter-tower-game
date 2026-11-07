@@ -414,8 +414,15 @@ export default function Battle({
         <div className="flex items-center gap-1.5 shrink-0">
           <div className="flex items-center gap-1 bg-neo-yellow border-2 border-black px-2 py-0.5 shadow-brutal-sm font-arcade text-xs text-black">
             <span>🪙</span>
-            <span>+{accumulatedGold + Math.floor(currentMonster.goldReward * (playerStats.goldMultiplier || 1.0))}</span>
+            <span>+{accumulatedGold}</span>
           </div>
+
+          {accumulatedCrystals > 0 && (
+            <div className="flex items-center gap-1 bg-neo-cyan border-2 border-black px-2 py-0.5 shadow-brutal-sm font-arcade text-xs text-black">
+              <span>💎</span>
+              <span>+{accumulatedCrystals}</span>
+            </div>
+          )}
 
           <button
             onClick={() => {

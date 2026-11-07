@@ -52,11 +52,11 @@ export const EQUIPMENT_ITEMS = [
   // --- WEAPONS ---
   {
     id: 'rusty_dagger',
-    name: 'Ржавый Кинжал',
+    name: 'Простой Меч',
     slot: 'weapon',
     rarity: 'common',
     icon: '🗡️',
-    description: 'Старое, но острое оружие новичка Академии.',
+    description: 'Базовый меч начинающего охотника. Прост в обращении, но надежен в бою.',
     baseStats: { atk: 12, critChance: 2 },
     growth: { atk: 3, critChance: 0.3 },
   },
