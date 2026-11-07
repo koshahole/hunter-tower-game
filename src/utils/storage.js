@@ -1,7 +1,7 @@
 // Persistent Storage with 3-minute Energy Refill & Cross-Device CloudStorage
-// Season 2 Hard Wipe: Clean start for all players
-const STORAGE_KEY = 'aether_tower_season_2';
-const CLOUD_STORAGE_KEY = 'hunter_cloud_save_s2';
+// Season 3 Hard Wipe: Clean start for all players
+const STORAGE_KEY = 'aether_tower_season_3';
+const CLOUD_STORAGE_KEY = 'hunter_cloud_save_s3';
 
 // 3 minutes in milliseconds (180 seconds)
 export const ENERGY_REFILL_MS = 3 * 60 * 1000;
@@ -73,6 +73,7 @@ export const DEFAULT_STATE = {
 function purgeOldSaves() {
   try {
     const oldKeys = [
+      'aether_tower_season_2',
       'aether_tower_season_1',
       'aether_tower_save_v6',
       'aether_tower_save_v5',
@@ -89,6 +90,7 @@ function purgeOldSaves() {
     });
 
     if (typeof window !== 'undefined' && window.Telegram?.WebApp?.CloudStorage) {
+      window.Telegram.WebApp.CloudStorage.removeItem('hunter_cloud_save_s2', () => {});
       window.Telegram.WebApp.CloudStorage.removeItem('hunter_cloud_save_s1', () => {});
       window.Telegram.WebApp.CloudStorage.removeItem('hunter_cloud_save', () => {});
     }

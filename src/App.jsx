@@ -54,9 +54,13 @@ export default function App() {
 
   const user = useMemo(() => getUserInfo(), []);
 
-  const showToast = (message, type = 'info') => {
-    setToast({ id: Date.now(), message, type });
-  };
+  const handleCloseToast = useCallback(() => {
+    setToast(null);
+  }, []);
+
+  const showToast = useCallback((message, type = 'info') => {
+    setToast({ id: Date.now() + Math.random(), message, type });
+  }, []);
 
   useEffect(() => {
     initTelegram();
@@ -409,6 +413,11 @@ export default function App() {
       : (EQUIPMENT_BY_ID?.[itemOrId] || EQUIPMENT_CATALOG.find(it => it.id === itemOrId));
     if (!template) return;
 
+    if (template.id === 'rusty_dagger') {
+      showToast('СТАРТОВЫЙ МЕЧ НЕЛЬЗЯ РАЗОБРАТЬ! ⚔️', 'error');
+      return;
+    }
+
     const crystalsYield = getSalvageValue(template.rarity);
 
     setState(prev => {
@@ -608,7 +617,7 @@ export default function App() {
     <div className="w-full min-h-dvh bg-neo-yellow text-black flex flex-col font-sans antialiased bg-comic-dots">
 
       {/* Toast notifications */}
-      <Toast toast={toast} onClose={() => setToast(null)} />
+      <Toast toast={toast} onClose={handleCloseToast} />
 
       {/* Main Container */}
       <main className="flex-1 w-full max-w-md mx-auto p-3 sm:p-4">

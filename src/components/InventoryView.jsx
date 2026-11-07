@@ -37,6 +37,7 @@ export default function InventoryView({
 }) {
   const [filterSlot, setFilterSlot] = useState('all');
   const [selectedItem, setSelectedItem] = useState(null);
+  const [salvageConfirmItem, setSalvageConfirmItem] = useState(null);
 
   const equipped = state.equipped || {};
   const equipmentLevels = state.equipmentLevels || {};
@@ -497,26 +498,84 @@ export default function InventoryView({
               )}
 
               {/* Salvage / Dismantle Button (1/3/10/30 Crystals) */}
+              {selectedItem.template.id === 'rusty_dagger' ? (
+                <div className="w-full py-2 bg-slate-100 text-slate-500 border-2 border-dashed border-slate-400 font-arcade text-[10px] text-center uppercase">
+                  🔒 СТАРТОВЫЙ МЕЧ НЕЛЬЗЯ РАЗОБРАТЬ
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    hapticImpact('medium');
+                    setSalvageConfirmItem(selectedItem.template);
+                  }}
+                  className="w-full py-2 bg-neo-cyan hover:bg-cyan-300 text-black border-3 border-black font-arcade text-xs shadow-brutal active:translate-x-[1px] active:translate-y-[1px] flex items-center justify-between uppercase transition-all"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>РАЗОБРАТЬ</span>
+                  </span>
+                  <span className="font-arcade text-xs font-black">
+                    +{getSalvageValue(selectedItem.template.rarity)} 💎
+                  </span>
+                </button>
+              )}
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal for Salvaging / Dismantling Item */}
+      {salvageConfirmItem && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border-4 border-black p-4 shadow-brutal-lg max-w-xs w-full animate-in zoom-in-95">
+            <div className="flex items-center gap-2 mb-2.5 pb-2.5 border-b-2 border-black">
+              <span className="text-3xl shrink-0">{salvageConfirmItem.icon}</span>
+              <div className="min-w-0">
+                <h4 className="font-arcade text-xs text-black uppercase truncate">
+                  {salvageConfirmItem.name}
+                </h4>
+                <span className="text-[10px] font-bold text-neo-purple uppercase">
+                  {RARITIES[salvageConfirmItem.rarity]?.name} • {SLOTS[salvageConfirmItem.slot]?.name}
+                </span>
+              </div>
+            </div>
+
+            <p className="font-arcade text-xs text-black mb-1.5 uppercase text-center text-neo-pink">
+              ⚠️ ТОЧНО РАЗОБРАТЬ ПРЕДМЕТ?
+            </p>
+
+            <p className="text-[11px] font-bold text-slate-700 mb-3.5 leading-snug bg-slate-100 p-2 border border-black">
+              Предмет будет уничтожен безвозвратно. Вы получите{' '}
+              <span className="text-black font-black underline">
+                +{getSalvageValue(salvageConfirmItem.rarity)} 💎 Кристаллов
+              </span>.
+            </p>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  hapticImpact('light');
+                  setSalvageConfirmItem(null);
+                }}
+                className="flex-1 py-2 bg-slate-200 hover:bg-slate-300 text-black border-2 border-black font-arcade text-[10px] uppercase shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px]"
+              >
+                ОТМЕНА
+              </button>
               <button
                 onClick={() => {
                   hapticImpact('heavy');
                   if (onSalvageItem) {
-                    onSalvageItem(selectedItem.template);
+                    onSalvageItem(salvageConfirmItem);
                   }
-                  setSelectedItem(null);
+                  setSalvageConfirmItem(null);
+                  setSelectedItem(null); // Closes item detail modal automatically!
                 }}
-                className="w-full py-2 bg-neo-cyan hover:bg-cyan-300 text-black border-3 border-black font-arcade text-xs shadow-brutal active:translate-x-[1px] active:translate-y-[1px] flex items-center justify-between uppercase transition-all"
+                className="flex-1 py-2 bg-neo-cyan hover:bg-cyan-300 text-black border-2 border-black font-arcade text-[10px] uppercase shadow-brutal active:translate-x-[1px] active:translate-y-[1px] font-black"
               >
-                <span className="flex items-center gap-1.5">
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>РАЗОБРАТЬ</span>
-                </span>
-                <span className="font-arcade text-xs font-black">
-                  +{getSalvageValue(selectedItem.template.rarity)} 💎
-                </span>
+                ДА, РАЗОБРАТЬ (+{getSalvageValue(salvageConfirmItem.rarity)} 💎)
               </button>
             </div>
-
           </div>
         </div>
       )}

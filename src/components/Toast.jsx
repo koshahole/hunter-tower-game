@@ -1,17 +1,27 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 
 export default function Toast({ toast, onClose }) {
-  if (!toast) return null;
+  const onCloseRef = useRef(onClose);
 
   useEffect(() => {
-    // Exactly 3.0 seconds auto-dismissal
+    onCloseRef.current = onClose;
+  });
+
+  useEffect(() => {
+    if (!toast) return;
+
+    // Guaranteed 3.0 seconds auto-dismissal
     const timer = setTimeout(() => {
-      onClose();
+      if (onCloseRef.current) {
+        onCloseRef.current();
+      }
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [toast?.id, toast?.message, onClose]);
+  }, [toast?.id]);
+
+  if (!toast) return null;
 
   const bgColors = {
     success: 'bg-neo-lime text-black',
