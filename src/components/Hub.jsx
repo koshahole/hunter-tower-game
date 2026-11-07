@@ -1,34 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Swords, 
-  Zap, 
-  Crown, 
-  Share2, 
-  Sparkles, 
-  Flame, 
-  Star, 
+import React, { useState } from 'react';
+import {
+  Swords,
+  Zap,
+  Crown,
+  Share2,
+  Sparkles,
+  Flame,
+  Star,
   Trophy,
   RotateCcw,
   Clock,
   Settings,
   Skull,
   Shield,
-  Play
+  Award,
+  ChevronRight,
+  Package
 } from 'lucide-react';
 import { sounds } from '../audio/soundEffects';
 import { hapticImpact, hapticNotification, shareInviteLink } from '../utils/telegram';
-import { getRankByMaxFloor } from '../data/ranks';
+import { getRankByMaxFloor, getRankProgress } from '../data/ranks';
 import { PETS } from '../data/pets';
 import { BOSSES } from '../data/monsters';
 import { calculateRebirthSouls } from '../data/rebirth';
 
-export default function Hub({ 
-  state, 
-  playerStats, 
-  user, 
-  onStartRun, 
-  activeTab, 
-  setActiveTab, 
+export default function Hub({
+  state,
+  playerStats,
+  user,
+  onStartRun,
+  activeTab,
+  setActiveTab,
   onOpenStarsShop,
   onOpenRebirthModal,
   onOpenLeaderboard,
@@ -43,12 +45,30 @@ export default function Hub({
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  const currentRank = getRankByMaxFloor(state.maxFloor);
+  const rankInfo = getRankProgress(state.maxFloor);
+  const currentRank = rankInfo.currentRank;
   const activePet = PETS.find(p => p.id === state.activePetId);
-  const activePetLevel = state.petLevels?.[state.activePetId] || 1;
 
-  const maxMilestone = Math.floor((state.maxFloor - 1) / 10) * 10;
-  const [selectedFloor, setSelectedFloor] = useState(Math.max(1, maxMilestone === 0 ? 1 : maxMilestone));
+  // Logical checkpoints unlocked by defeating respective bosses (1, 11, 21, 31, 41...)
+  const CHECKPOINTS = [
+    { floor: 1, name: 'Вход в Башню', bonusRelics: 0, bonusPotions: 0 },
+    { floor: 11, name: 'Катакомбы', bonusRelics: 1, bonusPotions: 0 },
+    { floor: 21, name: 'Лавовые Пещеры', bonusRelics: 2, bonusPotions: 1 },
+    { floor: 31, name: 'Залы Ночи', bonusRelics: 3, bonusPotions: 1 },
+    { floor: 41, name: 'Цитадель Бездны', bonusRelics: 4, bonusPotions: 2 },
+    { floor: 51, name: 'Небесный Разлом', bonusRelics: 5, bonusPotions: 2 },
+    { floor: 61, name: 'Кибер-Сектор', bonusRelics: 6, bonusPotions: 3 },
+    { floor: 71, name: 'Золотой Дворец', bonusRelics: 7, bonusPotions: 3 },
+    { floor: 81, name: 'Судилище Небес', bonusRelics: 8, bonusPotions: 4 },
+    { floor: 91, name: 'Трон Творца', bonusRelics: 9, bonusPotions: 4 },
+  ];
+
+  const availableCheckpoints = CHECKPOINTS.filter(cp => cp.floor <= Math.max(1, state.maxFloor));
+  const highestCheckpoint = availableCheckpoints[availableCheckpoints.length - 1] || CHECKPOINTS[0];
+
+  const [selectedCheckpoint, setSelectedCheckpoint] = useState(highestCheckpoint.floor);
+
+  const activeCheckpointObj = CHECKPOINTS.find(cp => cp.floor === selectedCheckpoint) || CHECKPOINTS[0];
 
   const handleStart = () => {
     if (state.energy <= 0) {
@@ -59,7 +79,7 @@ export default function Hub({
     }
     sounds.playAttack();
     hapticImpact('heavy');
-    onStartRun(selectedFloor);
+    onStartRun(selectedCheckpoint, activeCheckpointObj.bonusRelics, activeCheckpointObj.bonusPotions);
   };
 
   const handleInvite = () => {
@@ -74,10 +94,10 @@ export default function Hub({
 
   return (
     <div className="w-full space-y-3 pb-24 font-sans select-none">
-      
+
       {/* Neo-Brutalist Arcade Header Strip */}
       <div className="bg-white border-4 border-black p-3 shadow-brutal flex items-center justify-between gap-2">
-        
+
         {/* Hunter Profile Button */}
         <button
           onClick={() => {
@@ -142,8 +162,8 @@ export default function Hub({
 
       {/* Energy Ticker & Floor Record Pills */}
       <div className="grid grid-cols-2 gap-2.5">
-        
-        {/* 5-Min Energy Card */}
+
+        {/* 3-Min Energy Card */}
         <div className="bg-white border-3 border-black p-3 shadow-brutal flex items-center justify-between gap-1.5">
           <div className="min-w-0">
             <div className="flex items-center gap-1">
@@ -187,8 +207,53 @@ export default function Hub({
 
       </div>
 
+      {/* PROMINENT HUNTER RANK PROGRESS CARD */}
+      <div className="bg-white border-4 border-black p-3.5 shadow-brutal">
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-2xl shrink-0">{currentRank.badge}</span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="font-arcade text-xs text-black uppercase truncate">
+                  {currentRank.name}
+                </span>
+                <span className="bg-neo-lime text-black border border-black font-arcade text-[9px] px-1 py-0.2">
+                  {rankInfo.currentMultiplierText}
+                </span>
+              </div>
+              <div className="text-[10px] font-bold text-slate-600 uppercase truncate">
+                {rankInfo.isMax
+                  ? 'ДОСТИГНУТ ВЫСШИЙ РАНГ ОХОТНИКОВ!'
+                  : `СЛЕДУЮЩИЙ: ${rankInfo.nextRank.badge} ${rankInfo.nextRank.name}`}
+              </div>
+            </div>
+          </div>
+
+          {!rankInfo.isMax && (
+            <span className="bg-neo-pink text-white font-arcade text-[10px] px-2 py-0.5 border border-black shrink-0">
+              +{rankInfo.nextRank.bonusPercent}%
+            </span>
+          )}
+        </div>
+
+        {/* Progress Bar with Percent & Floor counter */}
+        <div className="space-y-1">
+          <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-700">
+            <span>ПРОГРЕСС ДО СЛЕД. РАНГА</span>
+            <span>{rankInfo.isMax ? '100%' : `${rankInfo.progressPercent}% (${state.maxFloor} / ${rankInfo.nextRank?.minFloor || 100} эт)`}</span>
+          </div>
+
+          <div className="relative h-4 bg-white border-3 border-black p-[1px] shadow-brutal-sm overflow-hidden">
+            <div
+              className="h-full bg-neo-yellow transition-all duration-300"
+              style={{ width: `${rankInfo.progressPercent}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Big Comic Fighter Hero Stage */}
-      <div 
+      <div
         onClick={onOpenProfile}
         className="bg-white border-4 border-black p-4 shadow-brutal-lg cursor-pointer active:translate-x-[2px] active:translate-y-[2px] transition-transform text-center relative overflow-hidden"
       >
@@ -248,38 +313,55 @@ export default function Hub({
         </div>
       </div>
 
-      {/* Starting Checkpoint Picker */}
-      {state.maxFloor > 10 && (
-        <div className="bg-white border-3 border-black p-3 shadow-brutal">
-          <div className="flex items-center justify-between mb-2">
-            <span className="font-arcade text-xs text-black uppercase">
-              ВЫБОР РУБЕЖА:
+      {/* Logical Checkpoint & Vanguard Cache Picker */}
+      {availableCheckpoints.length > 1 && (
+        <div className="bg-white border-4 border-black p-3.5 shadow-brutal space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="font-arcade text-xs text-black uppercase flex items-center gap-1">
+              <span>🚩</span>
+              <span>РУБЕЖ АВАНГАРДА:</span>
             </span>
             <span className="bg-neo-yellow border-2 border-black px-2 py-0.5 font-arcade text-xs">
-              ЭТАЖ {selectedFloor}
+              ЭТАЖ {selectedCheckpoint}
             </span>
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {[1, 10, 20, 30, 40, 50, 60, 70, 80, 90]
-              .filter(f => f <= state.maxFloor)
-              .map(floorNum => (
+            {availableCheckpoints.map(cp => {
+              const isSelected = selectedCheckpoint === cp.floor;
+              return (
                 <button
-                  key={floorNum}
+                  key={cp.floor}
                   onClick={() => {
                     hapticImpact('light');
-                    setSelectedFloor(floorNum);
+                    setSelectedCheckpoint(cp.floor);
                   }}
-                  className={`px-3 py-1.5 border-3 border-black font-arcade text-xs shrink-0 shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] ${
-                    selectedFloor === floorNum
-                      ? 'bg-neo-pink text-white'
+                  className={`px-3 py-1.5 border-3 border-black font-arcade text-xs shrink-0 shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] flex flex-col items-center min-w-[85px] transition-all ${
+                    isSelected
+                      ? 'bg-neo-pink text-white ring-2 ring-black'
                       : 'bg-white text-black hover:bg-slate-100'
                   }`}
                 >
-                  {floorNum === 1 ? '1 СТАРТ' : `${floorNum} ЭТ`}
+                  <span className="text-[11px] uppercase">{cp.floor === 1 ? '1 СТАРТ' : `${cp.floor} ЭТ`}</span>
+                  {cp.bonusRelics > 0 && (
+                    <span className={`text-[8px] font-black px-1 mt-0.5 ${isSelected ? 'bg-black text-neo-yellow' : 'bg-slate-200 text-slate-700'}`}>
+                      +{cp.bonusRelics} РЕЛИКВИЙ
+                    </span>
+                  )}
                 </button>
-              ))}
+              );
+            })}
           </div>
+
+          {activeCheckpointObj.bonusRelics > 0 && (
+            <div className="bg-neo-lime/30 border border-black p-2 text-[10px] font-black text-slate-800 flex items-center gap-1.5">
+              <span>🎁</span>
+              <span>
+                ДАР АВАНГАРДА: Старт с этажа {selectedCheckpoint} дает +{activeCheckpointObj.bonusRelics} случайных босс-реликвий
+                {activeCheckpointObj.bonusPotions > 0 ? ` и +${activeCheckpointObj.bonusPotions} зелья!` : '!'}
+              </span>
+            </div>
+          )}
         </div>
       )}
 
@@ -290,7 +372,7 @@ export default function Hub({
           className="w-full py-4 bg-neo-pink hover:bg-pink-600 active:translate-x-[3px] active:translate-y-[3px] active:shadow-brutal-press text-white border-4 border-black shadow-brutal-lg font-arcade text-lg flex items-center justify-center gap-3 transition-all"
         >
           <Swords className="w-6 h-6 stroke-[3]" />
-          <span>ШТУРМОВАТЬ ЭТАЖ {selectedFloor}!</span>
+          <span>ШТУРМОВАТЬ ЭТАЖ {selectedCheckpoint}!</span>
           <span className="bg-black text-neo-yellow border border-white px-2 py-0.5 text-xs font-black">
             -1 ⚡
           </span>

@@ -55,6 +55,8 @@ bot.command('start', async (ctx) => {
 
 // Item Catalog for Telegram Stars (Currency: XTR)
 const ITEMS = {
+  stars_gear_chest: { title: 'Сундук Снаряжения Бездны', description: 'Гарантированное эпическое или легендарное снаряжение', price: 25 },
+  stars_smith_pack: { title: 'Набор Ресурсов Кузнеца', description: '5,000 Золота и 100 Кристаллов Бездны', price: 30 },
   stars_revive: { title: 'Воскрешение в Башне', description: 'Мгновенное воскрешение охотника со 100% здоровьем', price: 15 },
   stars_egg: { title: 'Золотое Яйцо Гачи', description: 'Редкий, легендарный или мифический спутник в коллекцию', price: 25 },
   stars_energy: { title: 'Полный бак энергии (5 ⚡)', description: 'Мгновенное восстановление 5 единиц энергии', price: 10 },

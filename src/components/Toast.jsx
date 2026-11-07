@@ -1,15 +1,17 @@
 import React, { useEffect } from 'react';
-import { CheckCircle2, AlertTriangle, XCircle, Info, Star, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
 export default function Toast({ toast, onClose }) {
   if (!toast) return null;
 
   useEffect(() => {
+    // Exactly 3.0 seconds auto-dismissal
     const timer = setTimeout(() => {
       onClose();
-    }, 2800);
+    }, 3000);
+
     return () => clearTimeout(timer);
-  }, [toast, onClose]);
+  }, [toast?.id, toast?.message, onClose]);
 
   const bgColors = {
     success: 'bg-neo-lime text-black',
@@ -21,22 +23,23 @@ export default function Toast({ toast, onClose }) {
 
   return (
     <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-sm pointer-events-auto animate-fadeIn font-sans select-none">
-      <div 
+      <div
         onClick={onClose}
-        className={`flex items-center justify-between gap-3 p-3 border-3 border-black shadow-brutal transition-all cursor-pointer ${
+        className={`relative flex items-center justify-between gap-3 p-3 border-3 border-black shadow-brutal transition-all cursor-pointer ${
           bgColors[toast.type] || bgColors.info
         }`}
       >
-        <p className="font-arcade text-xs uppercase leading-snug truncate">
+        <p className="font-arcade text-xs uppercase leading-snug break-words pr-2">
           {toast.message}
         </p>
 
-        <button 
+        <button
           onClick={(e) => {
             e.stopPropagation();
             onClose();
           }}
-          className="p-0.5 bg-black text-white hover:opacity-80 shrink-0"
+          title="Закрыть"
+          className="p-1 bg-black text-white hover:bg-slate-800 active:translate-x-[1px] active:translate-y-[1px] shrink-0 border border-black"
         >
           <X className="w-3.5 h-3.5 stroke-[3]" />
         </button>

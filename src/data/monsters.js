@@ -1,17 +1,6 @@
 // Monster generation & Boss definitions for 100 Floors
-// Floor tiers:
-// 1-9: E-Rank Goblins, Slimes, Giant Rats
-// 10: BOSS - Король Гоблинов (Goblin King)
-// 11-19: D-Rank Skeleton Warriors, Stone Imps, Shadow Bats
-// 20: BOSS - Костяной Лорд (Bone Lord)
-// 21-29: C-Rank Dark Mages, Hellhounds, Cave Golems
-// 30: BOSS - Огненный Голем (Infernal Golem)
-// 31-39: B-Rank Shadow Ninjas, Blood Vampires, Frost Wraiths
-// 40: BOSS - Кровавая Графиня (Blood Countess)
-// 41-49: A-Rank Abyssal Knights, Void Stalkers, Chaos Drakes
-// 50: BOSS - Бездна-Дракон (Abyssal Drake)
-// 51-99: S-Rank Corrupted Celestials, Void Titans, Arch-demons
-// 100: FINAL BOSS - Владыка Башни (Tower Sovereign)
+// Regular floors have packs of 3-5 monsters.
+// Boss floors (10, 20, 30... 100) have strictly 1 epic Boss encounter.
 
 export const BOSSES = {
   10: {
@@ -21,112 +10,112 @@ export const BOSSES = {
     hpMultiplier: 3.5,
     atkMultiplier: 1.4,
     specialSkill: 'Яростный размах (двойной урон)',
-    goldReward: 250,
-    crystalReward: 15,
+    goldReward: 350,
+    crystalReward: 20,
     dialog: 'Ты посмел войти в мои владения, жалкий охотник?!'
   },
   20: {
     name: 'Костяной Лорд',
     title: 'Хранитель Катакомб',
     avatar: '💀⚔️',
-    hpMultiplier: 4.0,
+    hpMultiplier: 4.2,
     atkMultiplier: 1.6,
     specialSkill: 'Костяной щит (блокирует 50% урона)',
-    goldReward: 600,
-    crystalReward: 35,
+    goldReward: 800,
+    crystalReward: 45,
     dialog: 'Твои кости станут частью моего трона!'
   },
   30: {
     name: 'Огненный Голем',
     title: 'Сердце Лавовых Пещер',
     avatar: '🔥🗿',
-    hpMultiplier: 4.8,
+    hpMultiplier: 5.0,
     atkMultiplier: 1.8,
     specialSkill: 'Огненная буря (поджигает на 3 хода)',
-    goldReward: 1200,
-    crystalReward: 70,
+    goldReward: 1600,
+    crystalReward: 85,
     dialog: 'Сгори дотла в моем пламени!'
   },
   40: {
     name: 'Кровавая Графиня',
     title: 'Повелительница Ночи',
     avatar: '🧛‍♀️🩸',
-    hpMultiplier: 5.5,
-    atkMultiplier: 2.0,
+    hpMultiplier: 6.0,
+    atkMultiplier: 2.1,
     specialSkill: 'Кровавый вампиризм (лечит себя при атаке)',
-    goldReward: 2500,
-    crystalReward: 120,
+    goldReward: 3200,
+    crystalReward: 140,
     dialog: 'Твоя кровь пахнет силой... Поделись ею!'
   },
   50: {
     name: 'Бездна-Дракон',
     title: 'Пожиратель Миров',
     avatar: '🐉🌌',
-    hpMultiplier: 6.5,
-    atkMultiplier: 2.3,
+    hpMultiplier: 7.2,
+    atkMultiplier: 2.4,
     specialSkill: 'Дыхание Пустоты (игнорирует броню)',
-    goldReward: 5000,
-    crystalReward: 250,
+    goldReward: 6500,
+    crystalReward: 300,
     dialog: 'Ни один охотник не прошел мимо меня за тысячу лет!'
   },
   60: {
     name: 'Кибер-Титан V-9',
     title: 'Железный Страж 6-го Сектора',
     avatar: '🤖⚡',
-    hpMultiplier: 7.5,
-    atkMultiplier: 2.5,
+    hpMultiplier: 8.5,
+    atkMultiplier: 2.7,
     specialSkill: 'Ионный залп (оглушает на ход)',
-    goldReward: 9000,
-    crystalReward: 400,
+    goldReward: 11000,
+    crystalReward: 480,
     dialog: 'Цель обнаружена. Протокол уничтожения активирован.'
   },
   70: {
     name: 'Архидемон Маммон',
     title: 'Владыка Алчности',
     avatar: '😈💰',
-    hpMultiplier: 9.0,
-    atkMultiplier: 2.8,
+    hpMultiplier: 10.0,
+    atkMultiplier: 3.0,
     specialSkill: 'Проклятие Золота (крадет урон)',
-    goldReward: 16000,
-    crystalReward: 700,
+    goldReward: 20000,
+    crystalReward: 850,
     dialog: 'Твое золото теперь моё... как и твоя душа!'
   },
   80: {
     name: 'Падший Архангел',
     title: 'Судья Башни',
     avatar: '🪽⚡',
-    hpMultiplier: 11.0,
-    atkMultiplier: 3.2,
+    hpMultiplier: 12.0,
+    atkMultiplier: 3.4,
     specialSkill: 'Кара Небес (наносит урон 50% текущего HP)',
-    goldReward: 28000,
-    crystalReward: 1200,
+    goldReward: 35000,
+    crystalReward: 1400,
     dialog: 'Твое восхождение заканчивается здесь.'
   },
   90: {
     name: 'Теневой Монарх',
     title: 'Властитель Теней',
     avatar: '👤🗡️',
-    hpMultiplier: 14.0,
-    atkMultiplier: 3.8,
+    hpMultiplier: 15.0,
+    atkMultiplier: 4.0,
     specialSkill: 'Теневые клоны (двойная атака)',
-    goldReward: 50000,
-    crystalReward: 2000,
+    goldReward: 65000,
+    crystalReward: 2400,
     dialog: 'Ты думал, ты единственный охотник здесь? Восстань!'
   },
   100: {
     name: 'Владыка Башни (Творец)',
     title: 'Создатель Испытаний',
     avatar: '👑👁️🌌',
-    hpMultiplier: 20.0,
-    atkMultiplier: 4.5,
+    hpMultiplier: 22.0,
+    atkMultiplier: 4.8,
     specialSkill: 'Судный День (абсолютный урон)',
-    goldReward: 150000,
-    crystalReward: 10000,
+    goldReward: 200000,
+    crystalReward: 12000,
     dialog: 'Ты преодолел 99 этажей... Покажи мне силу смертного!'
   }
 };
 
-const REGULAR_MONSTERS = [
+export const REGULAR_MONSTERS = [
   { name: 'Пещерный Слизень', avatar: '🟢', tier: 1, intro: 'Чавкает и брызжет кислотой' },
   { name: 'Гоблин-Разведчик', avatar: '👺', tier: 1, intro: 'Хихикает и держит ржавый кинжал' },
   { name: 'Крыса-Мутант', avatar: '🐀', tier: 1, intro: 'Сверкает красными глазами' },
@@ -144,15 +133,26 @@ const REGULAR_MONSTERS = [
   { name: 'Астральный Палач', avatar: '👁️🪓', tier: 5, intro: 'Его топор рассекает саму реальность' },
 ];
 
-export function generateMonster(floor) {
+// Returns the number of monsters on a given floor (3 to 5 for regular floors, 1 for Boss)
+export function getMonsterCountForFloor(floor) {
+  if (floor % 10 === 0) return 1; // Boss
+  if (floor <= 3) return 3;       // 3 monsters at start
+  if (floor <= 10) return 3 + (floor % 2); // 3 or 4
+  if (floor <= 30) return 4;
+  return 4 + (floor % 2);         // 4 or 5
+}
+
+// Generate an entire pack of monsters for a floor
+export function generateFloorMonsters(floor) {
   const isBoss = floor % 10 === 0;
 
   if (isBoss) {
     const bossData = BOSSES[floor] || BOSSES[100];
-    const baseHp = Math.floor(150 * Math.pow(1.085, floor) * (bossData.hpMultiplier || 3.0));
-    const baseAtk = Math.floor(18 * Math.pow(1.062, floor) * (bossData.atkMultiplier || 1.4));
+    const baseHp = Math.floor(180 * Math.pow(1.085, floor) * (bossData.hpMultiplier || 3.0));
+    const baseAtk = Math.floor(20 * Math.pow(1.062, floor) * (bossData.atkMultiplier || 1.4));
 
-    return {
+    return [{
+      id: `boss_${floor}`,
       name: bossData.name,
       title: bossData.title,
       avatar: bossData.avatar,
@@ -166,34 +166,55 @@ export function generateMonster(floor) {
       dialog: bossData.dialog,
       goldReward: Math.floor(bossData.goldReward * (1 + (floor / 100))),
       crystalReward: bossData.crystalReward,
-    };
+      dropEquipment: true, // Bosses always guarantee gear/relic roll
+    }];
   }
 
-  // Regular monster based on floor tier
+  const count = getMonsterCountForFloor(floor);
   const tier = Math.min(5, Math.ceil(floor / 10));
   const pool = REGULAR_MONSTERS.filter(m => m.tier <= tier);
-  const template = pool[Math.floor(Math.random() * pool.length)] || pool[0];
 
-  // Progressive Roguelite Monster Scaling:
-  // Floor 1-4: warmup (~55-80 HP, 10-15 Atk)
-  // Floor 5-9: serious threat (~100-160 HP, 18-26 Atk)
-  const baseHp = Math.floor(54 * Math.pow(1.082, floor - 1) + floor * 5);
-  const baseAtk = Math.floor(10 * Math.pow(1.062, floor - 1) + Math.floor(floor * 0.9));
-  const gold = Math.floor(16 * Math.pow(1.055, floor) + 8 + Math.random() * 6);
-  const crystals = Math.random() < 0.35 ? Math.max(1, Math.floor(floor / 8)) : 0;
+  const monsters = [];
+  for (let idx = 0; idx < count; idx++) {
+    const template = pool[Math.floor(Math.random() * pool.length)] || pool[0];
+    const isLeader = idx === count - 1; // Final monster in the pack is the leader
 
-  return {
-    name: `${template.name} [Этаж ${floor}]`,
-    title: 'Монстр Башни',
-    avatar: template.avatar,
-    isBoss: false,
-    floor,
-    maxHp: baseHp,
-    hp: baseHp,
-    atk: baseAtk,
-    def: Math.floor(baseAtk * 0.15),
-    intro: template.intro,
-    goldReward: gold,
-    crystalReward: crystals,
-  };
+    // Role multiplier:
+    // Scout (0): slightly lower HP, normal atk
+    // Bruisers: standard
+    // Leader (last): +30% HP, +15% Atk, higher gold, chance for equipment drop
+    const roleHpMult = isLeader ? 1.35 : (idx === 0 ? 0.85 : 1.0);
+    const roleAtkMult = isLeader ? 1.15 : 1.0;
+
+    const baseHp = Math.max(38, Math.floor((48 * Math.pow(1.074, floor - 1) + floor * 4) * roleHpMult));
+    const baseAtk = Math.max(8, Math.floor((9 * Math.pow(1.056, floor - 1) + Math.floor(floor * 0.75)) * roleAtkMult));
+    const gold = Math.max(6, Math.floor((10 * Math.pow(1.05, floor) + 4 + Math.random() * 4) * (isLeader ? 1.5 : 1.0)));
+    const crystals = isLeader && Math.random() < 0.45 ? Math.max(1, Math.floor(floor / 9)) : 0;
+
+    monsters.push({
+      id: `monster_${floor}_${idx}`,
+      name: isLeader ? `Вожак: ${template.name}` : template.name,
+      title: isLeader ? 'Элитный Монстр' : 'Монстр Башни',
+      avatar: template.avatar,
+      isBoss: false,
+      isLeader,
+      floor,
+      maxHp: baseHp,
+      hp: baseHp,
+      atk: baseAtk,
+      def: Math.floor(baseAtk * 0.12),
+      intro: template.intro,
+      goldReward: gold,
+      crystalReward: crystals,
+      dropEquipment: isLeader && Math.random() < (0.15 + floor * 0.003), // Leader chance for equipment drop
+    });
+  }
+
+  return monsters;
+}
+
+// Single monster helper for backwards compatibility
+export function generateMonster(floor) {
+  const pack = generateFloorMonsters(floor);
+  return pack[0];
 }

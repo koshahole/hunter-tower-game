@@ -1,13 +1,13 @@
 // Persistent Storage with 3-minute Energy Refill & Cross-Device CloudStorage
-const STORAGE_KEY = 'aether_tower_save_v4';
+const STORAGE_KEY = 'aether_tower_save_v5';
 
 // 3 minutes in milliseconds (180 seconds)
 export const ENERGY_REFILL_MS = 3 * 60 * 1000;
 
 export const DEFAULT_STATE = {
   // Currencies
-  gold: 40,
-  crystals: 5,
+  gold: 80,
+  crystals: 10,
   souls: 0,
   totalRebirths: 0,
 
@@ -25,14 +25,25 @@ export const DEFAULT_STATE = {
   hunterAvatar: '🧙‍♂️',
   hunterTitle: 'Искатель Башни',
 
-  // Base Camp Upgrades
-  upgrades: {
-    base_atk: 0,
-    base_hp: 0,
-    crit_chance: 0,
-    dodge_chance: 0,
-    gold_mult: 0,
+  // Equipment System (Replaces legacy abstract upgrades)
+  equipped: {
+    weapon: 'rusty_dagger',
+    armor: 'cloth_tunic',
+    helmet: 'scout_band',
+    accessory: 'copper_pendant',
   },
+  equipmentLevels: {
+    rusty_dagger: 1,
+    cloth_tunic: 1,
+    scout_band: 1,
+    copper_pendant: 1,
+  },
+  inventory: [
+    'rusty_dagger',
+    'cloth_tunic',
+    'scout_band',
+    'copper_pendant',
+  ],
 
   // Rebirth Perks
   rebirthPerks: {
@@ -50,7 +61,7 @@ export const DEFAULT_STATE = {
   activePetId: 'green_slime',
 
   // Battle consumable & inventory
-  potions: 1,
+  potions: 2,
   reviveTokens: 0,
   artifacts: [], // Permanent or run relics
   vip: false,
@@ -68,13 +79,33 @@ export const DEFAULT_STATE = {
 
 export function loadGameState() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('aether_tower_save_v3');
+    const raw = localStorage.getItem(STORAGE_KEY) ||
+                localStorage.getItem('aether_tower_save_v4') ||
+                localStorage.getItem('aether_tower_save_v3');
     if (!raw) return DEFAULT_STATE;
     const parsed = JSON.parse(raw);
+
+    // Migration from old upgrades system to equipment
+    let equipped = parsed.equipped || DEFAULT_STATE.equipped;
+    let equipmentLevels = parsed.equipmentLevels || DEFAULT_STATE.equipmentLevels;
+    let inventory = parsed.inventory || DEFAULT_STATE.inventory;
+
+    // If legacy save had upgrades but no equipmentLevels, convert legacy stats
+    if (parsed.upgrades && !parsed.equipmentLevels) {
+      equipmentLevels = {
+        rusty_dagger: Math.max(1, (parsed.upgrades.base_atk || 0) + 1),
+        cloth_tunic: Math.max(1, (parsed.upgrades.base_hp || 0) + 1),
+        scout_band: Math.max(1, (parsed.upgrades.crit_chance || 0) + 1),
+        copper_pendant: Math.max(1, (parsed.upgrades.gold_mult || 0) + 1),
+      };
+    }
+
     return {
       ...DEFAULT_STATE,
       ...parsed,
-      upgrades: { ...DEFAULT_STATE.upgrades, ...(parsed.upgrades || {}) },
+      equipped: { ...DEFAULT_STATE.equipped, ...equipped },
+      equipmentLevels: { ...DEFAULT_STATE.equipmentLevels, ...equipmentLevels },
+      inventory: Array.isArray(inventory) && inventory.length > 0 ? inventory : DEFAULT_STATE.inventory,
       rebirthPerks: { ...DEFAULT_STATE.rebirthPerks, ...(parsed.rebirthPerks || {}) },
       petLevels: { ...DEFAULT_STATE.petLevels, ...(parsed.petLevels || {}) },
       stats: { ...DEFAULT_STATE.stats, ...(parsed.stats || {}) },

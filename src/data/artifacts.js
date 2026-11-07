@@ -136,10 +136,11 @@ export const ARTIFACTS = [
   }
 ];
 
-// Pick 3 random distinct relics for the boss reward modal
-export function rollBossRelics(currentArtifactIds = []) {
-  // Pool of available relics (prefer ones player doesn't have yet if possible)
-  const pool = [...ARTIFACTS];
-  const shuffled = pool.sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, 3);
+// Pick N random distinct relics for boss reward modal or Vanguard start
+export function rollBossRelics(currentArtifactIds = [], count = 3) {
+  // Pool of available relics (prefer ones player doesn't have yet)
+  const pool = ARTIFACTS.filter(a => !currentArtifactIds.includes(a.id));
+  const candidatePool = pool.length >= count ? pool : [...ARTIFACTS];
+  const shuffled = [...candidatePool].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
 }

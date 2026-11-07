@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Hub from './components/Hub';
 import Battle from './components/Battle';
-import UpgradeShop from './components/UpgradeShop';
+import InventoryView from './components/InventoryView';
 import PetSanctuary from './components/PetSanctuary';
 import StarsShop from './components/StarsShop';
 import ReviveModal from './components/ReviveModal';
@@ -13,7 +13,7 @@ import Toast from './components/Toast';
 
 import { loadGameState, saveGameState, calculateEnergy, loadFromCloudStorage } from './utils/storage';
 import { initTelegram, getUserInfo, hapticImpact } from './utils/telegram';
-import { UPGRADES, getTotalStatBonus } from './data/upgrades';
+import { EQUIPMENT_CATALOG, getItemStats, rollEquipmentDrop } from './data/equipment';
 import { PETS, getPetStats, rollPetGacha } from './data/pets';
 import { getRankByMaxFloor } from './data/ranks';
 import { REBIRTH_PERKS } from './data/rebirth';
@@ -41,7 +41,7 @@ export default function App() {
   const user = useMemo(() => getUserInfo(), []);
 
   const showToast = (message, type = 'info') => {
-    setToast({ message, type });
+    setToast({ id: Date.now(), message, type });
   };
 
   useEffect(() => {
@@ -82,30 +82,41 @@ export default function App() {
     saveGameState(state);
   }, [state]);
 
-  // Compute total effective player stats
+  // Compute total effective player stats dynamically from equipment & progression
   const playerStats = useMemo(() => {
     let baseHp = 100;
-    let baseAtk = 16;
+    let baseAtk = 18;
     let critChance = 5;
     let dodgeChance = 5;
+    let vampirism = 0;
     let goldMultiplier = 1.0;
 
-    UPGRADES.forEach(u => {
-      const level = state.upgrades[u.id] || 0;
-      if (u.statKey === 'atk') baseAtk += getTotalStatBonus(u.id, level);
-      if (u.statKey === 'maxHp') baseHp += getTotalStatBonus(u.id, level);
-      if (u.statKey === 'critChance') critChance += getTotalStatBonus(u.id, level);
-      if (u.statKey === 'dodgeChance') dodgeChance += getTotalStatBonus(u.id, level);
-      if (u.statKey === 'goldBonus') goldMultiplier += getTotalStatBonus(u.id, level);
+    // 1. Equipment Stats (from 4 equipped slots)
+    const equipped = state.equipped || {};
+    const levels = state.equipmentLevels || {};
+    Object.values(equipped).forEach(itemId => {
+      if (!itemId) return;
+      const itemTemplate = EQUIPMENT_CATALOG[itemId];
+      if (!itemTemplate) return;
+      const lvl = levels[itemId] || 1;
+      const stats = getItemStats(itemTemplate, lvl);
+
+      if (stats.atk) baseAtk += stats.atk;
+      if (stats.maxHp) baseHp += stats.maxHp;
+      if (stats.critChance) critChance += stats.critChance;
+      if (stats.dodgeChance) dodgeChance += stats.dodgeChance;
+      if (stats.vampirism) vampirism += stats.vampirism;
+      if (stats.goldMultiplier) goldMultiplier += stats.goldMultiplier;
     });
 
-    // Apply active run artifacts bonuses
+    // 2. Apply active run artifacts bonuses
     runArtifacts.forEach(art => {
       if (art.effectType === 'atk') baseAtk += art.value;
       if (art.effectType === 'maxHp') baseHp += art.value;
       if (art.effectType === 'critChance') critChance += art.value;
       if (art.effectType === 'dodgeChance') dodgeChance += art.value;
       if (art.effectType === 'goldBonus') goldMultiplier += art.value;
+      if (art.effectType === 'vampirism') vampirism += Math.round(art.value * 100);
       if (art.effectType === 'allStats') {
         baseAtk = Math.floor(baseAtk * 1.2);
         baseHp = Math.floor(baseHp * 1.2);
@@ -115,6 +126,7 @@ export default function App() {
       }
     });
 
+    // 3. Active Pet Buffs
     const activePet = PETS.find(p => p.id === state.activePetId);
     if (activePet) {
       const petLvl = state.petLevels?.[activePet.id] || 1;
@@ -126,10 +138,12 @@ export default function App() {
       goldMultiplier += petBuffs.goldBonus;
     }
 
+    // 4. Hunter Rank Multiplier
     const rank = getRankByMaxFloor(state.maxFloor);
     baseHp = Math.floor(baseHp * rank.multiplier);
     baseAtk = Math.floor(baseAtk * rank.multiplier);
 
+    // 5. Rebirth Perks
     const soulPower = state.rebirthPerks?.soul_power || 0;
     const soulVitality = state.rebirthPerks?.soul_vitality || 0;
     const soulFortune = state.rebirthPerks?.soul_fortune || 0;
@@ -141,48 +155,82 @@ export default function App() {
     critChance += soulInstinct * 3;
     dodgeChance += soulInstinct * 2;
 
+    // 6. VIP Permanent Buff
     if (state.vip) {
       goldMultiplier += 0.25;
     }
 
     return {
-      maxHp: baseHp,
-      atk: baseAtk,
+      maxHp: Math.max(50, baseHp),
+      atk: Math.max(5, baseAtk),
       critChance: Math.min(80, Math.round(critChance)),
       dodgeChance: Math.min(55, Math.round(dodgeChance)),
+      vampirism: Math.min(40, Math.round(vampirism)),
       goldMultiplier
     };
-  }, [state.upgrades, state.activePetId, state.petLevels, state.maxFloor, state.rebirthPerks, state.vip, runArtifacts]);
+  }, [state.equipped, state.equipmentLevels, state.activePetId, state.petLevels, state.maxFloor, state.rebirthPerks, state.vip, runArtifacts]);
 
-  const handleStartRun = (startFloor = 1) => {
+  const handleStartRun = (startFloor = 1, bonusRelics = 0, bonusPotions = 0) => {
     setState(prev => ({
       ...prev,
       energy: Math.max(0, prev.energy - 1),
-      currentFloor: startFloor
+      currentFloor: startFloor,
+      potions: prev.potions + (bonusPotions || 0)
     }));
+
     setRunHp(playerStats.maxHp);
-    setRunArtifacts([]);
+
+    // Grant starting Vanguard Relics for skipped tiers
+    if (bonusRelics > 0) {
+      const startingRelics = rollBossRelics([], bonusRelics);
+      setRunArtifacts(startingRelics);
+      showToast(`ПРИПАСЫ АВАНГАРДА: +${startingRelics.length} РЕЛИКВИЙ! 🎁`, 'stars');
+    } else {
+      setRunArtifacts([]);
+    }
+
     setView('battle');
   };
 
-  const handleFloorCleared = ({ gold, crystals, floor, remainingHp, isBoss }) => {
+  const handleFloorCleared = ({ gold, crystals, floor, remainingHp, isBoss, droppedEquipment = [] }) => {
     const healBonus = Math.floor(playerStats.maxHp * 0.25);
     const nextHp = Math.min(playerStats.maxHp, (remainingHp || playerStats.maxHp) + healBonus);
     setRunHp(nextHp);
 
-    setState(prev => ({
-      ...prev,
-      gold: prev.gold + gold,
-      crystals: prev.crystals + crystals,
-      currentFloor: floor + 1,
-      maxFloor: Math.max(prev.maxFloor, floor + 1),
-      stats: {
-        ...prev.stats,
-        highestFloorCleared: Math.max(prev.stats?.highestFloorCleared || 1, floor + 1),
-        monstersKilled: (prev.stats?.monstersKilled || 0) + 1,
-        bossesKilled: floor % 10 === 0 ? (prev.stats?.bossesKilled || 0) + 1 : (prev.stats?.bossesKilled || 0)
-      }
-    }));
+    setState(prev => {
+      const inv = [...(prev.inventory || [])];
+      const levels = { ...(prev.equipmentLevels || {}) };
+
+      droppedEquipment.forEach(item => {
+        if (!inv.includes(item.id)) {
+          inv.push(item.id);
+        }
+        if (!levels[item.id]) {
+          levels[item.id] = 1;
+        }
+      });
+
+      return {
+        ...prev,
+        gold: prev.gold + gold,
+        crystals: prev.crystals + crystals,
+        currentFloor: floor + 1,
+        maxFloor: Math.max(prev.maxFloor, floor + 1),
+        inventory: inv,
+        equipmentLevels: levels,
+        stats: {
+          ...prev.stats,
+          highestFloorCleared: Math.max(prev.stats?.highestFloorCleared || 1, floor + 1),
+          monstersKilled: (prev.stats?.monstersKilled || 0) + 1,
+          bossesKilled: floor % 10 === 0 ? (prev.stats?.bossesKilled || 0) + 1 : (prev.stats?.bossesKilled || 0)
+        }
+      };
+    });
+
+    if (droppedEquipment.length > 0) {
+      const itemName = droppedEquipment[0]?.name || 'Снаряжение';
+      showToast(`ДОБЫЧА: ${itemName.toUpperCase()}! 🛡️`, 'stars');
+    }
 
     // Trigger Boss Relic choice after defeating a boss (10, 20, 30...)
     if (isBoss || floor % 10 === 0) {
@@ -229,16 +277,31 @@ export default function App() {
     setView('hub');
   };
 
-  const handleBuyUpgrade = (upgradeId, goldCost, crystalCost) => {
+  const handleEquipItem = (item) => {
     setState(prev => ({
       ...prev,
-      gold: prev.gold - goldCost,
-      crystals: prev.crystals - crystalCost,
-      upgrades: {
-        ...prev.upgrades,
-        [upgradeId]: (prev.upgrades[upgradeId] || 0) + 1
+      equipped: {
+        ...(prev.equipped || {}),
+        [item.slot]: item.id
       }
     }));
+    showToast(`НАДЕТО: ${item.name.toUpperCase()}! 🛡️`, 'success');
+  };
+
+  const handleUpgradeItem = (item, goldCost, crystalCost) => {
+    setState(prev => {
+      const currentLvl = prev.equipmentLevels?.[item.id] || 1;
+      return {
+        ...prev,
+        gold: Math.max(0, prev.gold - goldCost),
+        crystals: Math.max(0, prev.crystals - crystalCost),
+        equipmentLevels: {
+          ...(prev.equipmentLevels || {}),
+          [item.id]: currentLvl + 1
+        }
+      };
+    });
+    showToast(`УЛУЧШЕНО: ${item.name.toUpperCase()} (+${(state.equipmentLevels?.[item.id] || 1) + 1})! ⚡`, 'success');
   };
 
   const handleEquipPet = (petId) => {
@@ -252,7 +315,6 @@ export default function App() {
 
       if (isAlreadyOwned) {
         if (currentLvl >= 20) {
-          // Max level compensation
           return {
             ...prev,
             crystals: prev.crystals + 50,
@@ -269,7 +331,6 @@ export default function App() {
         }
       }
 
-      // First time unlock
       return {
         ...prev,
         ownedPets: [...prev.ownedPets, petId],
@@ -309,20 +370,16 @@ export default function App() {
       crystals: 0,
       potions: 2,
       energy: prev.maxEnergy,
-      upgrades: {
-        base_atk: 0,
-        base_hp: 0,
-        crit_chance: 0,
-        dodge_chance: 0,
-        gold_mult: 0,
-      },
-      ownedPets: ['green_slime'],
-      activePetId: 'green_slime',
-      petLevels: {
-        green_slime: 1,
-      }
+      // Equipment and pet collection is preserved across rebirths
+      equipped: prev.equipped,
+      equipmentLevels: prev.equipmentLevels,
+      inventory: prev.inventory,
+      ownedPets: prev.ownedPets,
+      activePetId: prev.activePetId,
+      petLevels: prev.petLevels
     }));
     setIsRebirthOpen(false);
+    showToast(`ПЕРЕРОЖДЕНИЕ СОВЕРШЕНО! ПОЛУЧЕНО +${earnedSouls} ДУШ 🔮`, 'stars');
   };
 
   const handleBuySoulPerk = (perkId, soulCost) => {
@@ -344,7 +401,31 @@ export default function App() {
   };
 
   const handleStarsPurchaseSuccess = (action) => {
-    if (action === 'egg') {
+    if (action === 'gear_chest') {
+      const forceRarity = Math.random() < 0.5 ? 'epic' : 'legendary';
+      const dropped = rollEquipmentDrop(state.maxFloor || 1, forceRarity);
+      if (dropped) {
+        setState(prev => {
+          const inv = prev.inventory || [];
+          const newInv = inv.includes(dropped.id) ? inv : [...inv, dropped.id];
+          const levels = { ...(prev.equipmentLevels || {}) };
+          if (!levels[dropped.id]) levels[dropped.id] = 1;
+          return {
+            ...prev,
+            inventory: newInv,
+            equipmentLevels: levels
+          };
+        });
+        showToast(`ИЗ СУНДУКА БЕЗДНЫ ВЫПАЛО: ${dropped.name.toUpperCase()}! 👑`, 'stars');
+      }
+    } else if (action === 'smith_pack') {
+      setState(prev => ({
+        ...prev,
+        gold: prev.gold + 5000,
+        crystals: prev.crystals + 100
+      }));
+      showToast('НАБОР КУЗНЕЦА: +5,000 🪙 И +100 💎!', 'stars');
+    } else if (action === 'egg') {
       const pet = rollPetGacha();
       handleUnlockPet(pet.id);
       handleEquipPet(pet.id);
@@ -379,7 +460,7 @@ export default function App() {
 
   return (
     <div className="w-full min-h-dvh bg-neo-yellow text-black flex flex-col font-sans antialiased bg-comic-dots">
-      
+
       {/* Toast notifications */}
       <Toast toast={toast} onClose={() => setToast(null)} />
 
@@ -417,10 +498,12 @@ export default function App() {
               />
             )}
 
-            {activeTab === 'upgrades' && (
-              <UpgradeShop
+            {(activeTab === 'inventory' || activeTab === 'upgrades') && (
+              <InventoryView
                 state={state}
-                onBuyUpgrade={handleBuyUpgrade}
+                runArtifacts={runArtifacts}
+                onEquipItem={handleEquipItem}
+                onUpgradeItem={handleUpgradeItem}
                 onShowToast={showToast}
               />
             )}
@@ -509,15 +592,15 @@ export default function App() {
       {view === 'hub' && (
         <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t-4 border-black pb-safe shadow-brutal-lg">
           <div className="max-w-md mx-auto grid grid-cols-4 px-2 py-1.5 gap-1.5">
-            
+
             <button
               onClick={() => {
                 hapticImpact('light');
                 setActiveTab('tower');
               }}
               className={`flex flex-col items-center justify-center py-2 border-2 border-black transition-all ${
-                activeTab === 'tower' 
-                  ? 'bg-neo-pink text-white shadow-brutal-sm' 
+                activeTab === 'tower'
+                  ? 'bg-neo-pink text-white shadow-brutal-sm'
                   : 'bg-white text-black hover:bg-slate-100'
               }`}
             >
@@ -528,16 +611,16 @@ export default function App() {
             <button
               onClick={() => {
                 hapticImpact('light');
-                setActiveTab('upgrades');
+                setActiveTab('inventory');
               }}
               className={`flex flex-col items-center justify-center py-2 border-2 border-black transition-all ${
-                activeTab === 'upgrades' 
-                  ? 'bg-neo-cyan text-black shadow-brutal-sm' 
+                activeTab === 'inventory' || activeTab === 'upgrades'
+                  ? 'bg-neo-cyan text-black shadow-brutal-sm'
                   : 'bg-white text-black hover:bg-slate-100'
               }`}
             >
-              <Swords className="w-5 h-5 mb-0.5 stroke-[3]" />
-              <span className="font-arcade text-[10px] uppercase">АРСЕНАЛ</span>
+              <Shield className="w-5 h-5 mb-0.5 stroke-[3]" />
+              <span className="font-arcade text-[10px] uppercase">СНАРЯЖЕНИЕ</span>
             </button>
 
             <button
@@ -546,8 +629,8 @@ export default function App() {
                 setActiveTab('pets');
               }}
               className={`flex flex-col items-center justify-center py-2 border-2 border-black transition-all ${
-                activeTab === 'pets' 
-                  ? 'bg-neo-lime text-black shadow-brutal-sm' 
+                activeTab === 'pets'
+                  ? 'bg-neo-lime text-black shadow-brutal-sm'
                   : 'bg-white text-black hover:bg-slate-100'
               }`}
             >
@@ -561,8 +644,8 @@ export default function App() {
                 setActiveTab('shop');
               }}
               className={`flex flex-col items-center justify-center py-2 border-2 border-black transition-all ${
-                activeTab === 'shop' 
-                  ? 'bg-neo-yellow text-black shadow-brutal-sm' 
+                activeTab === 'shop'
+                  ? 'bg-neo-yellow text-black shadow-brutal-sm'
                   : 'bg-white text-black hover:bg-slate-100'
               }`}
             >

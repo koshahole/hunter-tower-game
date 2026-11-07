@@ -3,6 +3,16 @@
 // Body: { itemId: string, userId?: number|string }
 
 const ITEMS = {
+  stars_gear_chest: {
+    title: 'Сундук Снаряжения Бездны',
+    description: 'Гарантированное эпическое или легендарное снаряжение для охотника',
+    price: 25,
+  },
+  stars_smith_pack: {
+    title: 'Набор Ресурсов Кузнеца',
+    description: '5,000 Золота и 100 Кристаллов Бездны для заточки снаряжения',
+    price: 30,
+  },
   stars_revive: {
     title: 'Воскрешение в Башне',
     description: 'Мгновенное воскрешение охотника со 100% здоровьем на месте гибели',

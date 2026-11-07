@@ -1,11 +1,31 @@
 import React from 'react';
-import { Star, Zap, Heart, Crown, Gem, Egg, Sparkles } from 'lucide-react';
+import { Star, Zap, Heart, Crown, Gem, Egg, Sparkles, Shield, Package } from 'lucide-react';
 import { sounds } from '../audio/soundEffects';
 import { hapticImpact, hapticNotification, openStarsInvoice } from '../utils/telegram';
 
 export default function StarsShop({ state, onPurchaseSuccess, onShowToast }) {
 
   const SHOP_ITEMS = [
+    {
+      id: 'stars_gear_chest',
+      name: 'СУНДУК СНАРЯЖЕНИЯ БЕЗДНЫ',
+      description: 'Гарантированное эпическое или легендарное снаряжение для мгновенного усиления охотника.',
+      price: 25,
+      iconComponent: Shield,
+      iconBg: 'bg-neo-purple text-white',
+      badge: 'ЭПИК / ЛЕГ',
+      action: 'gear_chest'
+    },
+    {
+      id: 'stars_smith_pack',
+      name: 'НАБОР КУЗНЕЦА',
+      description: '5,000 Золота и 100 Кристаллов Бездны для быстрой заточки любого снаряжения.',
+      price: 30,
+      iconComponent: Gem,
+      iconBg: 'bg-neo-pink text-white',
+      badge: 'РЕСУРСЫ',
+      action: 'smith_pack'
+    },
     {
       id: 'stars_revive',
       name: 'ВОСКРЕШЕНИЕ НА МЕСТЕ (x1)',
@@ -49,7 +69,7 @@ export default function StarsShop({ state, onPurchaseSuccess, onShowToast }) {
     {
       id: 'stars_crystals',
       name: 'СУНДУК КРИСТАЛЛОВ (150 шт)',
-      description: 'Кристаллы Бездны для быстрой прокачки уровня питомцев и улучшений.',
+      description: 'Кристаллы Бездны для быстрой прокачки уровня питомцев и снаряжения.',
       price: 35,
       iconComponent: Gem,
       iconBg: 'bg-neo-purple text-white',
@@ -90,7 +110,7 @@ export default function StarsShop({ state, onPurchaseSuccess, onShowToast }) {
 
   return (
     <div className="w-full space-y-3 pb-24 font-sans select-none">
-      
+
       {/* Neo-Brutal Arcade Banner */}
       <div className="bg-white border-4 border-black p-4 shadow-brutal">
         <div className="flex items-center gap-3">
