@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Hub from './components/Hub';
 import Battle from './components/Battle';
 import InventoryView from './components/InventoryView';
