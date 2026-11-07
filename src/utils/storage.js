@@ -1,5 +1,7 @@
 // Persistent Storage with 3-minute Energy Refill & Cross-Device CloudStorage
-const STORAGE_KEY = 'aether_tower_save_v6';
+// Season 1 Hard Wipe: Clean start for all players
+const STORAGE_KEY = 'aether_tower_season_1';
+const CLOUD_STORAGE_KEY = 'hunter_cloud_save_s1';
 
 // 3 minutes in milliseconds (180 seconds)
 export const ENERGY_REFILL_MS = 3 * 60 * 1000;
@@ -65,11 +67,33 @@ export const DEFAULT_STATE = {
   lastSavedAt: Date.now()
 };
 
+// Purge legacy storage keys to guarantee a clean wipe for all players
+function purgeOldSaves() {
+  try {
+    const oldKeys = [
+      'aether_tower_save_v6',
+      'aether_tower_save_v5',
+      'aether_tower_save_v4',
+      'aether_tower_save_v3',
+      'aether_tower_save_v2',
+      'aether_tower_save_v1',
+      'hunter_tower_save'
+    ];
+    oldKeys.forEach(k => {
+      if (localStorage.getItem(k)) {
+        localStorage.removeItem(k);
+      }
+    });
+  } catch (e) {
+    // Ignore in restricted environments
+  }
+}
+
 export function loadGameState() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY) ||
-                localStorage.getItem('aether_tower_save_v5') ||
-                localStorage.getItem('aether_tower_save_v4');
+    purgeOldSaves();
+
+    const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_STATE;
     const parsed = JSON.parse(raw);
 
@@ -109,14 +133,16 @@ export function saveGameState(state) {
     const jsonStr = JSON.stringify(enriched);
     localStorage.setItem(STORAGE_KEY, jsonStr);
 
-    // Cross-Device Sync: save to Telegram CloudStorage
+    // Cross-Device Sync: save to Telegram CloudStorage under Season 1 key
     if (typeof window !== 'undefined' && window.Telegram?.WebApp?.CloudStorage) {
       if (cloudSaveTimer) clearTimeout(cloudSaveTimer);
       cloudSaveTimer = setTimeout(() => {
         try {
-          window.Telegram.WebApp.CloudStorage.setItem('hunter_cloud_save', jsonStr, (err) => {
+          window.Telegram.WebApp.CloudStorage.setItem(CLOUD_STORAGE_KEY, jsonStr, (err) => {
             if (err) console.warn('Telegram CloudStorage save failed:', err);
           });
+          // Also overwrite legacy cloud save so older builds cannot resurrect it
+          window.Telegram.WebApp.CloudStorage.setItem('hunter_cloud_save', jsonStr, () => {});
         } catch (e) {
           console.warn('CloudStorage setItem error:', e);
         }
@@ -131,7 +157,7 @@ export function saveGameState(state) {
 export function loadFromCloudStorage(onStateLoaded) {
   if (typeof window !== 'undefined' && window.Telegram?.WebApp?.CloudStorage) {
     try {
-      window.Telegram.WebApp.CloudStorage.getItem('hunter_cloud_save', (err, value) => {
+      window.Telegram.WebApp.CloudStorage.getItem(CLOUD_STORAGE_KEY, (err, value) => {
         if (!err && value) {
           try {
             const parsed = JSON.parse(value);
