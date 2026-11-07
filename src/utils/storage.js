@@ -1,13 +1,13 @@
 // Persistent Storage with 3-minute Energy Refill & Cross-Device CloudStorage
-const STORAGE_KEY = 'aether_tower_save_v5';
+const STORAGE_KEY = 'aether_tower_save_v6';
 
 // 3 minutes in milliseconds (180 seconds)
 export const ENERGY_REFILL_MS = 3 * 60 * 1000;
 
 export const DEFAULT_STATE = {
   // Currencies
-  gold: 80,
-  crystals: 10,
+  gold: 0,
+  crystals: 0,
   souls: 0,
   totalRebirths: 0,
 
@@ -25,25 +25,15 @@ export const DEFAULT_STATE = {
   hunterAvatar: '🧙‍♂️',
   hunterTitle: 'Искатель Башни',
 
-  // Equipment System (Replaces legacy abstract upgrades)
+  // Clean Start: No initial gear - player must earn equipment in the Tower
   equipped: {
-    weapon: 'rusty_dagger',
-    armor: 'cloth_tunic',
-    helmet: 'scout_band',
-    accessory: 'copper_pendant',
+    weapon: null,
+    armor: null,
+    helmet: null,
+    accessory: null,
   },
-  equipmentLevels: {
-    rusty_dagger: 1,
-    cloth_tunic: 1,
-    scout_band: 1,
-    copper_pendant: 1,
-  },
-  inventory: [
-    'rusty_dagger',
-    'cloth_tunic',
-    'scout_band',
-    'copper_pendant',
-  ],
+  equipmentLevels: {},
+  inventory: [],
 
   // Rebirth Perks
   rebirthPerks: {
@@ -53,15 +43,13 @@ export const DEFAULT_STATE = {
     soul_instinct: 0,
   },
 
-  // Pet Collection
-  ownedPets: ['green_slime'],
-  petLevels: {
-    green_slime: 1,
-  },
-  activePetId: 'green_slime',
+  // Clean Start: No initial pets - player must hatch or unlock companions
+  ownedPets: [],
+  petLevels: {},
+  activePetId: null,
 
   // Battle consumable & inventory
-  potions: 2,
+  potions: 1,
   reviveTokens: 0,
   artifacts: [], // Permanent or run relics
   vip: false,
@@ -80,34 +68,28 @@ export const DEFAULT_STATE = {
 export function loadGameState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY) ||
-                localStorage.getItem('aether_tower_save_v4') ||
-                localStorage.getItem('aether_tower_save_v3');
+                localStorage.getItem('aether_tower_save_v5') ||
+                localStorage.getItem('aether_tower_save_v4');
     if (!raw) return DEFAULT_STATE;
     const parsed = JSON.parse(raw);
 
-    // Migration from old upgrades system to equipment
-    let equipped = parsed.equipped || DEFAULT_STATE.equipped;
-    let equipmentLevels = parsed.equipmentLevels || DEFAULT_STATE.equipmentLevels;
-    let inventory = parsed.inventory || DEFAULT_STATE.inventory;
-
-    // If legacy save had upgrades but no equipmentLevels, convert legacy stats
-    if (parsed.upgrades && !parsed.equipmentLevels) {
-      equipmentLevels = {
-        rusty_dagger: Math.max(1, (parsed.upgrades.base_atk || 0) + 1),
-        cloth_tunic: Math.max(1, (parsed.upgrades.base_hp || 0) + 1),
-        scout_band: Math.max(1, (parsed.upgrades.crit_chance || 0) + 1),
-        copper_pendant: Math.max(1, (parsed.upgrades.gold_mult || 0) + 1),
-      };
-    }
+    const equipped = {
+      weapon: null,
+      armor: null,
+      helmet: null,
+      accessory: null,
+      ...(parsed.equipped || {})
+    };
 
     return {
       ...DEFAULT_STATE,
       ...parsed,
-      equipped: { ...DEFAULT_STATE.equipped, ...equipped },
-      equipmentLevels: { ...DEFAULT_STATE.equipmentLevels, ...equipmentLevels },
-      inventory: Array.isArray(inventory) && inventory.length > 0 ? inventory : DEFAULT_STATE.inventory,
+      equipped,
+      equipmentLevels: { ...(parsed.equipmentLevels || {}) },
+      inventory: Array.isArray(parsed.inventory) ? parsed.inventory : [],
       rebirthPerks: { ...DEFAULT_STATE.rebirthPerks, ...(parsed.rebirthPerks || {}) },
-      petLevels: { ...DEFAULT_STATE.petLevels, ...(parsed.petLevels || {}) },
+      ownedPets: Array.isArray(parsed.ownedPets) ? parsed.ownedPets : [],
+      petLevels: { ...(parsed.petLevels || {}) },
       stats: { ...DEFAULT_STATE.stats, ...(parsed.stats || {}) },
     };
   } catch (e) {

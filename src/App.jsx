@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Hub from './components/Hub';
 import Battle from './components/Battle';
 import InventoryView from './components/InventoryView';
@@ -9,6 +9,7 @@ import RebirthModal from './components/RebirthModal';
 import LeaderboardModal from './components/LeaderboardModal';
 import ProfileModal from './components/ProfileModal';
 import BossRelicModal from './components/BossRelicModal';
+import RunSummaryModal from './components/RunSummaryModal';
 import Toast from './components/Toast';
 
 import { loadGameState, saveGameState, calculateEnergy, loadFromCloudStorage } from './utils/storage';
@@ -32,11 +33,24 @@ export default function App() {
   const [runHp, setRunHp] = useState(null);
   const [runArtifacts, setRunArtifacts] = useState([]);
   const [relicChoice, setRelicChoice] = useState(null);
+  const [runSummary, setRunSummary] = useState(null);
   const [reviveModal, setReviveModal] = useState({ isOpen: false, onConfirm: null });
   const [isRebirthOpen, setIsRebirthOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [toast, setToast] = useState(null);
+
+  // Active run live trackers for the summary screen
+  const runTrackerRef = useRef({
+    startFloor: 1,
+    reachedFloor: 1,
+    floorsCleared: 0,
+    goldEarned: 0,
+    crystalsEarned: 0,
+    itemsFound: [],
+    monstersDefeated: 0,
+    cleared: false
+  });
 
   const user = useMemo(() => getUserInfo(), []);
 
@@ -83,11 +97,12 @@ export default function App() {
   }, [state]);
 
   // Compute total effective player stats dynamically from equipment & progression
+  // Hardcore tuning: without a weapon, hunter's unarmed baseAtk is 8 (very weak).
   const playerStats = useMemo(() => {
-    let baseHp = 100;
-    let baseAtk = 18;
-    let critChance = 5;
-    let dodgeChance = 5;
+    let baseHp = 90;
+    let baseAtk = 8; // Naked hunter starts with low attack
+    let critChance = 3;
+    let dodgeChance = 3;
     let vampirism = 0;
     let goldMultiplier = 1.0;
 
@@ -127,19 +142,21 @@ export default function App() {
     });
 
     // 3. Active Pet Buffs
-    const activePet = PETS.find(p => p.id === state.activePetId);
-    if (activePet) {
-      const petLvl = state.petLevels?.[activePet.id] || 1;
-      const petBuffs = getPetStats(activePet, petLvl);
-      baseHp = Math.floor(baseHp * (1 + petBuffs.hpBonus));
-      baseAtk = Math.floor(baseAtk * (1 + petBuffs.atkBonus));
-      critChance += petBuffs.critBonus;
-      dodgeChance += petBuffs.dodgeBonus;
-      goldMultiplier += petBuffs.goldBonus;
+    if (state.activePetId) {
+      const activePet = PETS.find(p => p.id === state.activePetId);
+      if (activePet) {
+        const petLvl = state.petLevels?.[activePet.id] || 1;
+        const petBuffs = getPetStats(activePet, petLvl);
+        baseHp = Math.floor(baseHp * (1 + petBuffs.hpBonus));
+        baseAtk = Math.floor(baseAtk * (1 + petBuffs.atkBonus));
+        critChance += petBuffs.critBonus;
+        dodgeChance += petBuffs.dodgeBonus;
+        goldMultiplier += petBuffs.goldBonus;
+      }
     }
 
-    // 4. Hunter Rank Multiplier
-    const rank = getRankByMaxFloor(state.maxFloor);
+    // 4. Hunter Rank Multiplier (calculated strictly from maxFloor)
+    const rank = getRankByMaxFloor(state.maxFloor || 1);
     baseHp = Math.floor(baseHp * rank.multiplier);
     baseAtk = Math.floor(baseAtk * rank.multiplier);
 
@@ -180,6 +197,18 @@ export default function App() {
 
     setRunHp(playerStats.maxHp);
 
+    // Initialize clean run tracker
+    runTrackerRef.current = {
+      startFloor,
+      reachedFloor: startFloor,
+      floorsCleared: 0,
+      goldEarned: 0,
+      crystalsEarned: 0,
+      itemsFound: [],
+      monstersDefeated: 0,
+      cleared: false
+    };
+
     // Grant starting Vanguard Relics for skipped tiers
     if (bonusRelics > 0) {
       const startingRelics = rollBossRelics([], bonusRelics);
@@ -193,9 +222,20 @@ export default function App() {
   };
 
   const handleFloorCleared = ({ gold, crystals, floor, remainingHp, isBoss, droppedEquipment = [] }) => {
-    const healBonus = Math.floor(playerStats.maxHp * 0.25);
+    const healBonus = Math.floor(playerStats.maxHp * 0.20);
     const nextHp = Math.min(playerStats.maxHp, (remainingHp || playerStats.maxHp) + healBonus);
     setRunHp(nextHp);
+
+    // Update live run tracker
+    const tracker = runTrackerRef.current;
+    tracker.floorsCleared += 1;
+    tracker.reachedFloor = floor + 1;
+    tracker.goldEarned += gold;
+    tracker.crystalsEarned += crystals;
+    tracker.monstersDefeated += isBoss ? 1 : 4;
+    droppedEquipment.forEach(item => {
+      tracker.itemsFound.push(item);
+    });
 
     setState(prev => {
       const inv = [...(prev.inventory || [])];
@@ -210,19 +250,22 @@ export default function App() {
         }
       });
 
+      // Crucial: Only increment maxFloor when a floor is FULLY CLEARED!
+      const newMaxFloor = Math.max(prev.maxFloor, floor + 1);
+
       return {
         ...prev,
         gold: prev.gold + gold,
         crystals: prev.crystals + crystals,
         currentFloor: floor + 1,
-        maxFloor: Math.max(prev.maxFloor, floor + 1),
+        maxFloor: newMaxFloor,
         inventory: inv,
         equipmentLevels: levels,
         stats: {
           ...prev.stats,
-          highestFloorCleared: Math.max(prev.stats?.highestFloorCleared || 1, floor + 1),
-          monstersKilled: (prev.stats?.monstersKilled || 0) + 1,
-          bossesKilled: floor % 10 === 0 ? (prev.stats?.bossesKilled || 0) + 1 : (prev.stats?.bossesKilled || 0)
+          highestFloorCleared: Math.max(prev.stats?.highestFloorCleared || 1, floor),
+          monstersKilled: (prev.stats?.monstersKilled || 0) + (isBoss ? 1 : 4),
+          bossesKilled: isBoss || floor % 10 === 0 ? (prev.stats?.bossesKilled || 0) + 1 : (prev.stats?.bossesKilled || 0)
         }
       };
     });
@@ -260,48 +303,83 @@ export default function App() {
     }
   };
 
-  const handleRunEnd = ({ gold = 0, crystals = 0, floor }) => {
+  const handleRunEnd = ({ gold = 0, crystals = 0, floor, droppedEquipment = [] }) => {
     setRunHp(null);
     setRunArtifacts([]);
-    setState(prev => ({
-      ...prev,
-      gold: prev.gold + gold,
-      crystals: prev.crystals + crystals,
-      maxFloor: Math.max(prev.maxFloor, floor),
-      currentFloor: 1,
-      stats: {
-        ...prev.stats,
-        totalRuns: (prev.stats?.totalRuns || 0) + 1
+
+    const tracker = runTrackerRef.current;
+    tracker.reachedFloor = floor;
+    if (gold > tracker.goldEarned) tracker.goldEarned = gold;
+    if (crystals > tracker.crystalsEarned) tracker.crystalsEarned = crystals;
+    droppedEquipment.forEach(item => {
+      if (!tracker.itemsFound.some(it => it.id === item.id)) {
+        tracker.itemsFound.push(item);
       }
-    }));
+    });
+
+    // Save final stats and inventory from end-of-run items
+    setState(prev => {
+      const inv = [...(prev.inventory || [])];
+      const levels = { ...(prev.equipmentLevels || {}) };
+
+      droppedEquipment.forEach(item => {
+        if (!inv.includes(item.id)) inv.push(item.id);
+        if (!levels[item.id]) levels[item.id] = 1;
+      });
+
+      return {
+        ...prev,
+        inventory: inv,
+        equipmentLevels: levels,
+        currentFloor: 1,
+        stats: {
+          ...prev.stats,
+          totalRuns: (prev.stats?.totalRuns || 0) + 1
+        }
+      };
+    });
+
+    // Show Run Summary screen in Hub
+    setRunSummary({ ...tracker });
     setView('hub');
   };
 
-  const handleEquipItem = (item) => {
+  const handleEquipItem = (itemOrId) => {
+    const template = typeof itemOrId === 'object' && itemOrId
+      ? itemOrId
+      : EQUIPMENT_CATALOG[itemOrId];
+    if (!template) return;
+
     setState(prev => ({
       ...prev,
       equipped: {
         ...(prev.equipped || {}),
-        [item.slot]: item.id
+        [template.slot]: template.id
       }
     }));
-    showToast(`НАДЕТО: ${item.name.toUpperCase()}! 🛡️`, 'success');
+    showToast(`НАДЕТО: ${template.name.toUpperCase()}! 🛡️`, 'success');
   };
 
-  const handleUpgradeItem = (item, goldCost, crystalCost) => {
+  const handleUpgradeItem = (itemOrId, goldCost, crystalCost) => {
+    const template = typeof itemOrId === 'object' && itemOrId
+      ? itemOrId
+      : EQUIPMENT_CATALOG[itemOrId];
+    if (!template) return;
+
+    const itemId = template.id;
+
     setState(prev => {
-      const currentLvl = prev.equipmentLevels?.[item.id] || 1;
+      const currentLvl = prev.equipmentLevels?.[itemId] || 1;
       return {
         ...prev,
         gold: Math.max(0, prev.gold - goldCost),
         crystals: Math.max(0, prev.crystals - crystalCost),
         equipmentLevels: {
           ...(prev.equipmentLevels || {}),
-          [item.id]: currentLvl + 1
+          [itemId]: currentLvl + 1
         }
       };
     });
-    showToast(`УЛУЧШЕНО: ${item.name.toUpperCase()} (+${(state.equipmentLevels?.[item.id] || 1) + 1})! ⚡`, 'success');
   };
 
   const handleEquipPet = (petId) => {
@@ -310,7 +388,8 @@ export default function App() {
 
   const handleUnlockPet = (petId) => {
     setState(prev => {
-      const isAlreadyOwned = prev.ownedPets.includes(petId);
+      const owned = Array.isArray(prev.ownedPets) ? prev.ownedPets : [];
+      const isAlreadyOwned = owned.includes(petId);
       const currentLvl = prev.petLevels?.[petId] || 1;
 
       if (isAlreadyOwned) {
@@ -324,7 +403,7 @@ export default function App() {
           return {
             ...prev,
             petLevels: {
-              ...prev.petLevels,
+              ...(prev.petLevels || {}),
               [petId]: currentLvl + 1
             }
           };
@@ -333,9 +412,9 @@ export default function App() {
 
       return {
         ...prev,
-        ownedPets: [...prev.ownedPets, petId],
+        ownedPets: [...owned, petId],
         petLevels: {
-          ...prev.petLevels,
+          ...(prev.petLevels || {}),
           [petId]: 1
         }
       };
@@ -348,7 +427,7 @@ export default function App() {
       gold: prev.gold - goldCost,
       crystals: prev.crystals - crystalCost,
       petLevels: {
-        ...prev.petLevels,
+        ...(prev.petLevels || {}),
         [petId]: (prev.petLevels?.[petId] || 1) + 1
       }
     }));
@@ -368,9 +447,8 @@ export default function App() {
       currentFloor: 1,
       gold: 0,
       crystals: 0,
-      potions: 2,
+      potions: 1,
       energy: prev.maxEnergy,
-      // Equipment and pet collection is preserved across rebirths
       equipped: prev.equipped,
       equipmentLevels: prev.equipmentLevels,
       inventory: prev.inventory,
@@ -402,7 +480,7 @@ export default function App() {
 
   const handleStarsPurchaseSuccess = (action) => {
     if (action === 'gear_chest') {
-      const forceRarity = Math.random() < 0.5 ? 'epic' : 'legendary';
+      const forceRarity = Math.random() < 0.6 ? 'epic' : 'legendary';
       const dropped = rollEquipmentDrop(state.maxFloor || 1, forceRarity);
       if (dropped) {
         setState(prev => {
@@ -530,6 +608,14 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {/* Run Summary Modal (Displayed upon return to Hub) */}
+      {runSummary && (
+        <RunSummaryModal
+          summary={runSummary}
+          onClose={() => setRunSummary(null)}
+        />
+      )}
 
       {/* Profile & Settings Modal */}
       {isProfileOpen && (

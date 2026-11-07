@@ -104,7 +104,7 @@ export default function InventoryView({
 
     sounds.playLevelUp();
     hapticNotification('success');
-    onUpgradeItem(template.id, gold, crystals);
+    onUpgradeItem(template, gold, crystals);
     onShowToast(`${template.name.toUpperCase()} ЗАТОЧЕН ДО +${currentLevel + 1}! ⚡`, 'success');
   };
 
@@ -356,7 +356,7 @@ export default function InventoryView({
                       onClick={(e) => {
                         e.stopPropagation();
                         hapticNotification('success');
-                        onEquipItem(template.id, template.slot);
+                        onEquipItem(template);
                         onShowToast(`ЭКИПИРОВАНО: ${template.name.toUpperCase()}! ⚔️`, 'success');
                       }}
                       className="bg-white hover:bg-neo-yellow border-2 border-black px-2 py-1 font-arcade text-[10px] uppercase shadow-brutal-sm"
@@ -479,7 +479,7 @@ export default function InventoryView({
                 <button
                   onClick={() => {
                     hapticNotification('success');
-                    onEquipItem(selectedItem.template.id, selectedItem.template.slot);
+                    onEquipItem(selectedItem.template);
                     onShowToast(`ЭКИПИРОВАНО: ${selectedItem.template.name.toUpperCase()}! ⚔️`, 'success');
                     setSelectedItem(prev => ({ ...prev, isEquipped: true }));
                   }}

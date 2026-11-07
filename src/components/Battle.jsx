@@ -420,7 +420,7 @@ export default function Battle({
           <button
             onClick={() => {
               hapticImpact('light');
-              onRunEnd({ gold: accumulatedGold, crystals: accumulatedCrystals, floor });
+              onRunEnd({ gold: accumulatedGold, crystals: accumulatedCrystals, floor, droppedEquipment: droppedItems, droppedItems });
             }}
             title="Отступить в лагерь"
             className="w-7 h-7 bg-white hover:bg-neo-pink hover:text-white border-2 border-black flex items-center justify-center font-arcade text-xs shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] transition-colors"
@@ -686,6 +686,7 @@ export default function Battle({
                   floor,
                   remainingHp: playerHp,
                   isBoss: currentMonster.isBoss,
+                  droppedEquipment: droppedItems,
                   droppedItems
                 })}
                 className="w-full py-3 bg-neo-pink text-white border-3 border-black font-arcade text-sm shadow-brutal active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2 uppercase transition-all"
@@ -699,6 +700,7 @@ export default function Battle({
                   gold: accumulatedGold,
                   crystals: accumulatedCrystals,
                   floor,
+                  droppedEquipment: droppedItems,
                   droppedItems
                 })}
                 className="w-full py-2 bg-white text-black border-2 border-black font-arcade text-xs shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] uppercase"
@@ -734,7 +736,13 @@ export default function Battle({
               </button>
 
               <button
-                onClick={() => onRunEnd({ gold: accumulatedGold, crystals: accumulatedCrystals, floor })}
+                onClick={() => onRunEnd({
+                  gold: accumulatedGold,
+                  crystals: accumulatedCrystals,
+                  floor,
+                  droppedEquipment: droppedItems,
+                  droppedItems
+                })}
                 className="w-full py-2 bg-slate-100 text-black border-2 border-black font-arcade text-xs shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] uppercase"
               >
                 СДАТЬСЯ И УЙТИ В ХАБ

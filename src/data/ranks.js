@@ -1,4 +1,11 @@
 // Hunter Ranks inspired by Solo Leveling
+// Ranks are unlocked STRICTLY after defeating the respective decade boss:
+// E: Floors 1-10 (Novice)
+// D: Floors 11-20 (After defeating Boss 10)
+// C: Floors 21-40 (After defeating Boss 20)
+// B: Floors 41-60 (After defeating Boss 40)
+// A: Floors 61-80 (After defeating Boss 60)
+// S: Floors 81-100 (After defeating Boss 80)
 export const RANKS = [
   {
     rank: 'E',
@@ -6,7 +13,7 @@ export const RANKS = [
     badge: '🥉',
     color: '#9ca3af',
     minFloor: 0,
-    nextFloor: 10,
+    nextFloor: 11,
     bonusPercent: 0,
     bonusText: 'Базовый статус охотника (+0%)',
     multiplier: 1.0
@@ -16,8 +23,8 @@ export const RANKS = [
     name: 'D-Ранг (Авангардист)',
     badge: '🥈',
     color: '#10b981',
-    minFloor: 10,
-    nextFloor: 20,
+    minFloor: 11,
+    nextFloor: 21,
     bonusPercent: 5,
     bonusText: '+5% ко всем характеристикам',
     multiplier: 1.05
@@ -27,8 +34,8 @@ export const RANKS = [
     name: 'C-Ранг (Мастер Подземелий)',
     badge: '🥇',
     color: '#3b82f6',
-    minFloor: 20,
-    nextFloor: 40,
+    minFloor: 21,
+    nextFloor: 41,
     bonusPercent: 12,
     bonusText: '+12% ко всем характеристикам',
     multiplier: 1.12
@@ -38,8 +45,8 @@ export const RANKS = [
     name: 'B-Ранг (Элитный Истребитель)',
     badge: '💎',
     color: '#a855f7',
-    minFloor: 40,
-    nextFloor: 60,
+    minFloor: 41,
+    nextFloor: 61,
     bonusPercent: 22,
     bonusText: '+22% ко всем характеристикам',
     multiplier: 1.22
@@ -49,8 +56,8 @@ export const RANKS = [
     name: 'A-Ранг (Повелитель Бездны)',
     badge: '👑',
     color: '#f59e0b',
-    minFloor: 60,
-    nextFloor: 80,
+    minFloor: 61,
+    nextFloor: 81,
     bonusPercent: 35,
     bonusText: '+35% ко всем характеристикам',
     multiplier: 1.35
@@ -60,7 +67,7 @@ export const RANKS = [
     name: 'S-Ранг (Национальный Герой)',
     badge: '🌟⚡',
     color: '#ef4444',
-    minFloor: 80,
+    minFloor: 81,
     nextFloor: 100,
     bonusPercent: 60,
     bonusText: '+60% ко всем характеристикам и золотая аура',
@@ -68,7 +75,7 @@ export const RANKS = [
   }
 ];
 
-export function getRankByMaxFloor(maxFloor) {
+export function getRankByMaxFloor(maxFloor = 1) {
   let current = RANKS[0];
   for (const r of RANKS) {
     if (maxFloor >= r.minFloor) {
