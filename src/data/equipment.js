@@ -1,10 +1,10 @@
 // Equipment & Inventory System for Hunter Tower
 // 4 Slots: Weapon, Armor, Helmet, Accessory
 // Total 400 Equipment Items (100 per slot: 25 Common, 25 Rare, 25 Epic, 25 Legendary)
-import { WEAPONS } from './equipment/weapons';
-import { ARMORS } from './equipment/armors';
-import { HELMETS } from './equipment/helmets';
-import { ACCESSORIES } from './equipment/accessories';
+import { WEAPONS } from './equipment/weapons.js';
+import { ARMORS } from './equipment/armors.js';
+import { HELMETS } from './equipment/helmets.js';
+import { ACCESSORIES } from './equipment/accessories.js';
 
 export const RARITIES = {
   common: {
@@ -143,11 +143,13 @@ export function getEquipmentUpgradeCost(itemTemplate, currentLevel = 1) {
   const rarity = RARITIES[itemTemplate.rarity] || RARITIES.common;
   const mult = rarity.costMult || 1.0;
 
-  // Gold: 40 at lvl 1, scaling by 1.34
-  const gold = Math.floor(40 * Math.pow(1.34, currentLevel - 1) * mult);
+  // Gold: 60 at lvl 1 (increased 1.5x from 40), scaling by 1.34 across all rarities
+  const gold = Math.floor(60 * Math.pow(1.34, currentLevel - 1) * mult);
 
-  // Crystals: starts at level 2+, scales slowly
-  const crystals = currentLevel >= 2
+  // Crystals: common items NEVER cost crystals to upgrade (0 crystals at all levels)
+  // Rare, Epic and Legendary require crystals starting from level 2+
+  const isCommon = itemTemplate.rarity === 'common';
+  const crystals = (!isCommon && currentLevel >= 2)
     ? Math.max(1, Math.floor(Math.pow(1.24, currentLevel - 2) * mult))
     : 0;
 
