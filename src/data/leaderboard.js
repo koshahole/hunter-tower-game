@@ -1,4 +1,4 @@
-// Leaderboard Dataset and Dynamic Live Sync
+// Leaderboard Dataset and Dynamic Live Sync with Upstash Redis
 export const MOCK_LEADERS_ALL_TIME = [
   { rank: 1, id: 1001, name: 'SungJinWoo', title: 'Теневой Монарх', maxFloor: 98, avatar: '👑', vip: true, souls: 142 },
   { rank: 2, id: 1002, name: 'ArisenOne', title: 'Паладин Света', maxFloor: 84, avatar: '⚔️', vip: true, souls: 95 },
@@ -21,38 +21,54 @@ export const MOCK_LEADERS_WEEKLY = [
 // Fetch or submit real player score to live leaderboard
 export async function syncLeaderboard(playerData) {
   try {
+    const isPost = Boolean(playerData && (playerData.id || playerData.name));
     const res = await fetch('/api/leaderboard', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(playerData)
+      method: isPost ? 'POST' : 'GET',
+      headers: isPost ? { 'Content-Type': 'application/json' } : {},
+      body: isPost ? JSON.stringify(playerData) : undefined
     });
-    const data = await res.json();
-    if (data.ok && Array.isArray(data.leaders)) {
-      return data.leaders;
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.ok && Array.isArray(data.leaders)) {
+        return {
+          leaders: data.leaders,
+          weekly: Array.isArray(data.weekly) ? data.weekly : MOCK_LEADERS_WEEKLY
+        };
+      }
     }
   } catch (err) {
     console.warn('Leaderboard API sync offline, using local merged list:', err);
   }
 
-  // Fallback: merge locally
+  // Fallback: merge locally if offline or local dev without server
   const list = [...MOCK_LEADERS_ALL_TIME];
-  const idx = list.findIndex(p => p.id === playerData.id || p.name === playerData.name);
-  const record = {
-    id: playerData.id || 777,
-    name: playerData.name || 'Охотник',
-    title: playerData.title || 'Искатель Башни',
-    avatar: playerData.avatar || '🧙‍♂️',
-    maxFloor: Math.max(1, playerData.maxFloor || 1),
-    souls: Math.max(0, playerData.souls || 0),
-    vip: Boolean(playerData.vip),
-  };
+  if (playerData) {
+    const idx = list.findIndex(p => p.id === playerData.id || p.name === playerData.name);
+    const record = {
+      id: playerData.id || 777,
+      name: playerData.name || 'Охотник',
+      title: playerData.title || 'Искатель Башни',
+      avatar: playerData.avatar || '🧙‍♂️',
+      maxFloor: Math.max(1, playerData.maxFloor || 1),
+      souls: Math.max(0, playerData.souls || 0),
+      vip: Boolean(playerData.vip),
+      points: (playerData.maxFloor || 1) * 100 + (playerData.souls || 0) * 10 + (playerData.vip ? 500 : 0)
+    };
 
-  if (idx >= 0) {
-    list[idx] = { ...list[idx], ...record };
-  } else {
-    list.push(record);
+    if (idx >= 0) {
+      list[idx] = { ...list[idx], ...record };
+    } else {
+      list.push(record);
+    }
   }
 
   list.sort((a, b) => b.maxFloor - a.maxFloor);
-  return list.map((p, i) => ({ ...p, rank: i + 1 }));
+  const leaders = list.map((p, i) => ({ ...p, rank: i + 1 }));
+
+  const weeklyList = [...list]
+    .sort((a, b) => (b.points || 0) - (a.points || 0))
+    .slice(0, 50)
+    .map((p, i) => ({ ...p, rank: i + 1 }));
+
+  return { leaders, weekly: weeklyList };
 }

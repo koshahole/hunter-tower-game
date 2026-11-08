@@ -1,43 +1,65 @@
-import React, { useState, useEffect } from 'react';
-import { Trophy, X, Crown } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Trophy, X, Crown, RotateCw } from 'lucide-react';
 import { MOCK_LEADERS_ALL_TIME, MOCK_LEADERS_WEEKLY, syncLeaderboard } from '../data/leaderboard';
+import { hapticImpact } from '../utils/telegram';
 
 export default function LeaderboardModal({ state, user, onClose }) {
   const [tab, setTab] = useState('all');
-  const [leaders, setLeaders] = useState(MOCK_LEADERS_ALL_TIME);
+  const [allLeaders, setAllLeaders] = useState(MOCK_LEADERS_ALL_TIME);
+  const [weeklyLeaders, setWeeklyLeaders] = useState(MOCK_LEADERS_WEEKLY);
+  const [isLoading, setIsLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
-  useEffect(() => {
-    if (tab === 'weekly') {
-      setLeaders(MOCK_LEADERS_WEEKLY);
-      return;
+  const fetchLiveLeaderboard = useCallback(async (manual = false) => {
+    if (manual) {
+      hapticImpact('medium');
     }
+    setIsLoading(true);
 
-    // Sync real player record to live leaderboard
     const playerData = {
-      id: user.id || 777,
-      name: state.hunterName || user.name || 'Охотник',
+      id: user?.id || 777,
+      name: state.hunterName || user?.name || 'Охотник',
       title: state.hunterTitle || 'Искатель Башни',
       avatar: state.hunterAvatar || '🧙‍♂️',
-      maxFloor: state.maxFloor || 1,
-      souls: state.souls || 0,
+      maxFloor: Math.max(1, state.maxFloor || 1),
+      souls: Math.max(0, state.souls || 0),
       vip: Boolean(state.vip)
     };
 
-    syncLeaderboard(playerData).then(liveList => {
-      if (liveList && liveList.length > 0) {
-        setLeaders(liveList);
+    try {
+      const data = await syncLeaderboard(playerData);
+      if (data) {
+        if (Array.isArray(data.leaders) && data.leaders.length > 0) {
+          setAllLeaders(data.leaders);
+        }
+        if (Array.isArray(data.weekly) && data.weekly.length > 0) {
+          setWeeklyLeaders(data.weekly);
+        }
+        setLastUpdated(new Date());
       }
-    });
-  }, [tab, state.maxFloor, state.souls, state.hunterName, state.hunterAvatar, state.hunterTitle, state.vip, user.id, user.name]);
+    } catch (err) {
+      console.warn('Leaderboard fetch error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user?.id, user?.name, state.hunterName, state.hunterTitle, state.hunterAvatar, state.maxFloor, state.souls, state.vip]);
 
-  const playerFloor = state.maxFloor || 1;
-  const playerRankItem = leaders.find(l => l.id === user.id || l.name === (state.hunterName || user.name));
-  const playerRank = playerRankItem ? playerRankItem.rank : 1;
+  useEffect(() => {
+    fetchLiveLeaderboard(false);
+  }, [fetchLiveLeaderboard]);
+
+  const displayedList = tab === 'weekly' ? weeklyLeaders : allLeaders;
+  const currentLeaderName = state.hunterName || user?.name;
+  const playerRankItem = displayedList.find(
+    l => (l.id && user?.id && String(l.id) === String(user.id)) ||
+         (l.name && currentLeaderName && l.name.toLowerCase() === currentLeaderName.toLowerCase())
+  );
+  const playerRank = playerRankItem ? playerRankItem.rank : (displayedList.length + 1);
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-3 animate-fadeIn font-sans select-none">
       <div className="bg-white border-4 border-black p-4 shadow-brutal-lg max-w-sm w-full max-h-[90vh] flex flex-col">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b-3 border-black">
           <div className="flex items-center gap-2">
@@ -48,46 +70,67 @@ export default function LeaderboardModal({ state, user, onClose }) {
               <h2 className="font-arcade text-base text-black uppercase leading-tight">
                 ЗАЛ СЛАВЫ
               </h2>
-              <p className="text-[10px] font-bold text-slate-700 uppercase">
-                ТОП ПОКОРИТЕЛЕЙ БАШНИ
-              </p>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <p className="text-[10px] font-bold text-slate-700 uppercase">
+                  {lastUpdated ? 'ОНЛАЙН РЕЙТИНГ' : 'ТОП ПОКОРИТЕЛЕЙ'}
+                </p>
+              </div>
             </div>
           </div>
 
-          <button 
-            onClick={onClose}
-            className="w-8 h-8 bg-black text-white flex items-center justify-center font-arcade text-xs active:translate-x-[1px] active:translate-y-[1px]"
-          >
-            <X className="w-4 h-4 stroke-[3]" />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => fetchLiveLeaderboard(true)}
+              disabled={isLoading}
+              title="Обновить список"
+              className="w-8 h-8 bg-neo-yellow hover:bg-yellow-300 text-black border-2 border-black flex items-center justify-center shadow-brutal-xs active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50"
+            >
+              <RotateCw className={`w-4 h-4 stroke-[2.5] ${isLoading ? 'animate-spin' : ''}`} />
+            </button>
+
+            <button
+              onClick={onClose}
+              className="w-8 h-8 bg-black hover:bg-slate-800 text-white flex items-center justify-center font-arcade text-xs active:translate-x-[1px] active:translate-y-[1px]"
+            >
+              <X className="w-4 h-4 stroke-[3]" />
+            </button>
+          </div>
         </div>
 
         {/* Tab Selector */}
         <div className="grid grid-cols-2 gap-1.5 p-1 bg-black border-2 border-black my-3">
           <button
-            onClick={() => setTab('all')}
-            className={`py-1.5 font-arcade text-xs uppercase transition-all ${
+            onClick={() => {
+              hapticImpact('light');
+              setTab('all');
+            }}
+            className={`py-1.5 font-arcade text-xs uppercase transition-all flex items-center justify-center gap-1.5 ${
               tab === 'all'
                 ? 'bg-neo-yellow text-black'
                 : 'text-white hover:text-neo-yellow'
             }`}
           >
-            ВСЕ ВРЕМЯ
+            <span>ВСЕ ВРЕМЯ</span>
           </button>
 
           <button
-            onClick={() => setTab('weekly')}
-            className={`py-1.5 font-arcade text-xs uppercase transition-all ${
+            onClick={() => {
+              hapticImpact('light');
+              setTab('weekly');
+            }}
+            className={`py-1.5 font-arcade text-xs uppercase transition-all flex items-center justify-center gap-1.5 ${
               tab === 'weekly'
                 ? 'bg-neo-pink text-white'
                 : 'text-white hover:text-neo-pink'
             }`}
           >
-            ТУРНИР
+            <span>ТУРНИР</span>
+            <span className="text-[9px] bg-black/40 px-1 rounded">PTS</span>
           </button>
         </div>
 
-        {/* Player Standing Card with VIP frame support */}
+        {/* Player Standing Card */}
         <div className={`p-3 flex items-center justify-between gap-2 shadow-brutal-sm mb-3 border-3 ${
           state.vip
             ? 'bg-neo-yellow border-neo-pink ring-2 ring-black'
@@ -100,7 +143,7 @@ export default function LeaderboardModal({ state, user, onClose }) {
             <div className="min-w-0">
               <div className="flex items-center gap-1">
                 <span className="font-arcade text-xs text-black truncate uppercase">
-                  {state.hunterName || user.name} (ВЫ)
+                  {state.hunterName || user?.name || 'Охотник'} (ВЫ)
                 </span>
                 {state.vip && (
                   <span className="bg-neo-pink text-white border border-black text-[9px] font-black px-1 flex items-center gap-0.5 shrink-0">
@@ -117,16 +160,26 @@ export default function LeaderboardModal({ state, user, onClose }) {
 
           <div className="text-right shrink-0">
             <span className="font-arcade text-xs text-black block">
-              {state.maxFloor} ЭТАЖ
+              {state.maxFloor || 1} ЭТАЖ
             </span>
+            {tab === 'weekly' && (
+              <span className="font-arcade text-[10px] text-neo-pink block">
+                {((state.maxFloor || 1) * 100 + (state.souls || 0) * 10 + (state.vip ? 500 : 0))} PTS
+              </span>
+            )}
+            {tab === 'all' && (state.souls || 0) > 0 && (
+              <span className="font-arcade text-[10px] text-neo-purple block">
+                {state.souls} 🔮
+              </span>
+            )}
           </div>
         </div>
 
         {/* Leaders List */}
         <div className="flex-1 overflow-y-auto space-y-2 pr-0.5">
-          {leaders.map((leader) => (
+          {displayedList.map((leader, idx) => (
             <div
-              key={leader.name}
+              key={`${leader.id || leader.name}_${idx}`}
               className={`border-3 border-black p-2.5 flex items-center justify-between gap-2 shadow-brutal-sm ${
                 leader.vip ? 'bg-amber-50 ring-1 ring-amber-400' : 'bg-white'
               }`}
@@ -139,7 +192,7 @@ export default function LeaderboardModal({ state, user, onClose }) {
                 </div>
 
                 <div className="text-xl shrink-0">
-                  {leader.avatar}
+                  {leader.avatar || '🧙‍♂️'}
                 </div>
 
                 <div className="min-w-0">
@@ -152,7 +205,7 @@ export default function LeaderboardModal({ state, user, onClose }) {
                     )}
                   </div>
                   <div className="text-[10px] font-bold text-slate-600 truncate uppercase">
-                    {leader.title}
+                    {leader.title || 'Искатель'}
                   </div>
                 </div>
               </div>
@@ -161,14 +214,14 @@ export default function LeaderboardModal({ state, user, onClose }) {
                 <span className="font-arcade text-xs text-black block">
                   {leader.maxFloor} ЭТ.
                 </span>
-                {leader.souls && (
-                  <span className="font-arcade text-[10px] text-neo-purple block">
-                    {leader.souls} 🔮
-                  </span>
-                )}
-                {leader.points && (
+                {tab === 'weekly' && leader.points !== undefined && (
                   <span className="font-arcade text-[10px] text-neo-pink block">
                     {leader.points} PTS
+                  </span>
+                )}
+                {tab === 'all' && leader.souls !== undefined && leader.souls > 0 && (
+                  <span className="font-arcade text-[10px] text-neo-purple block">
+                    {leader.souls} 🔮
                   </span>
                 )}
               </div>

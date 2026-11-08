@@ -19,6 +19,7 @@ import { PETS, getPetStats, rollPetGacha } from './data/pets';
 import { getRankByMaxFloor } from './data/ranks';
 import { REBIRTH_PERKS } from './data/rebirth';
 import { rollBossRelics } from './data/artifacts';
+import { syncLeaderboard } from './data/leaderboard';
 import { Swords, Shield, Sparkles, Star, Trophy, Home } from 'lucide-react';
 
 export default function App() {
@@ -64,6 +65,18 @@ export default function App() {
 
   useEffect(() => {
     initTelegram();
+
+    // Auto-sync player initial standing to online leaderboard
+    syncLeaderboard({
+      id: user?.id || 777,
+      name: state.hunterName || user?.name || 'Охотник',
+      title: state.hunterTitle || 'Искатель Башни',
+      avatar: state.hunterAvatar || '🧙‍♂️',
+      maxFloor: Math.max(1, state.maxFloor || 1),
+      souls: Math.max(0, state.souls || 0),
+      vip: Boolean(state.vip)
+    }).catch(() => {});
+
     // Cross-Device Sync: fetch from Telegram CloudStorage
     loadFromCloudStorage((cloudState) => {
       setState(prev => {
@@ -364,6 +377,17 @@ export default function App() {
       };
     });
 
+    // Auto-sync high score to global Upstash leaderboard
+    syncLeaderboard({
+      id: user?.id || 777,
+      name: state.hunterName || user?.name || 'Охотник',
+      title: state.hunterTitle || 'Искатель Башни',
+      avatar: state.hunterAvatar || '🧙‍♂️',
+      maxFloor: Math.max(state.maxFloor || 1, floor),
+      souls: state.souls || 0,
+      vip: Boolean(state.vip)
+    }).catch(() => {});
+
     // Show Run Summary screen in Hub
     setRunSummary({ ...tracker });
     setView('hub');
@@ -532,10 +556,23 @@ export default function App() {
   };
 
   const handleSaveProfile = (customData) => {
-    setState(prev => ({
-      ...prev,
-      ...customData
-    }));
+    setState(prev => {
+      const updated = {
+        ...prev,
+        ...customData
+      };
+      // Sync customized profile to live leaderboard
+      syncLeaderboard({
+        id: user?.id || 777,
+        name: updated.hunterName || user?.name || 'Охотник',
+        title: updated.hunterTitle || 'Искатель Башни',
+        avatar: updated.hunterAvatar || '🧙‍♂️',
+        maxFloor: Math.max(1, updated.maxFloor || 1),
+        souls: Math.max(0, updated.souls || 0),
+        vip: Boolean(updated.vip)
+      }).catch(() => {});
+      return updated;
+    });
   };
 
   const handleStarsPurchaseSuccess = (action) => {

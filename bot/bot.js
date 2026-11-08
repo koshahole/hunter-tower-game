@@ -4,6 +4,7 @@
 import http from 'http';
 import { Bot, InlineKeyboard } from 'grammy';
 import dotenv from 'dotenv';
+import leaderboardHandler from '../api/leaderboard.js';
 dotenv.config();
 
 const BOT_TOKEN = (process.env.BOT_TOKEN || '').trim();
@@ -124,6 +125,40 @@ const server = http.createServer(async (req, res) => {
         console.error('Invoice creation error:', err);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: false, error: err.message || 'Ошибка генерации инвойса' }));
+      }
+    });
+    return;
+  }
+
+  if (url.pathname === '/api/leaderboard') {
+    let bodyStr = '';
+    req.on('data', chunk => { bodyStr += chunk; });
+    req.on('end', async () => {
+      try {
+        let body = {};
+        if (bodyStr) {
+          try { body = JSON.parse(bodyStr); } catch {}
+        }
+        const mockReq = {
+          method: req.method,
+          body,
+          headers: req.headers
+        };
+        const mockRes = {
+          setHeader: (k, v) => res.setHeader(k, v),
+          status: (code) => ({
+            json: (payload) => {
+              res.writeHead(code, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify(payload));
+            },
+            end: () => res.end()
+          })
+        };
+        await leaderboardHandler(mockReq, mockRes);
+      } catch (err) {
+        console.error('Leaderboard local handler error:', err);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: err.message }));
       }
     });
     return;
