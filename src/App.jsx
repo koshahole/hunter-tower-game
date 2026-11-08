@@ -20,6 +20,7 @@ import { getRankByMaxFloor } from './data/ranks';
 import { REBIRTH_PERKS } from './data/rebirth';
 import { rollBossRelics } from './data/artifacts';
 import { syncLeaderboard } from './data/leaderboard';
+import { sounds } from './audio/soundEffects';
 import { Swords, Shield, Sparkles, Star, Trophy, Home } from 'lucide-react';
 
 export default function App() {
@@ -448,7 +449,12 @@ export default function App() {
       const inv = (prev.inventory || []).filter(id => id !== template.id);
       const equipped = { ...(prev.equipped || {}) };
       if (equipped[template.slot] === template.id) {
-        equipped[template.slot] = null;
+        if (template.slot === 'weapon') {
+          // If weapon was dismantled, auto fallback to indestructible starter weapon
+          equipped.weapon = inv.includes('rusty_dagger') ? 'rusty_dagger' : null;
+        } else {
+          equipped[template.slot] = null;
+        }
       }
       const levels = { ...(prev.equipmentLevels || {}) };
       delete levels[template.id];
@@ -462,7 +468,11 @@ export default function App() {
       };
     });
 
-    sounds.playCoin();
+    try {
+      sounds.playCoin?.();
+    } catch (e) {
+      console.warn('Audio playback error:', e);
+    }
     showToast(`ПРЕДМЕТ РАЗОБРАН: +${crystalsYield} 💎!`, 'stars');
   };
 

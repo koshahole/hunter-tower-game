@@ -527,7 +527,7 @@ export default function InventoryView({
 
       {/* Confirmation Modal for Salvaging / Dismantling Item */}
       {salvageConfirmItem && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white border-4 border-black p-4 shadow-brutal-lg max-w-xs w-full animate-in zoom-in-95">
             <div className="flex items-center gap-2 mb-2.5 pb-2.5 border-b-2 border-black">
               <span className="text-3xl shrink-0">{salvageConfirmItem.icon}</span>
