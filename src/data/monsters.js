@@ -7,8 +7,10 @@ export const BOSSES = {
     name: 'Король Гоблинов',
     title: 'Хозяин Заброшенных Залов',
     avatar: '👑👺',
-    hpMultiplier: 4.5,
-    atkMultiplier: 1.8,
+    hp: 1850,
+    atk: 50,
+    hpMultiplier: 1.65,
+    atkMultiplier: 1.07,
     specialSkill: 'Яростный Замах (двойной урон)',
     goldReward: 350,
     crystalReward: 15,
@@ -149,8 +151,8 @@ export function generateFloorMonsters(floor) {
   if (isBoss) {
     const bossData = BOSSES[floor] || BOSSES[100];
     // Bosses have significant HP and dangerous attack
-    const baseHp = Math.floor(450 * Math.pow(1.095, floor) * (bossData.hpMultiplier || 4.0));
-    const baseAtk = Math.floor(25 * Math.pow(1.065, floor) * (bossData.atkMultiplier || 1.8));
+    const baseHp = bossData.hp || Math.floor(450 * Math.pow(1.095, floor) * (bossData.hpMultiplier || 4.0));
+    const baseAtk = bossData.atk || Math.floor(25 * Math.pow(1.065, floor) * (bossData.atkMultiplier || 1.8));
 
     return [{
       id: `boss_${floor}`,
