@@ -175,9 +175,7 @@ export default function Battle({
         setMonsterHp(nextMon.maxHp);
         setMonsterGhostHp(nextMon.maxHp);
         setMonsterStunned(false);
-        setIsDefending(false);
         setIsAttacking(false);
-        tickCooldowns();
         addLog(`⚔️ В БОЙ ВСТУПАЕТ: ${nextMon.name}!`);
       }, 400);
 
@@ -253,6 +251,7 @@ export default function Battle({
 
     if (isCrit) {
       damage = Math.floor(damage * 1.9);
+      sounds.playCrit();
       addFloatingText(`💥 КРИТ! -${damage}`, 'crit', false);
     } else {
       addFloatingText(`⚡ -${damage}`, 'skill', false);
@@ -261,13 +260,15 @@ export default function Battle({
     setIsMonsterHurt(true);
     setTimeout(() => setIsMonsterHurt(false), 250);
 
-    if (skill.healRatio > 0) {
-      const healAmt = Math.floor(damage * skill.healRatio);
+    // Life-steal: combines skill inherent healRatio + player equipment/relic vampirism
+    const totalVampRatio = (skill.healRatio || 0) + ((playerStats.vampirism || 0) / 100);
+    if (totalVampRatio > 0) {
+      const healAmt = Math.max(1, Math.floor(damage * totalVampRatio));
       const newHp = Math.min(playerStats.maxHp, playerHp + healAmt);
       setPlayerHp(newHp);
       sounds.playHeal();
       addFloatingText(`+${healAmt} HP`, 'heal', true);
-      addLog(`ВАМПИРИЗМ: +${healAmt} HP!`);
+      addLog(`${skill.healRatio > 0 ? 'ВАМПИРИЗМ' : 'ПОХИЩЕНИЕ ЖИЗНИ'}: +${healAmt} HP!`);
     }
 
     if (skill.shieldRatio > 0) {
@@ -311,9 +312,6 @@ export default function Battle({
   };
 
   const monsterTurn = () => {
-    setIsMonsterAttacking(true);
-    setTimeout(() => setIsMonsterAttacking(false), 300);
-
     if (monsterStunned) {
       setMonsterStunned(false);
       sounds.playSkill();
@@ -323,11 +321,13 @@ export default function Battle({
       return;
     }
 
+    setIsMonsterAttacking(true);
+    setTimeout(() => setIsMonsterAttacking(false), 300);
+
     const isDodged = Math.random() * 100 < playerStats.dodgeChance;
     if (isDodged) {
       addFloatingText('УКЛОНЕНИЕ!', 'dodge', true);
       addLog(`УВОРОТ ОТ АТАКИ ВРАГА!`);
-      setIsDefending(false);
       setIsAttacking(false);
       return;
     }
@@ -473,6 +473,12 @@ export default function Battle({
           isMonsterHurt ? 'animate-shake scale-95 brightness-125' : ''
         } ${isMonsterAttacking ? 'animate-monster-lunge' : ''}`}>
 
+          {monsterStunned && (
+            <div className="absolute -top-7 bg-neo-yellow text-black border-2 border-black px-2.5 py-0.5 font-arcade text-[10px] shadow-brutal-sm uppercase z-20 animate-bounce">
+              ⚡ ОГЛУШЕН!
+            </div>
+          )}
+
           {currentMonster.isBoss && (
             <div className="absolute -top-3.5 bg-neo-pink text-white border-2 border-black px-3 py-0.5 font-arcade text-[10px] shadow-brutal-sm uppercase z-10">
               ГЛАВНЫЙ БОСС
@@ -547,6 +553,11 @@ export default function Battle({
           <div className="flex justify-between items-center mb-1 gap-2">
             <div className="flex items-center gap-1.5 min-w-0 overflow-x-auto scrollbar-none">
               <span className="font-arcade text-xs text-black uppercase shrink-0">ОХОТНИК</span>
+              {isDefending && (
+                <span className="bg-neo-cyan text-black border-2 border-black px-1.5 py-0.2 font-arcade text-[10px] shrink-0 shadow-brutal-sm animate-pulse">
+                  🛡️ БАРЬЕР (-70%)
+                </span>
+              )}
               {activePet && (
                 <span className="bg-neo-yellow text-black border-2 border-black px-1.5 py-0.2 font-arcade text-[10px] shrink-0">
                   {activePet.avatar} {activePet.name}
