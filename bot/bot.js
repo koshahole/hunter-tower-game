@@ -30,7 +30,7 @@ bot.command('start', async (ctx) => {
     welcomeExtra = `\n🎁 Вы пришли по приглашению охотника #${referrerId}! Бонусная энергия начислена.`;
   }
 
-  const name = ctx.from?.first_name || 'Охотник';
+  const name = ctx.from?.first_name ? ctx.from.first_name.replace(/[<>&]/g, '') : 'Охотник';
 
   const keyboard = new InlineKeyboard()
     .webApp('⚔️ НАЧАТЬ ВОСХОЖДЕНИЕ', WEBAPP_URL)
@@ -39,16 +39,16 @@ bot.command('start', async (ctx) => {
     .row();
 
   await ctx.reply(
-    `👋 Приветствую в Академии Охотников, **${name}**!${welcomeExtra}\n\n` +
+    `👋 Приветствую в Академии Охотников, <b>${name}</b>!${welcomeExtra}\n\n` +
     `Перед тобой Врата 100-этажной Башни Испытаний. Сможешь ли ты пройти сквозь орды монстров, сокрушить Боссов и апнуть легендарный S-ранг?\n\n` +
-    `⚡ **Что тебя ждет:**\n` +
+    `⚡ <b>Что тебя ждет:</b>\n` +
     `• Пошаговые бои и мощные комбо-навыки\n` +
     `• Питомцы-спутники с уникальными баффами\n` +
     `• Базовый лагерь для постоянной прокачки\n` +
     `• 100 этажей и 10 уникальных боссов\n\n` +
     `Нажми кнопку ниже, чтобы запустить игру прямо в Telegram! 👇`,
     {
-      parse_mode: 'Markdown',
+      parse_mode: 'HTML',
       reply_markup: keyboard
     }
   );
@@ -204,32 +204,51 @@ bot.on('pre_checkout_query', async (ctx) => {
 bot.on(':successful_payment', async (ctx) => {
   const payment = ctx.message.successful_payment;
   const starsPaid = payment.total_amount;
-  const payload = payment.invoice_payload;
+  const payload = payment.invoice_payload || '';
 
   console.log(`[STARS PURCHASE] User ${ctx.from.id} paid ${starsPaid} Stars for ${payload}`);
 
-  await ctx.reply(
-    `🎉 **Оплата успешно принята!**\n\n` +
-    `⭐️ Получено: **${starsPaid} Stars**\n` +
-    `📦 Товар: **${payload}**\n\n` +
-    `Награда уже зачислена в ваш инвентарь в игре! Возвращайтесь в Башню.`,
-    {
-      parse_mode: 'Markdown',
-      reply_markup: new InlineKeyboard().webApp('⚔️ Вернуться в игру', WEBAPP_URL)
+  // Resolve human-readable item title
+  let itemTitle = 'Игровой предмет';
+  for (const [key, val] of Object.entries(ITEMS)) {
+    if (payload.startsWith(key)) {
+      itemTitle = val.title;
+      break;
     }
-  );
+  }
+
+  try {
+    await ctx.reply(
+      `🎉 <b>Оплата успешно принята!</b>\n\n` +
+      `⭐️ Получено: <b>${starsPaid} Stars</b>\n` +
+      `📦 Товар: <b>${itemTitle}</b>\n\n` +
+      `Награда уже зачислена в ваш инвентарь в игре! Возвращайтесь в Башню.`,
+      {
+        parse_mode: 'HTML',
+        reply_markup: new InlineKeyboard().webApp('⚔️ Вернуться в игру', WEBAPP_URL)
+      }
+    );
+  } catch (err) {
+    console.error('Failed to send successful payment confirmation message:', err);
+  }
 });
 
 // Help command
 bot.command('help', async (ctx) => {
   await ctx.reply(
-    `📖 **Помощь по игре "Академия Охотников"**\n\n` +
-    `• **/start** — главное меню и запуск игры\n` +
-    `• **Энергия:** восстанавливается каждые 3 минуты (макс 5)\n` +
-    `• **Прокачка:** всё золото и кристаллы сохраняются в Оружейной\n` +
-    `• **Telegram Stars:** официальная валюта для покупок питомцев и воскрешений\n`,
-    { parse_mode: 'Markdown' }
+    `📖 <b>Помощь по игре "Академия Охотников"</b>\n\n` +
+    `• <b>/start</b> — главное меню и запуск игры\n` +
+    `• <b>Энергия:</b> восстанавливается каждые 3 минуты (макс 5)\n` +
+    `• <b>Прокачка:</b> всё золото и кристаллы сохраняются в Оружейной\n` +
+    `• <b>Telegram Stars:</b> официальная валюта для покупок питомцев и воскрешений\n`,
+    { parse_mode: 'HTML' }
   );
+});
+
+// Global error handler to prevent bot crash on Telegram API errors
+bot.catch((err) => {
+  const ctx = err.ctx;
+  console.error(`⚠️ [BOT ERROR] Ошибка при обработке update ${ctx?.update?.update_id}:`, err.error || err);
 });
 
 // Start bot polling if executed directly
