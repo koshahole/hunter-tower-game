@@ -170,6 +170,7 @@ export async function getPaymentsFromRedis() {
 
 // Dynamic Admin Storage in Redis
 const memoryAdmins = new Set();
+const DEFAULT_ADMINS = ['1316058958']; // Owner ID guaranteed fallback
 
 export async function getAdminsFromRedis() {
   const envAdmins = (process.env.ADMIN_IDS || '')
@@ -195,7 +196,7 @@ export async function getAdminsFromRedis() {
     }
   }
 
-  const combined = new Set([...envAdmins, ...redisAdmins, ...memoryAdmins]);
+  const combined = new Set([...DEFAULT_ADMINS, ...envAdmins, ...redisAdmins, ...memoryAdmins]);
   return Array.from(combined);
 }
 
