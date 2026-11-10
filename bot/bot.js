@@ -238,11 +238,40 @@ bot.command('help', async (ctx) => {
   await ctx.reply(
     `📖 <b>Помощь по игре "Академия Охотников"</b>\n\n` +
     `• <b>/start</b> — главное меню и запуск игры\n` +
+    `• <b>/gift &lt;user_id&gt;</b> — выдать VIP и Золотое Яйцо игроку\n` +
     `• <b>Энергия:</b> восстанавливается каждые 3 минуты (макс 5)\n` +
     `• <b>Прокачка:</b> всё золото и кристаллы сохраняются в Оружейной\n` +
     `• <b>Telegram Stars:</b> официальная валюта для покупок питомцев и воскрешений\n`,
     { parse_mode: 'HTML' }
   );
+});
+
+// Admin Gift command: /gift <chat_id>
+bot.command('gift', async (ctx) => {
+  const parts = (ctx.match || '').trim().split(/\s+/);
+  const targetId = parts[0] || ctx.from.id;
+
+  try {
+    const giftKeyboard = new InlineKeyboard()
+      .webApp('🎁 ЗАБРАТЬ VIP И ПИТОМЦА', `${WEBAPP_URL}?claim=vip_egg`)
+      .row();
+
+    await bot.api.sendMessage(
+      targetId,
+      `🎁 <b>Вам начислен подарок от Администрации Башни!</b>\n\n` +
+      `⭐️ <b>VIP-статус навсегда:</b> +25% к золоту и кристаллам, золотая корона в Зале Славы\n` +
+      `🥚 <b>Золотое Яйцо Гачи:</b> Редкий или Легендарный спутник в коллекцию\n\n` +
+      `Нажмите кнопку ниже, чтобы мгновенно забрать награды в игре! 👇`,
+      {
+        parse_mode: 'HTML',
+        reply_markup: giftKeyboard
+      }
+    );
+
+    await ctx.reply(`✅ Подарок успешно отправлен игроку <code>${targetId}</code>!`);
+  } catch (err) {
+    await ctx.reply(`❌ Ошибка отправки подарка игроку ${targetId}: ${err.message}`);
+  }
 });
 
 // Global error handler to prevent bot crash on Telegram API errors

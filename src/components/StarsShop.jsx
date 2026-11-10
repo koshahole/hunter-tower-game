@@ -1,9 +1,10 @@
-import React from 'react';
-import { Star, Zap, Heart, Crown, Gem, Egg, Sparkles, Shield, Package } from 'lucide-react';
+import React, { useState } from 'react';
+import { Star, Zap, Heart, Crown, Gem, Egg, Sparkles, Shield, Package, Gift } from 'lucide-react';
 import { sounds } from '../audio/soundEffects';
 import { hapticImpact, hapticNotification, openStarsInvoice } from '../utils/telegram';
 
-export default function StarsShop({ state, onPurchaseSuccess, onShowToast }) {
+export default function StarsShop({ state, onPurchaseSuccess, onShowToast, onApplyPromo }) {
+  const [promoCode, setPromoCode] = useState('');
 
   const SHOP_ITEMS = [
     {
@@ -180,6 +181,37 @@ export default function StarsShop({ state, onPurchaseSuccess, onShowToast }) {
             </div>
           );
         })}
+      </div>
+
+      {/* Promo Code & Gift Code Section */}
+      <div className="bg-white border-4 border-black p-4 shadow-brutal space-y-2 mt-4">
+        <div className="flex items-center gap-2">
+          <Gift className="w-5 h-5 text-black stroke-[3]" />
+          <h3 className="font-arcade text-xs text-black uppercase">ПРОМОКОД ИЛИ ПОДАРОЧНЫЙ КОД</h3>
+        </div>
+        <p className="text-[11px] font-bold text-slate-700 uppercase">
+          ВВЕДИТЕ ПРОМОКОД ДЛЯ МГНОВЕННОГО ПОЛУЧЕНИЯ НАГРАД И VIP-СТАТУСА:
+        </p>
+        <div className="flex gap-2 pt-1">
+          <input
+            type="text"
+            value={promoCode}
+            onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+            placeholder="НАПРИМЕР: VIP-EGG"
+            className="flex-1 bg-neo-cream border-3 border-black px-3 py-2 font-mono text-xs font-black uppercase tracking-wider text-black placeholder:text-slate-400 focus:outline-none"
+          />
+          <button
+            onClick={() => {
+              if (onApplyPromo && promoCode.trim()) {
+                const ok = onApplyPromo(promoCode.trim());
+                if (ok) setPromoCode('');
+              }
+            }}
+            className="bg-neo-lime border-3 border-black font-arcade text-xs px-4 py-2 uppercase shadow-brutal active:translate-x-[2px] active:translate-y-[2px] active:shadow-brutal-press whitespace-nowrap"
+          >
+            АКТИВИРОВАТЬ
+          </button>
+        </div>
       </div>
 
     </div>

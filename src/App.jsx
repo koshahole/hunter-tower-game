@@ -21,6 +21,7 @@ import { REBIRTH_PERKS } from './data/rebirth';
 import { rollBossRelics } from './data/artifacts';
 import { syncLeaderboard } from './data/leaderboard';
 import { sounds } from './audio/soundEffects';
+import confetti from 'canvas-confetti';
 import { Swords, Shield, Sparkles, Star, Trophy, Home } from 'lucide-react';
 
 export default function App() {
@@ -94,6 +95,47 @@ export default function App() {
         return prev;
       });
     });
+  }, []);
+
+  // Auto-claim bonus or gifts passed via Telegram link (e.g. ?claim=vip_egg or start_param: gift_vip_egg)
+  useEffect(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const startParam = (window.Telegram?.WebApp?.initDataUnsafe?.start_param || '').toLowerCase();
+      const claimParam = (urlParams.get('claim') || urlParams.get('gift') || '').toLowerCase();
+      const target = claimParam || startParam;
+
+      if (target && (target.includes('vip') || target.includes('egg') || target.includes('gift'))) {
+        const claimKey = `hunter_claimed_${target}`;
+        if (!localStorage.getItem(claimKey)) {
+          localStorage.setItem(claimKey, 'true');
+
+          setTimeout(() => {
+            if (target.includes('vip') || target.includes('gift')) {
+              setState(prev => ({
+                ...prev,
+                vip: true,
+                crystals: prev.crystals + 50,
+                gold: prev.gold + 1000
+              }));
+            }
+            if (target.includes('egg') || target.includes('gift')) {
+              const pet = rollPetGacha();
+              if (pet) {
+                handleUnlockPet(pet.id);
+                handleEquipPet(pet.id);
+              }
+            }
+
+            confetti({ particleCount: 90, spread: 75, origin: { y: 0.6 } });
+            sounds.playStarsPurchase();
+            showToast('🎁 ПОДАРОК АКТИВИРОВАН: VIP-СТАТУС И ЗОЛОТОЕ ЯЙЦО! 👑', 'stars');
+          }, 800);
+        }
+      }
+    } catch (e) {
+      console.warn('Auto-claim gift error:', e);
+    }
   }, []);
 
   // Update timer cycle every second to keep 3-min countdown accurate
@@ -690,6 +732,64 @@ export default function App() {
     }
   };
 
+  const handleApplyPromo = (rawCode) => {
+    const code = (rawCode || '').trim().toUpperCase();
+    if (!code) return false;
+
+    const claimedKey = `hunter_promo_${code}`;
+    if (localStorage.getItem(claimedKey)) {
+      showToast('ЭТОТ ПРОМОКОД УЖЕ ИСПОЛЬЗОВАН!', 'warning');
+      return false;
+    }
+
+    if (code === 'VIP-EGG' || code === 'MINATO' || code === 'GIFT-VIP-EGG' || code === 'VIP2026') {
+      localStorage.setItem(claimedKey, 'true');
+      setState(prev => ({
+        ...prev,
+        vip: true,
+        crystals: prev.crystals + 100,
+        gold: prev.gold + 2500
+      }));
+
+      // Roll and equip pet
+      const pet = rollPetGacha();
+      if (pet) {
+        handleUnlockPet(pet.id);
+        handleEquipPet(pet.id);
+      }
+
+      confetti({ particleCount: 90, spread: 75, origin: { y: 0.6 } });
+      sounds.playStarsPurchase();
+      showToast('🎉 VIP-СТАТУС И ЗОЛОТОЕ ЯЙЦО НАЧИСЛЕНЫ! 👑', 'stars');
+      return true;
+    }
+
+    if (code === 'VIP' || code === 'HUNTER-VIP') {
+      localStorage.setItem(claimedKey, 'true');
+      setState(prev => ({ ...prev, vip: true }));
+      confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+      sounds.playStarsPurchase();
+      showToast('👑 VIP-СТАТУС НАВСЕГДА АКТИВИРОВАН!', 'stars');
+      return true;
+    }
+
+    if (code === 'EGG' || code === 'PET-GIFT') {
+      localStorage.setItem(claimedKey, 'true');
+      const pet = rollPetGacha();
+      if (pet) {
+        handleUnlockPet(pet.id);
+        handleEquipPet(pet.id);
+      }
+      confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+      sounds.playStarsPurchase();
+      showToast('🥚 ЗОЛОТОЕ ЯЙЦО ГАЧИ АКТИВИРОВАНО!', 'stars');
+      return true;
+    }
+
+    showToast('НЕВЕРНЫЙ ИЛИ ИСТЕКШИЙ ПРОМОКОД!', 'error');
+    return false;
+  };
+
   const handleOpenReviveModal = (confirmCallback) => {
     setReviveModal({
       isOpen: true,
@@ -774,6 +874,7 @@ export default function App() {
                 state={state}
                 onPurchaseSuccess={handleStarsPurchaseSuccess}
                 onShowToast={showToast}
+                onApplyPromo={handleApplyPromo}
               />
             )}
           </div>
