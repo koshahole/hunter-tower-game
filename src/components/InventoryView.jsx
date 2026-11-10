@@ -26,6 +26,7 @@ import {
 } from '../data/equipment';
 import { sounds } from '../audio/soundEffects';
 import { hapticImpact, hapticNotification } from '../utils/telegram';
+import { GameIcon, CurrencyIcon, EquipmentIcon, RelicIcon } from './icons';
 
 export default function InventoryView({
   state,
@@ -154,7 +155,7 @@ export default function InventoryView({
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div>
             <h2 className="font-arcade text-base text-black flex items-center gap-2 uppercase">
-              <span>🎒</span>
+              <GameIcon icon="backpack" size="sm" inline />
               <span>ИНВЕНТАРЬ И ЭКИПИРОВКА</span>
             </h2>
             <p className="text-[11px] font-bold text-slate-700 mt-0.5 uppercase">
@@ -164,17 +165,19 @@ export default function InventoryView({
 
           {/* Currency Badges */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            <div className="bg-neo-yellow border-2 border-black px-2 py-0.5 font-arcade text-xs text-black shadow-brutal-sm">
-              🪙 {state.gold}
+            <div className="bg-neo-yellow border-2 border-black px-2 py-0.5 font-arcade text-xs text-black shadow-brutal-sm inline-flex items-center gap-1">
+              <CurrencyIcon type="gold" size="xs" inline />
+              <span>{state.gold}</span>
             </div>
-            <div className="bg-neo-cyan border-2 border-black px-2 py-0.5 font-arcade text-xs text-black shadow-brutal-sm">
-              💎 {state.crystals}
+            <div className="bg-neo-cyan border-2 border-black px-2 py-0.5 font-arcade text-xs text-black shadow-brutal-sm inline-flex items-center gap-1">
+              <CurrencyIcon type="crystal" size="xs" inline />
+              <span>{state.crystals}</span>
             </div>
           </div>
         </div>
 
         <div className="bg-neo-cream border-2 border-black px-2.5 py-1.5 text-[11px] font-bold text-slate-800 leading-snug">
-          💡 Кристаллы 💎 падают с Боссов каждые 10 этажей и даются за разбор лишних вещей (+1/+3/+10/+30 💎).
+          💡 Кристаллы <CurrencyIcon type="crystal" size="xs" inline /> падают с Боссов каждые 10 этажей и даются за разбор лишних вещей (+1/+3/+10/+30 <CurrencyIcon type="crystal" size="xs" inline />).
         </div>
       </div>
 
@@ -209,8 +212,9 @@ export default function InventoryView({
               >
                 {/* Slot Tag */}
                 <div className="flex items-center justify-between gap-1 w-full mb-1.5">
-                  <span className="font-arcade text-[11px] text-slate-700 uppercase">
-                    {slotInfo.icon} {slotInfo.name}
+                  <span className="font-arcade text-[11px] text-slate-700 uppercase inline-flex items-center gap-1">
+                    <EquipmentIcon slot={slotKey} size="xs" inline />
+                    <span>{slotInfo.name}</span>
                   </span>
                   {template && (
                     <span className="bg-neo-pink text-white font-arcade text-[11px] px-1.5 py-0.2 border border-black shadow-brutal-press">
@@ -222,7 +226,9 @@ export default function InventoryView({
                 {template ? (
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl shrink-0">{template.icon}</span>
+                      <span className="w-8 h-8 shrink-0 flex items-center justify-center">
+                        <EquipmentIcon item={template} size="md" />
+                      </span>
                       <div className="min-w-0">
                         <div className="font-arcade text-xs text-black truncate uppercase">
                           {template.name}
@@ -243,7 +249,9 @@ export default function InventoryView({
                   </div>
                 ) : (
                   <div className="py-3 text-center">
-                    <span className="text-2xl text-slate-400 block mb-1">{slotInfo.icon}</span>
+                    <span className="w-8 h-8 mx-auto flex items-center justify-center opacity-40 mb-1">
+                      <EquipmentIcon slot={slotKey} size="md" />
+                    </span>
                     <span className="font-arcade text-[11px] text-slate-500 uppercase block">ПУСТО</span>
                     <span className="text-[11px] font-bold text-slate-500 block">показать в сумке</span>
                   </div>
@@ -255,20 +263,44 @@ export default function InventoryView({
 
         {/* Aggregate Gear Stats Bar */}
         <div className="mt-2.5 pt-2 border-t-2 border-black flex items-center justify-around gap-1.5 flex-wrap font-arcade text-[11px] text-black">
-          {totalGearStats.atk > 0 && <span className="bg-neo-pink text-white px-1.5 py-0.5 border border-black">⚔️ +{Math.round(totalGearStats.atk)}</span>}
-          {totalGearStats.maxHp > 0 && <span className="bg-neo-lime text-black px-1.5 py-0.5 border border-black">❤️ +{Math.round(totalGearStats.maxHp)}</span>}
-          {totalGearStats.critChance > 0 && <span className="bg-neo-yellow text-black px-1.5 py-0.5 border border-black">🎯 +{Math.round(totalGearStats.critChance * 10) / 10}%</span>}
-          {totalGearStats.dodgeChance > 0 && <span className="bg-neo-cyan text-black px-1.5 py-0.5 border border-black">💨 +{Math.round(totalGearStats.dodgeChance * 10) / 10}%</span>}
+          {totalGearStats.atk > 0 && (
+            <span className="bg-neo-pink text-white px-1.5 py-0.5 border border-black inline-flex items-center gap-1">
+              <GameIcon icon="crossed_swords" size="xs" inline /> +{Math.round(totalGearStats.atk)}
+            </span>
+          )}
+          {totalGearStats.maxHp > 0 && (
+            <span className="bg-neo-lime text-black px-1.5 py-0.5 border border-black inline-flex items-center gap-1">
+              <GameIcon icon="heart" size="xs" inline /> +{Math.round(totalGearStats.maxHp)}
+            </span>
+          )}
+          {totalGearStats.critChance > 0 && (
+            <span className="bg-neo-yellow text-black px-1.5 py-0.5 border border-black inline-flex items-center gap-1">
+              <GameIcon icon="target" size="xs" inline /> +{Math.round(totalGearStats.critChance * 10) / 10}%
+            </span>
+          )}
+          {totalGearStats.dodgeChance > 0 && (
+            <span className="bg-neo-cyan text-black px-1.5 py-0.5 border border-black inline-flex items-center gap-1">
+              <GameIcon icon="wind" size="xs" inline /> +{Math.round(totalGearStats.dodgeChance * 10) / 10}%
+            </span>
+          )}
           {totalGearStats.vampirism > 0 && (() => {
             const vampPct = pctRound(totalGearStats.vampirism);
             return (
-              <span className="bg-red-400 text-white px-1.5 py-0.5 border border-black">
-                🩸 +{vampPct > 60 ? `60% (кап от ${vampPct}%)` : `${vampPct}%${vampPct === 60 ? ' (кап)' : ''}`}
+              <span className="bg-red-400 text-white px-1.5 py-0.5 border border-black inline-flex items-center gap-1">
+                <GameIcon icon="blood" size="xs" inline /> +{vampPct > 60 ? `60% (кап от ${vampPct}%)` : `${vampPct}%${vampPct === 60 ? ' (кап)' : ''}`}
               </span>
             );
           })()}
-          {totalGearStats.goldBonus > 0 && <span className="bg-amber-300 text-black px-1.5 py-0.5 border border-black">🪙 +{pctRound(totalGearStats.goldBonus)}%</span>}
-          {totalGearStats.crystalBonus > 0 && <span className="bg-purple-200 text-black px-1.5 py-0.5 border border-black">💎 +{pctRound(totalGearStats.crystalBonus)}%</span>}
+          {totalGearStats.goldBonus > 0 && (
+            <span className="bg-amber-300 text-black px-1.5 py-0.5 border border-black inline-flex items-center gap-1">
+              <CurrencyIcon type="gold" size="xs" inline /> +{pctRound(totalGearStats.goldBonus)}%
+            </span>
+          )}
+          {totalGearStats.crystalBonus > 0 && (
+            <span className="bg-purple-200 text-black px-1.5 py-0.5 border border-black inline-flex items-center gap-1">
+              <CurrencyIcon type="crystal" size="xs" inline /> +{pctRound(totalGearStats.crystalBonus)}%
+            </span>
+          )}
         </div>
       </div>
 
@@ -281,7 +313,9 @@ export default function InventoryView({
         <div className="grid grid-cols-2 gap-2">
           {/* Potions Card */}
           <div className="bg-neo-lime border-3 border-black p-2.5 shadow-brutal-sm flex items-center gap-2.5">
-            <span className="text-3xl shrink-0">🧪</span>
+            <span className="w-8 h-8 shrink-0 flex items-center justify-center">
+              <CurrencyIcon type="potion" size="md" />
+            </span>
             <div className="min-w-0">
               <div className="font-arcade text-xs text-black uppercase leading-tight">
                 ЗЕЛЬЯ ЖИЗНИ ({state.potions || 0})
@@ -294,7 +328,9 @@ export default function InventoryView({
 
           {/* Revive Feathers Card */}
           <div className="bg-neo-yellow border-3 border-black p-2.5 shadow-brutal-sm flex items-center gap-2.5">
-            <span className="text-3xl shrink-0">🪶</span>
+            <span className="w-8 h-8 shrink-0 flex items-center justify-center">
+              <CurrencyIcon type="feather" size="md" />
+            </span>
             <div className="min-w-0">
               <div className="font-arcade text-xs text-black uppercase leading-tight">
                 ПЕРЬЯ ({state.reviveTokens || 0})
@@ -309,8 +345,9 @@ export default function InventoryView({
         {/* Active Run Relics (collected in current run) */}
         {runArtifacts && runArtifacts.length > 0 && (
           <div className="mt-2 pt-2 border-t-2 border-black">
-            <span className="font-arcade text-[11px] text-neo-purple uppercase block mb-1.5">
-              👑 АКТИВНЫЕ РЕЛИКВИИ ЭТОГО ЗАБЕГА:
+            <span className="font-arcade text-[11px] text-neo-purple uppercase mb-1.5 inline-flex items-center gap-1">
+              <GameIcon icon="crown" size="xs" inline />
+              <span>АКТИВНЫЕ РЕЛИКВИИ ЭТОГО ЗАБЕГА:</span>
             </span>
             <div className="flex items-center gap-1.5 flex-wrap">
               {runArtifacts.map((art, idx) => (
@@ -318,7 +355,7 @@ export default function InventoryView({
                   key={idx}
                   className="bg-white border-2 border-black px-2 py-1 shadow-brutal-sm flex items-center gap-1.5"
                 >
-                  <span className="text-base">{art.icon}</span>
+                  <RelicIcon relic={art} size="sm" />
                   <div className="min-w-0">
                     <span className="font-arcade text-[11px] text-black uppercase block truncate">
                       {art.name}
@@ -344,11 +381,11 @@ export default function InventoryView({
           {/* Category Filter Pills */}
           <div className="flex items-center gap-1 flex-wrap">
             {[
-              { id: 'all', label: 'ВСЕ' },
-              { id: 'weapon', label: '⚔️ ОРУЖИЕ' },
-              { id: 'armor', label: '🛡️ БРОНЯ' },
-              { id: 'helmet', label: '🪖 ШЛЕМ' },
-              { id: 'accessory', label: '💍 АМУЛЕТ' }
+              { id: 'all', label: 'ВСЕ', slot: null },
+              { id: 'weapon', label: 'ОРУЖИЕ', slot: 'weapon' },
+              { id: 'armor', label: 'БРОНЯ', slot: 'armor' },
+              { id: 'helmet', label: 'ШЛЕМ', slot: 'helmet' },
+              { id: 'accessory', label: 'АМУЛЕТ', slot: 'accessory' }
             ].map(f => (
               <button
                 key={f.id}
@@ -356,13 +393,14 @@ export default function InventoryView({
                   hapticImpact('light');
                   setFilterSlot(f.id);
                 }}
-                className={`px-2 py-1 border-2 border-black font-arcade text-[11px] uppercase shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] ${
+                className={`px-2 py-1 border-2 border-black font-arcade text-[11px] uppercase shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] inline-flex items-center gap-1 ${
                   filterSlot === f.id
                     ? 'bg-neo-pink text-white'
                     : 'bg-white text-black [@media(hover:hover)]:hover:bg-slate-100'
                 }`}
               >
-                {f.label}
+                {f.slot && <EquipmentIcon slot={f.slot} size="xs" inline />}
+                <span>{f.label}</span>
               </button>
             ))}
           </div>
@@ -392,8 +430,8 @@ export default function InventoryView({
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-10 h-10 bg-white border-2 border-black flex items-center justify-center text-xl shrink-0 shadow-brutal-sm">
-                        {template.icon}
+                      <div className="w-10 h-10 bg-white border-2 border-black flex items-center justify-center shrink-0 shadow-brutal-sm p-1">
+                        <EquipmentIcon item={template} size="full" />
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -472,7 +510,9 @@ export default function InventoryView({
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-2.5 border-b-3 border-black">
               <div className="flex items-center gap-2 min-w-0">
-                <span className="text-3xl shrink-0">{selectedItem.template.icon}</span>
+                <div className="w-10 h-10 bg-white border-2 border-black p-1 shrink-0 flex items-center justify-center shadow-brutal-sm">
+                  <EquipmentIcon item={selectedItem.template} size="full" />
+                </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
                     <h3 className="font-arcade text-sm text-black uppercase truncate">
@@ -593,8 +633,8 @@ export default function InventoryView({
                   >
                     <span>ЗАТОЧИТЬ (+1)</span>
                     <div className="flex items-center gap-2">
-                      <span>🪙 {gold}</span>
-                      {crystals > 0 && <span>💎 {crystals}</span>}
+                      <span className="inline-flex items-center gap-1"><CurrencyIcon type="gold" size="xs" inline /> {gold}</span>
+                      {crystals > 0 && <span className="inline-flex items-center gap-1"><CurrencyIcon type="crystal" size="xs" inline /> {crystals}</span>}
                     </div>
                   </button>
                 );
@@ -635,8 +675,8 @@ export default function InventoryView({
                     <Trash2 className="w-3.5 h-3.5" />
                     <span>РАЗОБРАТЬ</span>
                   </span>
-                  <span className="font-arcade text-xs font-black">
-                    +{getSalvageValue(selectedItem.template.rarity)} 💎
+                  <span className="font-arcade text-xs font-black inline-flex items-center gap-1">
+                    +{getSalvageValue(selectedItem.template.rarity)} <CurrencyIcon type="crystal" size="xs" inline />
                   </span>
                 </button>
               )}
@@ -651,7 +691,9 @@ export default function InventoryView({
         <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white border-4 border-black p-4 shadow-brutal-lg max-w-xs w-full animate-in zoom-in-95">
             <div className="flex items-center gap-2 mb-2.5 pb-2.5 border-b-2 border-black">
-              <span className="text-3xl shrink-0">{salvageConfirmItem.icon}</span>
+              <div className="w-10 h-10 bg-white border-2 border-black p-1 shrink-0 flex items-center justify-center shadow-brutal-sm">
+                <EquipmentIcon item={salvageConfirmItem} size="full" />
+              </div>
               <div className="min-w-0">
                 <h4 className="font-arcade text-xs text-black uppercase truncate">
                   {salvageConfirmItem.name}
@@ -668,8 +710,8 @@ export default function InventoryView({
 
             <p className="text-[11px] font-bold text-slate-700 mb-3.5 leading-snug bg-slate-100 p-2 border border-black">
               Предмет будет уничтожен безвозвратно. Вы получите{' '}
-              <span className="text-black font-black underline">
-                +{getSalvageValue(salvageConfirmItem.rarity)} 💎 Кристаллов
+              <span className="text-black font-black underline inline-flex items-center gap-1">
+                +{getSalvageValue(salvageConfirmItem.rarity)} <CurrencyIcon type="crystal" size="xs" inline /> Кристаллов
               </span>.
             </p>
 
@@ -683,9 +725,11 @@ export default function InventoryView({
                   setSalvageConfirmItem(null);
                   setSelectedItem(null); // Closes item detail modal automatically!
                 }}
-                className="w-full py-2.5 bg-neo-cyan [@media(hover:hover)]:hover:bg-cyan-300 text-black border-2 border-black font-arcade text-xs uppercase shadow-brutal active:translate-x-[1px] active:translate-y-[1px] font-black"
+                className="w-full py-2.5 bg-neo-cyan [@media(hover:hover)]:hover:bg-cyan-300 text-black border-2 border-black font-arcade text-xs uppercase shadow-brutal active:translate-x-[1px] active:translate-y-[1px] font-black inline-flex items-center justify-center gap-1"
               >
-                РАЗОБРАТЬ (+{getSalvageValue(salvageConfirmItem.rarity)} 💎)
+                <span>РАЗОБРАТЬ (+{getSalvageValue(salvageConfirmItem.rarity)}</span>
+                <CurrencyIcon type="crystal" size="xs" inline />
+                <span>)</span>
               </button>
               <button
                 onClick={() => {

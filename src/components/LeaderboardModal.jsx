@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Trophy, X, Crown, RotateCw } from 'lucide-react';
 import { MOCK_LEADERS_ALL_TIME, MOCK_LEADERS_WEEKLY, syncLeaderboard } from '../data/leaderboard';
 import { hapticImpact } from '../utils/telegram';
+import { GameIcon, CurrencyIcon } from './icons';
 
 export default function LeaderboardModal({ state, user, onClose }) {
   const [tab, setTab] = useState('all');
@@ -175,7 +176,10 @@ export default function LeaderboardModal({ state, user, onClose }) {
             )}
             {tab === 'all' && (state.souls || 0) > 0 && (
               <span className="font-arcade text-[11px] text-neo-purple block">
-                {state.souls} 🔮
+                <span className="inline-flex items-center gap-1">
+                  <span>{state.souls}</span>
+                  <CurrencyIcon type="soul" size="xs" inline />
+                </span>
               </span>
             )}
           </div>
@@ -197,8 +201,8 @@ export default function LeaderboardModal({ state, user, onClose }) {
                   #{leader.rank}
                 </div>
 
-                <div className="text-xl shrink-0">
-                  {leader.avatar || '🧙‍♂️'}
+                <div className="w-7 h-7 shrink-0 flex items-center justify-center">
+                  <GameIcon icon={leader.avatar || '🧙‍♂️'} size="sm" />
                 </div>
 
                 <div className="min-w-0">
@@ -227,7 +231,10 @@ export default function LeaderboardModal({ state, user, onClose }) {
                 )}
                 {tab === 'all' && leader.souls !== undefined && leader.souls > 0 && (
                   <span className="font-arcade text-[11px] text-neo-purple block">
-                    {leader.souls} 🔮
+                    <span className="inline-flex items-center gap-1">
+                      <span>{leader.souls}</span>
+                      <CurrencyIcon type="soul" size="xs" inline />
+                    </span>
                   </span>
                 )}
               </div>

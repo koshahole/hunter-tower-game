@@ -24,6 +24,7 @@ import { SKILLS } from '../data/skills';
 import { PETS } from '../data/pets';
 import { rollEquipmentDrop } from '../data/equipment';
 import confetti from 'canvas-confetti';
+import { GameIcon, CurrencyIcon, MonsterAvatar, PetAvatar, RelicIcon, EquipmentIcon } from './icons';
 
 export default function Battle({
   playerStats,
@@ -492,13 +493,13 @@ export default function Battle({
         {/* Current accumulated bounty, quick mute, and retreat button */}
         <div className="flex items-center gap-1.5 shrink-0">
           <div className="flex items-center gap-1 bg-neo-yellow border-2 border-black px-2 py-0.5 shadow-brutal-sm font-arcade text-xs text-black">
-            <span>🪙</span>
+            <CurrencyIcon type="gold" size="xs" inline />
             <span>+{accumulatedGold}</span>
           </div>
 
           {accumulatedCrystals > 0 && (
             <div className="flex items-center gap-1 bg-neo-cyan border-2 border-black px-2 py-0.5 shadow-brutal-sm font-arcade text-xs text-black">
-              <span>💎</span>
+              <CurrencyIcon type="crystal" size="xs" inline />
               <span>+{accumulatedCrystals}</span>
             </div>
           )}
@@ -566,8 +567,9 @@ export default function Battle({
         } ${isMonsterAttacking ? 'animate-monster-lunge' : ''}`}>
 
           {monsterStunned && (
-            <div className="absolute -top-7 bg-neo-yellow text-black border-2 border-black px-2.5 py-0.5 font-arcade text-[11px] shadow-brutal-sm uppercase z-20 animate-bounce">
-              ⚡ ОГЛУШЕН!
+            <div className="absolute -top-7 bg-neo-yellow text-black border-2 border-black px-2.5 py-0.5 font-arcade text-[11px] shadow-brutal-sm uppercase z-20 animate-bounce inline-flex items-center gap-1">
+              <CurrencyIcon type="energy" size="xs" inline />
+              <span>ОГЛУШЕН!</span>
             </div>
           )}
 
@@ -578,10 +580,10 @@ export default function Battle({
           )}
 
           {/* Monster Avatar Frame */}
-          <div className={`w-28 h-28 sm:w-32 sm:h-32 battle-compact-avatar border-4 border-black shadow-brutal-lg flex items-center justify-center text-5xl sm:text-6xl ${
+          <div className={`w-28 h-28 sm:w-32 sm:h-32 battle-compact-avatar border-4 border-black shadow-brutal-lg flex items-center justify-center p-2.5 ${
             currentMonster.isBoss ? 'bg-neo-pink' : (currentMonster.isLeader ? 'bg-neo-yellow' : 'bg-white')
           }`}>
-            <span className="select-none filter drop-shadow-md">{currentMonster.avatar}</span>
+            <MonsterAvatar monster={currentMonster} size="full" className="w-full h-full object-contain filter drop-shadow-md select-none" />
           </div>
 
           <div className="text-center mt-2 px-2 w-full flex flex-col items-center">
@@ -597,8 +599,9 @@ export default function Battle({
             )}
 
             {currentMonster.isBoss && currentMonster.specialSkill && (
-              <div className="mt-1 bg-black text-neo-yellow border border-white px-2.5 py-0.5 font-arcade text-[11px] uppercase">
-                💀 СТИЛЬ: {currentMonster.specialSkill}
+              <div className="mt-1 bg-black text-neo-yellow border border-white px-2.5 py-0.5 font-arcade text-[11px] uppercase inline-flex items-center gap-1">
+                <GameIcon icon="skull" size="xs" inline />
+                <span>СТИЛЬ: {currentMonster.specialSkill}</span>
               </div>
             )}
 
@@ -612,8 +615,9 @@ export default function Battle({
           {/* Monster HP Bar + ATK indicator */}
           <div className="w-60 sm:w-72 mt-2">
             <div className="flex justify-between items-center text-xs font-black mb-1 uppercase gap-2">
-              <span className="bg-black text-neo-yellow border border-black px-1.5 py-0.2 font-arcade text-[11px] shrink-0">
-                ⚔️ ~{currentMonster.atk} АТК
+              <span className="bg-black text-neo-yellow border border-black px-1.5 py-0.5 font-arcade text-[11px] shrink-0 inline-flex items-center gap-1">
+                <GameIcon icon="crossed_swords" size="xs" inline />
+                <span>~{currentMonster.atk} АТК</span>
               </span>
               <span className="text-black font-arcade text-xs">
                 {monsterHp} / {currentMonster.maxHp} HP
@@ -657,20 +661,22 @@ export default function Battle({
             <div className="flex items-center gap-1.5 min-w-0 overflow-x-auto scrollbar-none">
               <span className="font-arcade text-xs text-black uppercase shrink-0">ОХОТНИК</span>
               {isDefending && (
-                <span className="bg-neo-cyan text-black border-2 border-black px-1.5 py-0.2 font-arcade text-[11px] shrink-0 shadow-brutal-sm animate-pulse">
-                  🛡️ БАРЬЕР (-70%)
+                <span className="bg-neo-cyan text-black border-2 border-black px-1.5 py-0.5 font-arcade text-[11px] shrink-0 shadow-brutal-sm animate-pulse inline-flex items-center gap-1">
+                  <GameIcon icon="shield_plate" size="xs" inline />
+                  <span>БАРЬЕР (-70%)</span>
                 </span>
               )}
               {activePet && (
-                <span className="bg-neo-yellow text-black border-2 border-black px-1.5 py-0.2 font-arcade text-[11px] shrink-0">
-                  {activePet.avatar} {activePet.name}
+                <span className="bg-neo-yellow text-black border-2 border-black px-1.5 py-0.5 font-arcade text-[11px] shrink-0 inline-flex items-center gap-1">
+                  <PetAvatar pet={activePet} size="xs" inline />
+                  <span>{activePet.name}</span>
                 </span>
               )}
               {runArtifacts && runArtifacts.length > 0 && (
                 <div className="flex items-center gap-1 shrink-0">
                   {runArtifacts.map((art, idx) => (
-                    <span key={idx} title={art.name} className="text-xs bg-slate-100 border border-black px-1 shadow-brutal-sm">
-                      {art.icon}
+                    <span key={idx} title={art.name} className="w-5 h-5 bg-slate-100 border border-black p-0.5 shadow-brutal-sm flex items-center justify-center">
+                      <RelicIcon relic={art} size="xs" />
                     </span>
                   ))}
                 </div>
@@ -694,11 +700,11 @@ export default function Battle({
 
           {/* Active Combat Passives Strip */}
           <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px] font-black text-slate-700 uppercase">
-            <span>⚔️ {playerStats.atk} АТК</span>
-            <span>🎯 {playerStats.critChance}% КРИТ</span>
-            <span>💨 {playerStats.dodgeChance}% УВОР</span>
-            <span className={playerStats.vampirism > 0 ? 'text-neo-pink' : ''}>
-              🩸 {playerStats.vampirism || 0}% ВАМП
+            <span className="inline-flex items-center gap-1"><GameIcon icon="crossed_swords" size="xs" inline /> {playerStats.atk} АТК</span>
+            <span className="inline-flex items-center gap-1"><GameIcon icon="target" size="xs" inline /> {playerStats.critChance}% КРИТ</span>
+            <span className="inline-flex items-center gap-1"><GameIcon icon="wind" size="xs" inline /> {playerStats.dodgeChance}% УВОР</span>
+            <span className={`inline-flex items-center gap-1 ${playerStats.vampirism > 0 ? 'text-neo-pink' : ''}`}>
+              <GameIcon icon="blood" size="xs" inline /> {playerStats.vampirism || 0}% ВАМП
             </span>
           </div>
         </div>
@@ -719,7 +725,7 @@ export default function Battle({
             disabled={battleState !== 'fighting' || isAttacking || potions <= 0 || playerHp >= playerStats.maxHp}
             className="flex items-center justify-center gap-2 bg-neo-lime [@media(hover:hover)]:hover:bg-lime-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-brutal-press text-black py-3 px-3 border-3 border-black shadow-brutal font-arcade text-sm disabled:opacity-50 transition-all uppercase"
           >
-            <Heart className="w-5 h-5 fill-black stroke-[3]" />
+            <CurrencyIcon type="potion" size="sm" inline />
             <span>ЗЕЛЬЕ ({potions})</span>
           </button>
         </div>
@@ -746,7 +752,9 @@ export default function Battle({
                 )}
 
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-xl shrink-0">{skill.icon}</span>
+                  <span className="w-6 h-6 shrink-0 flex items-center justify-center">
+                    <GameIcon icon={skill.icon} size="sm" />
+                  </span>
                   <div className="min-w-0">
                     <div className="font-arcade text-[11px] text-black uppercase leading-tight">
                       {skill.name}
@@ -766,8 +774,8 @@ export default function Battle({
       {confirmRetreat && (
         <div className="fixed inset-0 bg-black/75 backdrop-blur-xs z-50 flex items-center justify-center p-4 text-center animate-fadeIn">
           <div className="bg-white border-4 border-black p-4 shadow-brutal-lg max-w-xs w-full">
-            <div className="w-12 h-12 bg-neo-yellow border-3 border-black flex items-center justify-center text-2xl mx-auto mb-2 shadow-brutal-sm">
-              🏕️
+            <div className="w-12 h-12 bg-neo-yellow border-3 border-black flex items-center justify-center mx-auto mb-2 shadow-brutal-sm p-2">
+              <GameIcon icon="tent" size="full" />
             </div>
             <h3 className="font-arcade text-base text-black uppercase mb-1">
               ОТСТУПИТЬ В ЛАГЕРЬ?
@@ -777,9 +785,9 @@ export default function Battle({
             </p>
 
             <div className="bg-neo-light border-2 border-black p-2.5 mb-3 flex items-center justify-center gap-3 text-xs font-arcade">
-              <span>🪙 +{accumulatedGold}</span>
-              <span>💎 +{accumulatedCrystals}</span>
-              <span>🎁 {droppedItems.length} шт.</span>
+              <span className="inline-flex items-center gap-1"><CurrencyIcon type="gold" size="xs" inline /> +{accumulatedGold}</span>
+              <span className="inline-flex items-center gap-1"><CurrencyIcon type="crystal" size="xs" inline /> +{accumulatedCrystals}</span>
+              <span className="inline-flex items-center gap-1"><GameIcon icon="chest" size="xs" inline /> {droppedItems.length} шт.</span>
             </div>
 
             <div className="space-y-2">
@@ -812,8 +820,8 @@ export default function Battle({
       {battleState === 'won' && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 flex items-center justify-center p-4 text-center animate-fadeIn">
           <div className="bg-neo-yellow border-4 border-black p-5 shadow-brutal-lg max-w-xs w-full flex flex-col items-center">
-            <div className="w-16 h-16 bg-white border-3 border-black flex items-center justify-center text-4xl mb-3 shadow-brutal">
-              🏆
+            <div className="w-16 h-16 bg-white border-3 border-black flex items-center justify-center mb-3 shadow-brutal p-2.5">
+              <GameIcon icon="trophy" size="full" />
             </div>
             <h2 className="font-arcade text-xl text-black uppercase mb-1">
               ЭТАЖ {floor} ЗАЧИЩЕН!
@@ -826,12 +834,12 @@ export default function Battle({
             <div className="flex flex-col items-center justify-center gap-1.5 bg-white border-3 border-black p-2.5 w-full mb-3 shadow-brutal-sm">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5 font-arcade text-base text-black">
-                  <span>🪙</span>
+                  <CurrencyIcon type="gold" size="sm" inline />
                   <span>+{accumulatedGold}</span>
                 </div>
                 {accumulatedCrystals > 0 && (
                   <div className="flex items-center gap-1.5 font-arcade text-base text-neo-purple">
-                    <span>💎</span>
+                    <CurrencyIcon type="crystal" size="sm" inline />
                     <span>+{accumulatedCrystals}</span>
                   </div>
                 )}
@@ -840,13 +848,14 @@ export default function Battle({
               {/* Dropped Equipment Badge if any */}
               {droppedItems.length > 0 && (
                 <div className="w-full mt-1.5 pt-1.5 border-t border-black text-left">
-                  <span className="font-arcade text-[11px] text-black uppercase block mb-1">
-                    🎁 НАЙДЕНО СНАРЯЖЕНИЕ:
+                  <span className="font-arcade text-[11px] text-black uppercase mb-1 inline-flex items-center gap-1">
+                    <GameIcon icon="chest" size="xs" inline />
+                    <span>НАЙДЕНО СНАРЯЖЕНИЕ:</span>
                   </span>
                   <div className="space-y-1">
                     {droppedItems.map((item, idx) => (
-                      <div key={idx} className="bg-neo-pink text-white border border-black px-2 py-0.5 font-arcade text-[11px] flex items-center gap-1">
-                        <span>{item.icon}</span>
+                      <div key={idx} className="bg-neo-pink text-white border border-black px-2 py-0.5 font-arcade text-[11px] flex items-center gap-1.5">
+                        <EquipmentIcon item={item} size="xs" inline />
                         <span className="truncate">{item.name}</span>
                       </div>
                     ))}
@@ -893,8 +902,8 @@ export default function Battle({
       {battleState === 'lost' && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-40 flex items-center justify-center p-4 text-center animate-fadeIn">
           <div className="bg-white border-4 border-black p-5 shadow-brutal-lg max-w-xs w-full flex flex-col items-center">
-            <div className="w-16 h-16 bg-neo-pink text-white border-3 border-black flex items-center justify-center text-4xl mb-3 shadow-brutal">
-              💀
+            <div className="w-16 h-16 bg-neo-pink text-white border-3 border-black flex items-center justify-center mb-3 shadow-brutal p-2.5">
+              <GameIcon icon="skull" size="full" />
             </div>
             <h2 className="font-arcade text-xl text-black uppercase mb-1">
               ТЫ ПАЛ В БОЮ!
@@ -910,9 +919,19 @@ export default function Battle({
               >
                 <Sparkles className="w-4 h-4 stroke-[3] shrink-0" />
                 <span>
-                  {reviveTokens > 0
-                    ? `ВОСКРЕСНУТЬ (БЕСПЛАТНО • 🪶 ${reviveTokens})`
-                    : 'ВОСКРЕСНУТЬ (15 ⭐️)'}
+                  {reviveTokens > 0 ? (
+                    <span className="inline-flex items-center gap-1">
+                      <span>ВОСКРЕСНУТЬ (БЕСПЛАТНО • </span>
+                      <CurrencyIcon type="feather" size="xs" inline />
+                      <span>{reviveTokens})</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1">
+                      <span>ВОСКРЕСНУТЬ (15 </span>
+                      <CurrencyIcon type="star" size="xs" inline />
+                      <span>)</span>
+                    </span>
+                  )}
                 </span>
               </button>
 

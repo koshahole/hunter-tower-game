@@ -2,9 +2,34 @@ import React, { useState } from 'react';
 import { Star, Zap, Heart, Crown, Gem, Egg, Sparkles, Shield, Package, Gift } from 'lucide-react';
 import { sounds } from '../audio/soundEffects';
 import { hapticImpact, hapticNotification, openStarsInvoice } from '../utils/telegram';
+import { CurrencyIcon, EquipmentIcon, GameIcon } from './icons';
 
 export default function StarsShop({ state, onPurchaseSuccess, onShowToast, onApplyPromo }) {
   const [promoCode, setPromoCode] = useState('');
+
+  const renderShopItemIcon = (item) => {
+    switch (item.action) {
+      case 'gear_chest':
+        return <GameIcon icon="chest" size="md" />;
+      case 'smith_pack':
+        return <EquipmentIcon archetype="hammer" size="md" />;
+      case 'revive':
+        return <CurrencyIcon type="feather" size="md" />;
+      case 'egg':
+        return <GameIcon icon="sparkles" size="md" />;
+      case 'energy':
+        return <CurrencyIcon type="energy" size="md" />;
+      case 'potions':
+        return <CurrencyIcon type="potion" size="md" />;
+      case 'crystals':
+        return <CurrencyIcon type="crystal" size="md" />;
+      case 'vip':
+        return <GameIcon icon="crown" size="md" />;
+      default:
+        const Icon = item.iconComponent;
+        return <Icon className="w-6 h-6 stroke-[3]" />;
+    }
+  };
 
   const SHOP_ITEMS = [
     {
@@ -114,15 +139,16 @@ export default function StarsShop({ state, onPurchaseSuccess, onShowToast, onApp
       {/* Neo-Brutal Arcade Banner */}
       <div className="bg-white border-4 border-black p-4 shadow-brutal">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-neo-yellow border-3 border-black shadow-brutal-sm flex items-center justify-center shrink-0">
-            <Star className="w-7 h-7 fill-black stroke-[3]" />
+          <div className="w-12 h-12 bg-neo-yellow border-3 border-black shadow-brutal-sm flex items-center justify-center shrink-0 p-1">
+            <CurrencyIcon type="star" size="full" />
           </div>
           <div className="min-w-0">
             <h2 className="font-arcade text-base text-black uppercase truncate">
               МАГАЗИН TELEGRAM STARS
             </h2>
-            <p className="text-xs font-bold text-slate-700 mt-0.5 uppercase">
-              ОФИЦИАЛЬНАЯ ОПЛАТА В 1 КЛИК ЧЕРЕЗ ЗВЕЗДЫ ⭐️
+            <p className="text-xs font-bold text-slate-700 mt-0.5 uppercase inline-flex items-center gap-1">
+              <span>ОФИЦИАЛЬНАЯ ОПЛАТА В 1 КЛИК ЧЕРЕЗ ЗВЕЗДЫ</span>
+              <CurrencyIcon type="star" size="xs" inline />
             </p>
           </div>
         </div>
@@ -131,8 +157,6 @@ export default function StarsShop({ state, onPurchaseSuccess, onShowToast, onApp
       {/* Items List */}
       <div className="space-y-3">
         {SHOP_ITEMS.map(item => {
-          const Icon = item.iconComponent;
-
           return (
             <div
               key={item.id}
@@ -148,8 +172,8 @@ export default function StarsShop({ state, onPurchaseSuccess, onShowToast, onApp
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-start gap-3 min-w-0 flex-1">
-                  <div className={`w-12 h-12 border-3 border-black shadow-brutal-sm flex items-center justify-center shrink-0 ${item.iconBg}`}>
-                    <Icon className="w-6 h-6 stroke-[3]" />
+                  <div className={`w-12 h-12 border-3 border-black shadow-brutal-sm flex items-center justify-center shrink-0 p-1.5 ${item.iconBg}`}>
+                    {renderShopItemIcon(item)}
                   </div>
 
                   <div className="min-w-0 flex-1">
@@ -172,8 +196,8 @@ export default function StarsShop({ state, onPurchaseSuccess, onShowToast, onApp
                       onClick={() => handleBuy(item)}
                       className="w-full sm:w-auto flex items-center justify-center gap-1.5 py-2.5 px-4 bg-neo-yellow [@media(hover:hover)]:hover:bg-yellow-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-brutal-press text-black border-3 border-black font-arcade text-xs shadow-brutal transition-all uppercase whitespace-nowrap"
                     >
-                      <Star className="w-4 h-4 fill-black stroke-[3] shrink-0" />
-                      <span>{item.price} ⭐️</span>
+                      <CurrencyIcon type="star" size="xs" inline />
+                      <span>{item.price} ЗВЁЗД</span>
                     </button>
                   )}
                 </div>

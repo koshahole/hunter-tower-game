@@ -3,6 +3,7 @@ import { Trophy, Skull, Swords, ArrowRight, Shield, Gem, Star } from 'lucide-rea
 import { sounds } from '../audio/soundEffects';
 import { hapticImpact } from '../utils/telegram';
 import { RARITIES } from '../data/equipment';
+import { GameIcon, CurrencyIcon, EquipmentIcon } from './icons';
 
 export default function RunSummaryModal({ summary, onClose }) {
   if (!summary) return null;
@@ -23,10 +24,10 @@ export default function RunSummaryModal({ summary, onClose }) {
       <div className="bg-white border-4 border-black p-5 shadow-brutal-lg max-w-sm w-full flex flex-col items-center">
 
         {/* Banner Avatar */}
-        <div className={`w-16 h-16 border-3 border-black flex items-center justify-center text-4xl mb-2 shadow-brutal ${
+        <div className={`w-16 h-16 border-3 border-black flex items-center justify-center mb-2 shadow-brutal p-2.5 ${
           cleared ? 'bg-neo-yellow' : 'bg-neo-pink text-white'
         }`}>
-          {cleared ? '🏆' : '💀'}
+          <GameIcon icon={cleared ? 'trophy' : 'skull'} size="full" />
         </div>
 
         {/* Title */}
@@ -45,7 +46,7 @@ export default function RunSummaryModal({ summary, onClose }) {
             <div className="bg-neo-yellow border-2 border-black p-2 shadow-brutal-sm">
               <span className="text-[11px] font-black uppercase text-slate-700 block">ДОБЫТО ЗОЛОТА</span>
               <div className="font-arcade text-sm text-black flex items-center gap-1 mt-0.5">
-                <span>🪙</span>
+                <CurrencyIcon type="gold" size="xs" inline />
                 <span>+{goldEarned}</span>
               </div>
             </div>
@@ -53,7 +54,7 @@ export default function RunSummaryModal({ summary, onClose }) {
             <div className="bg-neo-cyan border-2 border-black p-2 shadow-brutal-sm">
               <span className="text-[11px] font-black uppercase text-slate-700 block">КРИСТАЛЛЫ БЕЗДНЫ</span>
               <div className="font-arcade text-sm text-black flex items-center gap-1 mt-0.5">
-                <span>💎</span>
+                <CurrencyIcon type="crystal" size="xs" inline />
                 <span>+{crystalsEarned}</span>
               </div>
             </div>
@@ -69,8 +70,9 @@ export default function RunSummaryModal({ summary, onClose }) {
 
             <div className="bg-slate-100 border-2 border-black p-2 shadow-brutal-sm">
               <span className="text-[11px] font-black uppercase text-slate-700 block">ВРАГОВ ПОВЕРЖЕНО</span>
-              <div className="font-arcade text-sm text-black mt-0.5">
-                ⚔️ {monstersDefeated}
+              <div className="font-arcade text-sm text-black mt-0.5 inline-flex items-center gap-1">
+                <GameIcon icon="crossed_swords" size="xs" inline />
+                <span>{monstersDefeated}</span>
               </div>
             </div>
           </div>
@@ -78,7 +80,10 @@ export default function RunSummaryModal({ summary, onClose }) {
           {/* Loot Found */}
           <div className="bg-slate-50 border-2 border-black p-2.5 shadow-brutal-sm">
             <div className="flex items-center justify-between font-arcade text-[11px] text-black uppercase mb-1.5">
-              <span>🎁 НАЙДЕНО СНАРЯЖЕНИЯ:</span>
+              <span className="inline-flex items-center gap-1">
+                <GameIcon icon="chest" size="xs" inline />
+                <span>НАЙДЕНО СНАРЯЖЕНИЯ:</span>
+              </span>
               <span className="text-neo-pink">
                 {itemsFound.length > 0 ? `${itemsFound.length} ШТ.` : 'НЕТ'}
               </span>
@@ -94,7 +99,9 @@ export default function RunSummaryModal({ summary, onClose }) {
                       className="flex items-center justify-between gap-2 p-1.5 bg-white border border-black text-[11px]"
                     >
                       <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="text-base shrink-0">{item.icon}</span>
+                        <div className="w-5 h-5 shrink-0 flex items-center justify-center">
+                          <EquipmentIcon item={item} size="xs" />
+                        </div>
                         <span className="font-arcade text-[11px] text-black truncate uppercase">
                           {item.name}
                         </span>

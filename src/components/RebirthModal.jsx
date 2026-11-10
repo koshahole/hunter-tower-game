@@ -4,6 +4,7 @@ import { sounds } from '../audio/soundEffects';
 import { hapticImpact, hapticNotification } from '../utils/telegram';
 import { RotateCcw, X, AlertTriangle } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { CurrencyIcon, GameIcon } from './icons';
 
 export default function RebirthModal({
   state,
@@ -64,8 +65,8 @@ export default function RebirthModal({
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b-3 border-black">
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-neo-purple text-white border-2 border-black flex items-center justify-center text-xl shadow-brutal-sm">
-              🔮
+            <div className="w-10 h-10 bg-neo-purple text-white border-2 border-black flex items-center justify-center p-1.5 shadow-brutal-sm">
+              <CurrencyIcon type="soul" size="full" />
             </div>
             <div>
               <h2 className="font-arcade text-base text-black uppercase leading-tight">
@@ -91,8 +92,9 @@ export default function RebirthModal({
             <span className="font-arcade text-[11px] text-neo-yellow uppercase block">
               БАЛАНС ДУШ:
             </span>
-            <span className="font-arcade text-xl">
-              {state.souls} 🔮
+            <span className="font-arcade text-xl inline-flex items-center gap-1.5">
+              <span>{state.souls}</span>
+              <CurrencyIcon type="soul" size="sm" inline />
             </span>
           </div>
 
@@ -151,8 +153,8 @@ export default function RebirthModal({
                 className="bg-white border-3 border-black p-2.5 flex items-center justify-between gap-2 shadow-brutal-sm"
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-10 h-10 bg-neo-cyan border-2 border-black flex items-center justify-center text-xl shrink-0">
-                    {perk.icon}
+                  <div className="w-10 h-10 bg-neo-cyan border-2 border-black flex items-center justify-center p-1.5 shrink-0">
+                    <GameIcon icon={perk.icon} size="full" />
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
@@ -178,13 +180,14 @@ export default function RebirthModal({
                     <button
                       onClick={() => handleUpgradePerk(perk)}
                       disabled={!canAfford}
-                      className={`px-3 py-1.5 border-2 border-black font-arcade text-xs shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] ${
+                      className={`px-3 py-1.5 border-2 border-black font-arcade text-xs shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] inline-flex items-center gap-1 ${
                         canAfford
                           ? 'bg-neo-lime text-black'
                           : 'bg-slate-200 text-slate-500 cursor-not-allowed shadow-none'
                       }`}
                     >
-                      {cost} 🔮
+                      <span>{cost}</span>
+                      <CurrencyIcon type="soul" size="xs" inline />
                     </button>
                   )}
                 </div>
@@ -208,8 +211,9 @@ export default function RebirthModal({
             </h3>
 
             <div className="bg-white border-2 border-black p-2.5 text-left text-xs font-bold space-y-1.5">
-              <div className="text-emerald-700">
-                🔮 Награда: <strong>+{earnedSouls} Осколков Душ</strong>
+              <div className="text-emerald-700 inline-flex items-center gap-1">
+                <CurrencyIcon type="soul" size="xs" inline />
+                <span>Награда: <strong>+{earnedSouls} Осколков Душ</strong></span>
               </div>
               <div className="text-red-700">
                 ❌ Сбросятся: этажи (до 1), золото, кристаллы, весь лут (останется Простой Меч Ур.1), питомцы и жетоны.
@@ -222,9 +226,11 @@ export default function RebirthModal({
             <div className="flex flex-col gap-2 pt-1">
               <button
                 onClick={executeRebirth}
-                className="w-full py-3 bg-neo-pink text-white border-3 border-black font-arcade text-xs shadow-brutal active:translate-x-[2px] active:translate-y-[2px] uppercase"
+                className="w-full py-3 bg-neo-pink text-white border-3 border-black font-arcade text-xs shadow-brutal active:translate-x-[2px] active:translate-y-[2px] uppercase inline-flex items-center justify-center gap-1"
               >
-                ДА, ПЕРЕРОДИТЬСЯ (+{earnedSouls} 🔮)
+                <span>ДА, ПЕРЕРОДИТЬСЯ (+{earnedSouls}</span>
+                <CurrencyIcon type="soul" size="xs" inline />
+                <span>)</span>
               </button>
               <button
                 onClick={() => setConfirmOpen(false)}

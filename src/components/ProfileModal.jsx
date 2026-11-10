@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Settings, Volume2, VolumeX, X, Check } from 'lucide-react';
 import { sounds } from '../audio/soundEffects';
 import { getRankByMaxFloor } from '../data/ranks';
+import { GameIcon, RankBadge } from './icons';
 
 export const AVATAR_OPTIONS = ['🧙‍♂️', '🥷', '🗡️', '👑', '🏹', '🐺', '⚡', '🐉', '🤖', '👾'];
 
@@ -85,8 +86,8 @@ export default function ProfileModal({
 
         {/* Hero Avatar Selection */}
         <div className="my-3 flex flex-col items-center">
-          <div className="w-20 h-20 bg-neo-yellow border-4 border-black shadow-brutal flex items-center justify-center text-4xl mb-2">
-            <span>{avatar}</span>
+          <div className="w-20 h-20 bg-neo-yellow border-4 border-black shadow-brutal flex items-center justify-center p-2 mb-2">
+            <GameIcon icon={avatar} size="full" />
           </div>
 
           <div className="flex items-center gap-1.5 flex-wrap justify-center">
@@ -94,13 +95,13 @@ export default function ProfileModal({
               <button
                 key={av}
                 onClick={() => setAvatar(av)}
-                className={`w-9 h-9 border-2 border-black flex items-center justify-center text-xl transition-all ${
+                className={`w-9 h-9 border-2 border-black flex items-center justify-center p-1 transition-all ${
                   avatar === av
                     ? 'bg-neo-pink text-white shadow-brutal-sm scale-105'
                     : 'bg-white [@media(hover:hover)]:hover:bg-slate-100'
                 }`}
               >
-                {av}
+                <GameIcon icon={av} size="full" />
               </button>
             ))}
           </div>
@@ -166,9 +167,12 @@ export default function ProfileModal({
             <div className="font-arcade text-xs text-black uppercase mb-1">
               ДОСЬЕ ОХОТНИКА:
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <span>РАНГ (даёт бонус статов):</span>
-              <span className="font-arcade text-neo-pink">{currentRank.name}</span>
+              <span className="font-arcade text-neo-pink inline-flex items-center gap-1">
+                <RankBadge rank={currentRank.code} size="xs" inline />
+                <span>{currentRank.name}</span>
+              </span>
             </div>
             <div className="flex justify-between">
               <span>РЕКОРД ЭТАЖА:</span>

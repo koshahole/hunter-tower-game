@@ -4,6 +4,7 @@ import { sounds } from '../audio/soundEffects';
 import { hapticImpact, hapticNotification, openStarsInvoice } from '../utils/telegram';
 import { Check, Star, ArrowUpCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { PetAvatar, CurrencyIcon, GameIcon } from './icons';
 
 const formatPetPct = (val) => {
   const pct = Math.round((val || 0) * 1000) / 10;
@@ -171,7 +172,7 @@ export default function PetSanctuary({
       <div className="bg-white border-4 border-black p-3.5 shadow-brutal flex items-center justify-between gap-2">
         <div className="min-w-0">
           <h2 className="font-arcade text-base text-black flex items-center gap-1.5 uppercase truncate">
-            <span>🐾</span>
+            <PetAvatar pet={selectedPet} size="xs" inline />
             <span>ПИТОМНИК ОХОТНИКОВ</span>
           </h2>
           <p className="text-[11px] font-bold text-slate-700 mt-0.5 uppercase">
@@ -194,7 +195,11 @@ export default function PetSanctuary({
             disabled={summoning}
             className="flex items-center justify-center gap-1.5 py-3 px-2 bg-neo-cyan active:translate-x-[2px] active:translate-y-[2px] active:shadow-brutal-press text-black border-3 border-black font-arcade text-xs shadow-brutal transition-all uppercase"
           >
-            <span>ПРИЗЫВ (40 💎)</span>
+            <span className="inline-flex items-center gap-1">
+              <span>ПРИЗЫВ (40</span>
+              <CurrencyIcon type="crystal" size="xs" inline />
+              <span>)</span>
+            </span>
           </button>
 
           <button
@@ -202,8 +207,8 @@ export default function PetSanctuary({
             disabled={summoning}
             className="flex items-center justify-center gap-1.5 py-3 px-2 bg-neo-yellow active:translate-x-[2px] active:translate-y-[2px] active:shadow-brutal-press text-black border-3 border-black font-arcade text-xs shadow-brutal transition-all uppercase"
           >
-            <Star className="w-4 h-4 fill-black stroke-[3]" />
-            <span>ЯЙЦО (25 ⭐️)</span>
+            <CurrencyIcon type="star" size="xs" inline />
+            <span>ЯЙЦО (25 ЗВЁЗД)</span>
           </button>
         </div>
 
@@ -215,8 +220,8 @@ export default function PetSanctuary({
       {/* Selected Pet Detail Card */}
       <div className="bg-white border-4 border-black p-4 shadow-brutal-lg">
         <div className="flex items-start gap-3.5">
-          <div className="w-16 h-16 bg-neo-yellow border-3 border-black shadow-brutal-sm flex items-center justify-center text-4xl shrink-0">
-            {selectedPet.avatar}
+          <div className="w-16 h-16 bg-neo-yellow border-3 border-black shadow-brutal-sm flex items-center justify-center p-1 shrink-0">
+            <PetAvatar pet={selectedPet} size="full" />
           </div>
 
           <div className="flex-1 min-w-0">
@@ -306,7 +311,13 @@ export default function PetSanctuary({
                   }`}
                 >
                   <ArrowUpCircle className="w-4 h-4 stroke-[3]" />
-                  <span>ПРОКАЧАТЬ ({upGold}🪙 {upCrystals}💎)</span>
+                  <span className="inline-flex items-center gap-1">
+                    <span>ПРОКАЧАТЬ (</span>
+                    <CurrencyIcon type="gold" size="xs" inline />
+                    <span>{upGold}</span>
+                    <CurrencyIcon type="crystal" size="xs" inline />
+                    <span>{upCrystals})</span>
+                  </span>
                 </button>
               )}
             </>
@@ -376,8 +387,8 @@ export default function PetSanctuary({
                     <span className="absolute top-1 right-1 w-3 h-3 bg-neo-lime border-2 border-black" />
                   )}
 
-                  <div className="text-3xl my-1 shrink-0">
-                    {pet.avatar}
+                  <div className="w-12 h-12 my-1 shrink-0 flex items-center justify-center">
+                    <PetAvatar pet={pet} size="full" />
                   </div>
 
                   <div className="w-full min-w-0">
@@ -398,8 +409,8 @@ export default function PetSanctuary({
       {/* Summoning Modal */}
       {summoning && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex flex-col items-center justify-center p-4 text-center animate-fadeIn">
-          <div className="w-24 h-24 bg-neo-yellow border-4 border-black flex items-center justify-center text-5xl animate-bounce shadow-brutal-lg mb-3">
-            🥚
+          <div className="w-24 h-24 bg-neo-yellow border-4 border-black flex items-center justify-center animate-bounce shadow-brutal-lg mb-3 p-4">
+            <GameIcon icon="sparkles" size="full" />
           </div>
           <h3 className="font-arcade text-lg text-white uppercase">
             ПРИЗЫВ СПУТНИКА...
@@ -411,8 +422,8 @@ export default function PetSanctuary({
       {summonedPet && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 text-center animate-fadeIn">
           <div className="bg-neo-yellow border-4 border-black p-5 shadow-brutal-lg max-w-xs w-full flex flex-col items-center">
-            <div className="w-20 h-20 bg-white border-3 border-black flex items-center justify-center text-4xl mb-2.5 shadow-brutal">
-              {summonedPet.avatar}
+            <div className="w-20 h-20 bg-white border-3 border-black flex items-center justify-center mb-2.5 shadow-brutal p-2">
+              <PetAvatar pet={summonedPet} size="full" />
             </div>
 
             <div className="flex items-center gap-1.5 flex-wrap justify-center mb-1.5">

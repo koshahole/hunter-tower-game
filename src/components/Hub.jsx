@@ -25,6 +25,7 @@ import { getRankByMaxFloor, getRankProgress } from '../data/ranks';
 import { PETS } from '../data/pets';
 import { BOSSES } from '../data/monsters';
 import { calculateRebirthSouls } from '../data/rebirth';
+import { GameIcon, CurrencyIcon, PetAvatar, MonsterAvatar, RankBadge } from './icons';
 
 export default function Hub({
   state,
@@ -111,8 +112,8 @@ export default function Hub({
             }}
             className="flex items-center gap-2.5 min-w-0 text-left active:translate-x-[2px] active:translate-y-[2px] transition-transform"
           >
-            <div className="w-11 h-11 bg-neo-cyan border-3 border-black shadow-brutal-sm flex items-center justify-center text-2xl shrink-0">
-              {state.hunterAvatar || '🧙‍♂️'}
+            <div className="w-11 h-11 bg-neo-cyan border-3 border-black shadow-brutal-sm flex items-center justify-center shrink-0 p-1">
+              <GameIcon icon={state.hunterAvatar || 'mage'} size="md" />
             </div>
 
             <div className="min-w-0">
@@ -162,25 +163,33 @@ export default function Hub({
 
         {/* Row 2: Dedicated Currency Strip */}
         <div className="flex items-center gap-2 mt-2.5 pt-2 border-t-2 border-black flex-wrap">
-          <div className="flex items-center gap-1 bg-neo-yellow border-2 border-black px-2.5 py-0.5 shadow-brutal-sm font-arcade text-xs text-black">
-            <span>🪙</span>
+          <div className="flex items-center gap-1.5 bg-neo-yellow border-2 border-black px-2 py-0.5 shadow-brutal-sm font-arcade text-xs text-black">
+            <CurrencyIcon type="gold" size="xs" inline />
             <span>{state.gold}</span>
           </div>
 
-          <div className="flex items-center gap-1 bg-neo-cyan border-2 border-black px-2.5 py-0.5 shadow-brutal-sm font-arcade text-xs text-black">
-            <span>💎</span>
+          <div className="flex items-center gap-1.5 bg-neo-cyan border-2 border-black px-2 py-0.5 shadow-brutal-sm font-arcade text-xs text-black">
+            <CurrencyIcon type="crystal" size="xs" inline />
             <span>{state.crystals}</span>
           </div>
 
           {state.souls > 0 && (
-            <div className="flex items-center gap-1 bg-neo-purple text-white border-2 border-black px-2.5 py-0.5 shadow-brutal-sm font-arcade text-xs">
-              <span>🔮</span>
+            <div className="flex items-center gap-1.5 bg-neo-purple text-white border-2 border-black px-2 py-0.5 shadow-brutal-sm font-arcade text-xs">
+              <CurrencyIcon type="soul" size="xs" inline />
               <span>{state.souls}</span>
             </div>
           )}
 
-          <div className="ml-auto font-arcade text-[11px] text-slate-700 uppercase">
-            🧪 {state.potions || 0} • 🪶 {state.reviveTokens || 0}
+          <div className="ml-auto font-arcade text-[11px] text-slate-700 uppercase flex items-center gap-2">
+            <span className="flex items-center gap-1">
+              <CurrencyIcon type="potion" size="xs" inline />
+              <span>{state.potions || 0}</span>
+            </span>
+            <span>•</span>
+            <span className="flex items-center gap-1">
+              <CurrencyIcon type="revive" size="xs" inline />
+              <span>{state.reviveTokens || 0}</span>
+            </span>
           </div>
         </div>
       </div>
@@ -215,16 +224,19 @@ export default function Hub({
                 </span>
               )}
             </div>
-            <div className="font-arcade text-lg text-black mt-0.5">
-              {state.energy} / {state.maxEnergy} ⚡
+            <div className="font-arcade text-lg text-black mt-0.5 flex items-center gap-1">
+              <span>{state.energy} / {state.maxEnergy}</span>
+              <CurrencyIcon type="energy" size="xs" inline />
             </div>
           </div>
 
           <button
             onClick={onOpenStarsShop}
-            className="bg-neo-lime text-black border-2 border-black font-arcade text-[11px] px-2 py-1 shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] shrink-0 whitespace-nowrap"
+            className="bg-neo-lime text-black border-2 border-black font-arcade text-[11px] px-2 py-1 shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] shrink-0 whitespace-nowrap flex items-center gap-1"
           >
-            ⚡ ЗА 10⭐️
+            <CurrencyIcon type="energy" size="xs" inline />
+            <span>ЗА 10</span>
+            <CurrencyIcon type="star" size="xs" inline />
           </button>
         </div>
 
@@ -251,7 +263,9 @@ export default function Hub({
       <div className="bg-white border-4 border-black p-3.5 shadow-brutal">
         <div className="flex items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-2xl shrink-0">{currentRank.badge}</span>
+            <span className="shrink-0">
+              <RankBadge rank={currentRank.rank} size="md" />
+            </span>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="font-arcade text-xs text-black uppercase truncate">
@@ -261,10 +275,16 @@ export default function Hub({
                   {rankInfo.currentMultiplierText}
                 </span>
               </div>
-              <div className="text-[11px] font-bold text-slate-600 uppercase truncate">
+              <div className="text-[11px] font-bold text-slate-600 uppercase truncate flex items-center gap-1">
                 {rankInfo.isMax
                   ? 'ДОСТИГНУТ ВЫСШИЙ РАНГ ОХОТНИКОВ!'
-                  : `СЛЕДУЮЩИЙ: ${rankInfo.nextRank.badge} ${rankInfo.nextRank.name}`}
+                  : (
+                    <>
+                      <span>СЛЕДУЮЩИЙ:</span>
+                      <RankBadge rank={rankInfo.nextRank.rank} size="xs" inline />
+                      <span>{rankInfo.nextRank.name}</span>
+                    </>
+                  )}
               </div>
             </div>
           </div>
@@ -303,13 +323,13 @@ export default function Hub({
 
         {/* Avatar Display */}
         <div className="relative inline-block my-2">
-          <div className="w-24 h-24 bg-neo-yellow border-4 border-black shadow-brutal flex items-center justify-center text-5xl">
-            {state.hunterAvatar || '🧙‍♂️'}
+          <div className="w-24 h-24 bg-neo-yellow border-4 border-black shadow-brutal flex items-center justify-center p-2">
+            <GameIcon icon={state.hunterAvatar || 'mage'} size="2xl" />
           </div>
 
           {activePet && (
-            <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-neo-pink border-3 border-black shadow-brutal-sm flex items-center justify-center text-xl animate-float-wiggle">
-              {activePet.avatar}
+            <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-neo-pink border-3 border-black shadow-brutal-sm flex items-center justify-center animate-float-wiggle p-1">
+              <PetAvatar pet={activePet} size="sm" />
             </div>
           )}
         </div>
@@ -347,17 +367,26 @@ export default function Hub({
         {/* Secondary Combat & Economy Buffs Strip */}
         <div className="mt-2 grid grid-cols-3 gap-1.5 text-[11px] font-black uppercase">
           <div className="bg-red-100 border-2 border-black py-1 px-1.5 shadow-brutal-sm flex flex-col items-center">
-            <span className="text-slate-700">🩸 ВАМП</span>
+            <span className="text-slate-700 flex items-center gap-1">
+              <GameIcon icon="blood" size="xs" inline />
+              <span>ВАМП</span>
+            </span>
             <span className="font-arcade text-xs text-neo-pink">{playerStats.vampirism || 0}%</span>
           </div>
           <div className="bg-neo-yellow border-2 border-black py-1 px-1.5 shadow-brutal-sm flex flex-col items-center">
-            <span className="text-slate-700">🪙 ЗОЛОТО</span>
+            <span className="text-slate-700 flex items-center gap-1">
+              <CurrencyIcon type="gold" size="xs" inline />
+              <span>ЗОЛОТО</span>
+            </span>
             <span className="font-arcade text-xs text-black">
               +{Math.round(((playerStats.goldMultiplier || 1.0) - 1) * 100)}%
             </span>
           </div>
           <div className="bg-neo-cyan border-2 border-black py-1 px-1.5 shadow-brutal-sm flex flex-col items-center">
-            <span className="text-slate-700">💎 КРИСТ</span>
+            <span className="text-slate-700 flex items-center gap-1">
+              <CurrencyIcon type="crystal" size="xs" inline />
+              <span>КРИСТ</span>
+            </span>
             <span className="font-arcade text-xs text-black">
               +{Math.round(((playerStats.crystalMultiplier || 1.0) - 1) * 100)}%
             </span>
@@ -433,7 +462,9 @@ export default function Hub({
         {/* Boss Banner Card */}
         <div className="bg-white border-3 border-black p-3 shadow-brutal flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
-            <span className="text-3xl shrink-0">{nextBoss.avatar}</span>
+            <span className="w-10 h-10 shrink-0">
+              <MonsterAvatar isBoss floor={nextBossFloor} size="lg" />
+            </span>
             <div className="min-w-0">
               <div className="font-arcade text-xs text-black truncate uppercase">
                 БОСС: {nextBoss.name}
@@ -444,8 +475,9 @@ export default function Hub({
             </div>
           </div>
 
-          <span className="bg-neo-lime border-2 border-black px-2.5 py-1 font-arcade text-xs shadow-brutal-sm shrink-0">
-            +{nextBoss.goldReward} 🪙
+          <span className="bg-neo-lime border-2 border-black px-2.5 py-1 font-arcade text-xs shadow-brutal-sm shrink-0 flex items-center gap-1">
+            <span>+{nextBoss.goldReward}</span>
+            <CurrencyIcon type="gold" size="xs" inline />
           </span>
         </div>
       </div>
@@ -455,10 +487,10 @@ export default function Hub({
         state.maxFloor >= 20 ? 'bg-neo-purple text-white' : 'bg-slate-100 text-black'
       }`}>
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className={`w-10 h-10 border-2 flex items-center justify-center text-xl shrink-0 shadow-brutal-sm ${
+          <div className={`w-10 h-10 border-2 flex items-center justify-center p-1 shrink-0 shadow-brutal-sm ${
             state.maxFloor >= 20 ? 'bg-black text-white border-white' : 'bg-white text-black border-black'
           }`}>
-            🔮
+            <CurrencyIcon type="soul" size="md" />
           </div>
           <div className="min-w-0">
             <div className="font-arcade text-xs uppercase truncate">ХРАМ ПЕРЕРОЖДЕНИЯ</div>
