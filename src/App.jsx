@@ -97,46 +97,34 @@ export default function App() {
     });
   }, []);
 
-  // Auto-claim bonus or gifts passed via Telegram link (e.g. ?claim=vip_egg or start_param: gift_vip_egg)
+  // Auto-claim bonus or gifts passed via Telegram link (e.g. ?claim=GIFT-XXXX or start_param: GIFT-XXXX)
   useEffect(() => {
     try {
       const urlParams = new URLSearchParams(window.location.search);
-      const startParam = (window.Telegram?.WebApp?.initDataUnsafe?.start_param || '').toLowerCase();
-      const claimParam = (urlParams.get('claim') || urlParams.get('gift') || '').toLowerCase();
-      const target = claimParam || startParam;
+      const startParam = (window.Telegram?.WebApp?.initDataUnsafe?.start_param || '').trim();
+      const claimParam = (urlParams.get('claim') || urlParams.get('gift') || '').trim();
+      const code = claimParam || startParam;
 
-      if (target && (target.includes('vip') || target.includes('egg') || target.includes('gift'))) {
-        const claimKey = `hunter_claimed_${target}`;
-        if (!localStorage.getItem(claimKey)) {
-          localStorage.setItem(claimKey, 'true');
-
-          setTimeout(() => {
-            if (target.includes('vip') || target.includes('gift')) {
-              setState(prev => ({
-                ...prev,
-                vip: true,
-                crystals: prev.crystals + 50,
-                gold: prev.gold + 1000
-              }));
+      if (code) {
+        fetch('/api/promo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, userId: user?.id })
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.ok) {
+              setTimeout(() => {
+                applyReward(data.reward);
+              }, 600);
             }
-            if (target.includes('egg') || target.includes('gift')) {
-              const pet = rollPetGacha();
-              if (pet) {
-                handleUnlockPet(pet.id);
-                handleEquipPet(pet.id);
-              }
-            }
-
-            confetti({ particleCount: 90, spread: 75, origin: { y: 0.6 } });
-            sounds.playStarsPurchase();
-            showToast('🎁 ПОДАРОК АКТИВИРОВАН: VIP-СТАТУС И ЗОЛОТОЕ ЯЙЦО! 👑', 'stars');
-          }, 800);
-        }
+          })
+          .catch(e => console.warn('Auto-claim gift error:', e));
       }
     } catch (e) {
       console.warn('Auto-claim gift error:', e);
     }
-  }, []);
+  }, [user?.id]);
 
   // Update timer cycle every second to keep 3-min countdown accurate
   useEffect(() => {
@@ -732,49 +720,28 @@ export default function App() {
     }
   };
 
-  const handleApplyPromo = (rawCode) => {
-    const code = (rawCode || '').trim().toUpperCase();
-    if (!code) return false;
-
-    const claimedKey = `hunter_promo_${code}`;
-    if (localStorage.getItem(claimedKey)) {
-      showToast('ЭТОТ ПРОМОКОД УЖЕ ИСПОЛЬЗОВАН!', 'warning');
-      return false;
-    }
-
-    if (code === 'VIP-EGG' || code === 'MINATO' || code === 'GIFT-VIP-EGG' || code === 'VIP2026') {
-      localStorage.setItem(claimedKey, 'true');
+  const applyReward = (rewardType) => {
+    if (rewardType === 'vip_egg' || rewardType === 'gift_vip_egg') {
       setState(prev => ({
         ...prev,
         vip: true,
         crystals: prev.crystals + 100,
         gold: prev.gold + 2500
       }));
-
-      // Roll and equip pet
       const pet = rollPetGacha();
       if (pet) {
         handleUnlockPet(pet.id);
         handleEquipPet(pet.id);
       }
-
       confetti({ particleCount: 90, spread: 75, origin: { y: 0.6 } });
       sounds.playStarsPurchase();
       showToast('🎉 VIP-СТАТУС И ЗОЛОТОЕ ЯЙЦО НАЧИСЛЕНЫ! 👑', 'stars');
-      return true;
-    }
-
-    if (code === 'VIP' || code === 'HUNTER-VIP') {
-      localStorage.setItem(claimedKey, 'true');
+    } else if (rewardType === 'vip') {
       setState(prev => ({ ...prev, vip: true }));
       confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
       sounds.playStarsPurchase();
       showToast('👑 VIP-СТАТУС НАВСЕГДА АКТИВИРОВАН!', 'stars');
-      return true;
-    }
-
-    if (code === 'EGG' || code === 'PET-GIFT') {
-      localStorage.setItem(claimedKey, 'true');
+    } else if (rewardType === 'egg') {
       const pet = rollPetGacha();
       if (pet) {
         handleUnlockPet(pet.id);
@@ -782,12 +749,41 @@ export default function App() {
       }
       confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
       sounds.playStarsPurchase();
-      showToast('🥚 ЗОЛОТОЕ ЯЙЦО ГАЧИ АКТИВИРОВАНО!', 'stars');
-      return true;
+      showToast('🥚 ЗОЛОТОЕ ЯЙЦО ГАЧИ ВЫЛУПИЛОСЬ! 🐾', 'stars');
+    } else if (rewardType === 'crystals') {
+      setState(prev => ({ ...prev, crystals: prev.crystals + 150 }));
+      showToast('+150 КРИСТАЛЛОВ БЕЗДНЫ! 💎', 'stars');
+    } else if (rewardType === 'smith') {
+      setState(prev => ({ ...prev, gold: prev.gold + 5000, crystals: prev.crystals + 100 }));
+      showToast('НАБОР КУЗНЕЦА: +5,000 🪙 И +100 💎!', 'stars');
+    } else if (rewardType === 'gear') {
+      handleStarsPurchaseSuccess('gear_chest');
     }
+  };
 
-    showToast('НЕВЕРНЫЙ ИЛИ ИСТЕКШИЙ ПРОМОКОД!', 'error');
-    return false;
+  const handleApplyPromo = async (rawCode) => {
+    const code = (rawCode || '').trim().toUpperCase();
+    if (!code) return false;
+
+    try {
+      const res = await fetch('/api/promo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, userId: user?.id })
+      });
+      const data = await res.json();
+      if (data && data.ok) {
+        applyReward(data.reward);
+        return true;
+      } else {
+        showToast(data?.error || 'НЕВЕРНЫЙ ИЛИ ИСЧЕРПАННЫЙ ПРОМОКОД!', 'error');
+        return false;
+      }
+    } catch (err) {
+      console.warn('Promo redemption error:', err);
+      showToast('ОШИБКА ПРОВЕРКИ ПРОМОКОДА НА СЕРВЕРЕ', 'error');
+      return false;
+    }
   };
 
   const handleOpenReviveModal = (confirmCallback) => {

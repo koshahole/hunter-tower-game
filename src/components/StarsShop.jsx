@@ -201,9 +201,9 @@ export default function StarsShop({ state, onPurchaseSuccess, onShowToast, onApp
             className="flex-1 bg-neo-cream border-3 border-black px-3 py-2 font-mono text-xs font-black uppercase tracking-wider text-black placeholder:text-slate-400 focus:outline-none"
           />
           <button
-            onClick={() => {
+            onClick={async () => {
               if (onApplyPromo && promoCode.trim()) {
-                const ok = onApplyPromo(promoCode.trim());
+                const ok = await onApplyPromo(promoCode.trim());
                 if (ok) setPromoCode('');
               }
             }}
