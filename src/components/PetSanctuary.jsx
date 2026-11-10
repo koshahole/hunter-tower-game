@@ -1,24 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { PETS, getPetStats, getPetUpgradeCost, rollPetGacha } from '../data/pets';
 import { sounds } from '../audio/soundEffects';
-import { hapticImpact, hapticNotification } from '../utils/telegram';
-import { Sparkles, Check, Star, ArrowUpCircle } from 'lucide-react';
+import { hapticImpact, hapticNotification, openStarsInvoice } from '../utils/telegram';
+import { Check, Star, ArrowUpCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
-export default function PetSanctuary({ 
-  state, 
-  onEquipPet, 
-  onUnlockPet, 
+const formatPetPct = (val) => {
+  const pct = Math.round((val || 0) * 1000) / 10;
+  return Number.isInteger(pct) ? String(pct) : pct.toFixed(1);
+};
+
+const RARITY_ORDER = { legendary: 4, epic: 3, rare: 2, common: 1 };
+
+export default function PetSanctuary({
+  state,
+  onEquipPet,
+  onUnlockPet,
   onUpgradePet,
   onSpendCrystals,
+  onBuyStarsEgg,
   onOpenStarsShop,
   onShowToast
 }) {
   const [summoning, setSummoning] = useState(false);
   const [summonedPet, setSummonedPet] = useState(null);
-  const [selectedPetId, setSelectedPetId] = useState(state.activePetId || 'green_slime');
+  const [filterMode, setFilterMode] = useState('all'); // all | owned | common | rare | epic | legendary
+  const [selectedPetId, setSelectedPetId] = useState(
+    () => state.activePetId || state.ownedPets?.[0] || PETS[0]?.id || 'volchonok'
+  );
+
+  useEffect(() => {
+    if (state.activePetId) {
+      setSelectedPetId(state.activePetId);
+    }
+  }, [state.activePetId]);
 
   const handleSummon = (currency) => {
+    if (summoning) return;
     if (currency === 'crystals') {
       if (state.crystals < 40) {
         hapticNotification('error');
@@ -63,7 +81,38 @@ export default function PetSanctuary({
         spread: 70,
         origin: { y: 0.5 }
       });
-    }, 1000);
+    }, 900);
+  };
+
+  const handleBuyEggDirect = () => {
+    hapticImpact('medium');
+    if (!onBuyStarsEgg) {
+      onOpenStarsShop?.();
+      return;
+    }
+    openStarsInvoice(
+      {
+        id: 'stars_egg',
+        name: 'ЗОЛОТОЕ ЯЙЦО ГАЧИ',
+        description: 'Случайный питомец в коллекцию или усиление дубликата',
+        price: 25,
+      },
+      () => {
+        sounds.playStarsPurchase();
+        hapticNotification('success');
+        onBuyStarsEgg();
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.5 }
+        });
+      },
+      (error) => {
+        if (error !== 'cancelled') {
+          onShowToast('Платеж отменен или не удался.', 'warning');
+        }
+      }
+    );
   };
 
   const selectedPet = PETS.find(p => p.id === selectedPetId) || PETS[0];
@@ -74,6 +123,30 @@ export default function PetSanctuary({
   const isActive = state.activePetId === selectedPet.id;
   const canUpgrade = state.gold >= upGold && state.crystals >= upCrystals && petLevel < 20;
 
+  const filteredAndSortedPets = useMemo(() => {
+    const ownedSet = new Set(state.ownedPets || []);
+    const list = PETS.filter(pet => {
+      if (filterMode === 'owned') return ownedSet.has(pet.id);
+      if (filterMode === 'all') return true;
+      return pet.rarity === filterMode;
+    });
+
+    return list.sort((a, b) => {
+      const aActive = state.activePetId === a.id ? 1 : 0;
+      const bActive = state.activePetId === b.id ? 1 : 0;
+      if (aActive !== bActive) return bActive - aActive;
+
+      const aOwned = ownedSet.has(a.id) ? 1 : 0;
+      const bOwned = ownedSet.has(b.id) ? 1 : 0;
+      if (aOwned !== bOwned) return bOwned - aOwned;
+
+      const rarDiff = (RARITY_ORDER[b.rarity] || 0) - (RARITY_ORDER[a.rarity] || 0);
+      if (rarDiff !== 0) return rarDiff;
+
+      return (state.petLevels?.[b.id] || 1) - (state.petLevels?.[a.id] || 1);
+    });
+  }, [filterMode, state.ownedPets, state.activePetId, state.petLevels]);
+
   const handleLevelUp = () => {
     if (!canUpgrade || !isOwned) return;
     sounds.playLevelUp();
@@ -82,9 +155,18 @@ export default function PetSanctuary({
     onShowToast(`УРОВЕНЬ ${selectedPet.name} ПОВЫШЕН ДО ${petLevel + 1}! ✨`, 'success');
   };
 
+  const FILTERS = [
+    { key: 'all', label: `ВСЕ (${PETS.length})` },
+    { key: 'owned', label: `МОИ (${state.ownedPets.length})` },
+    { key: 'legendary', label: 'ЛЕГ' },
+    { key: 'epic', label: 'ЭПИК' },
+    { key: 'rare', label: 'РЕДК' },
+    { key: 'common', label: 'ОБЫЧ' },
+  ];
+
   return (
     <div className="w-full space-y-3 pb-24 font-sans select-none">
-      
+
       {/* Arcade Header Box */}
       <div className="bg-white border-4 border-black p-3.5 shadow-brutal flex items-center justify-between gap-2">
         <div className="min-w-0">
@@ -92,8 +174,8 @@ export default function PetSanctuary({
             <span>🐾</span>
             <span>ПИТОМНИК ОХОТНИКОВ</span>
           </h2>
-          <p className="text-[11px] font-bold text-slate-700 mt-0.5 truncate uppercase">
-            СПУТНИКИ РАСТУТ В БОЮ И ДАЮТ БАФФЫ!
+          <p className="text-[11px] font-bold text-slate-700 mt-0.5 uppercase">
+            АКТИВНЫЙ СПУТНИК ДАЁТ ПАССИВНЫЕ БАФФЫ. ПИТОМЦЕВ НЕЛЬЗЯ РАЗБИРАТЬ.
           </p>
         </div>
 
@@ -104,22 +186,30 @@ export default function PetSanctuary({
         </div>
       </div>
 
-      {/* Gacha Action Buttons */}
-      <div className="grid grid-cols-2 gap-2.5">
-        <button
-          onClick={() => handleSummon('crystals')}
-          className="flex items-center justify-center gap-1.5 py-3 px-2 bg-neo-cyan active:translate-x-[2px] active:translate-y-[2px] active:shadow-brutal-press text-black border-3 border-black font-arcade text-xs shadow-brutal transition-all uppercase"
-        >
-          <span>ПРИЗЫВ (40 💎)</span>
-        </button>
+      {/* Gacha Action Buttons + Honest Drop Rates */}
+      <div className="space-y-1.5">
+        <div className="grid grid-cols-2 gap-2.5">
+          <button
+            onClick={() => handleSummon('crystals')}
+            disabled={summoning}
+            className="flex items-center justify-center gap-1.5 py-3 px-2 bg-neo-cyan active:translate-x-[2px] active:translate-y-[2px] active:shadow-brutal-press text-black border-3 border-black font-arcade text-xs shadow-brutal transition-all uppercase"
+          >
+            <span>ПРИЗЫВ (40 💎)</span>
+          </button>
 
-        <button
-          onClick={onOpenStarsShop}
-          className="flex items-center justify-center gap-1.5 py-3 px-2 bg-neo-yellow active:translate-x-[2px] active:translate-y-[2px] active:shadow-brutal-press text-black border-3 border-black font-arcade text-xs shadow-brutal transition-all uppercase"
-        >
-          <Star className="w-4 h-4 fill-black stroke-[3]" />
-          <span>ЯЙЦО (25 ⭐️)</span>
-        </button>
+          <button
+            onClick={handleBuyEggDirect}
+            disabled={summoning}
+            className="flex items-center justify-center gap-1.5 py-3 px-2 bg-neo-yellow active:translate-x-[2px] active:translate-y-[2px] active:shadow-brutal-press text-black border-3 border-black font-arcade text-xs shadow-brutal transition-all uppercase"
+          >
+            <Star className="w-4 h-4 fill-black stroke-[3]" />
+            <span>ЯЙЦО (25 ⭐️)</span>
+          </button>
+        </div>
+
+        <div className="bg-white border-2 border-black px-2.5 py-1.5 text-[11px] font-bold text-slate-800 text-center shadow-brutal-sm">
+          🎲 Шансы гачи: <strong>50%</strong> Обыч • <strong>32%</strong> Редк • <strong>15%</strong> Эпик • <strong>3%</strong> Лег (дубль = +1 ур.)
+        </div>
       </div>
 
       {/* Selected Pet Detail Card */}
@@ -134,7 +224,7 @@ export default function PetSanctuary({
               <h3 className="font-arcade text-base text-black uppercase truncate">
                 {selectedPet.name}
               </h3>
-              <span className="bg-black text-white px-2 py-0.5 font-arcade text-[9px] uppercase shrink-0">
+              <span className="bg-black text-white px-2 py-0.5 font-arcade text-[11px] uppercase shrink-0">
                 {selectedPet.rarityName}
               </span>
             </div>
@@ -143,27 +233,42 @@ export default function PetSanctuary({
               УРОВЕНЬ: {petLevel} / 20
             </div>
 
-            <p className="text-xs font-bold text-slate-700 mt-1 line-clamp-2">
+            <p className="text-xs font-bold text-slate-700 mt-1 break-words">
               {selectedPet.description}
             </p>
           </div>
         </div>
 
-        {/* Buffs Strip */}
-        <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t-3 border-black text-center">
+        {/* All 6 Real Engine Buffs Strip */}
+        <div className="grid grid-cols-3 gap-1.5 mt-3 pt-3 border-t-3 border-black text-center">
           <div className="bg-neo-lime text-black border-2 border-black p-1.5 shadow-brutal-sm">
-            <div className="text-[9px] font-black uppercase">HP БОНУС</div>
-            <div className="font-arcade text-xs mt-0.5">+{Math.round(petStats.hpBonus * 100)}%</div>
+            <div className="text-[11px] font-black uppercase">HP</div>
+            <div className="font-arcade text-xs mt-0.5">+{formatPetPct(petStats.hpBonus)}%</div>
           </div>
 
           <div className="bg-neo-pink text-white border-2 border-black p-1.5 shadow-brutal-sm">
-            <div className="text-[9px] font-black uppercase">АТАКА</div>
-            <div className="font-arcade text-xs mt-0.5">+{Math.round(petStats.atkBonus * 100)}%</div>
+            <div className="text-[11px] font-black uppercase">АТАКА</div>
+            <div className="font-arcade text-xs mt-0.5">+{formatPetPct(petStats.atkBonus)}%</div>
           </div>
 
           <div className="bg-neo-yellow text-black border-2 border-black p-1.5 shadow-brutal-sm">
-            <div className="text-[9px] font-black uppercase">ЗОЛОТО</div>
-            <div className="font-arcade text-xs mt-0.5">+{Math.round(petStats.goldBonus * 100)}%</div>
+            <div className="text-[11px] font-black uppercase">ЗОЛОТО</div>
+            <div className="font-arcade text-xs mt-0.5">+{formatPetPct(petStats.goldBonus)}%</div>
+          </div>
+
+          <div className="bg-amber-200 text-black border-2 border-black p-1.5 shadow-brutal-sm">
+            <div className="text-[11px] font-black uppercase">КРИТ</div>
+            <div className="font-arcade text-xs mt-0.5">+{petStats.critBonus || 0}%</div>
+          </div>
+
+          <div className="bg-emerald-200 text-black border-2 border-black p-1.5 shadow-brutal-sm">
+            <div className="text-[11px] font-black uppercase">УВОРОТ</div>
+            <div className="font-arcade text-xs mt-0.5">+{petStats.dodgeBonus || 0}%</div>
+          </div>
+
+          <div className="bg-neo-cyan text-black border-2 border-black p-1.5 shadow-brutal-sm">
+            <div className="text-[11px] font-black uppercase">КРИСТ</div>
+            <div className="font-arcade text-xs mt-0.5">+{formatPetPct(petStats.crystalBonus)}%</div>
           </div>
         </div>
 
@@ -206,61 +311,88 @@ export default function PetSanctuary({
               )}
             </>
           ) : (
-            <div className="w-full py-2.5 bg-slate-200 border-2 border-black font-arcade text-slate-600 text-xs text-center uppercase">
+            <div className="w-full py-2.5 bg-slate-200 border-2 border-black font-arcade text-slate-700 text-xs text-center uppercase px-2">
               🔒 ЗАКРЫТ. ИСПЫТАЙ УДАЧУ В ПРИЗЫВЕ!
             </div>
           )}
         </div>
       </div>
 
-      {/* Roster Grid */}
-      <div className="space-y-1.5">
-        <h4 className="font-arcade text-xs text-black uppercase px-1">
-          КОЛЛЕКЦИЯ СПУТНИКОВ:
-        </h4>
-
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-          {PETS.map(pet => {
-            const owned = state.ownedPets.includes(pet.id);
-            const active = state.activePetId === pet.id;
-            const selected = selectedPetId === pet.id;
-            const level = state.petLevels?.[pet.id] || 1;
-
-            return (
-              <button
-                key={pet.id}
-                onClick={() => {
-                  hapticImpact('light');
-                  setSelectedPetId(pet.id);
-                }}
-                className={`relative p-2 border-3 border-black text-center transition-all flex flex-col items-center justify-between ${
-                  selected 
-                    ? 'bg-neo-yellow shadow-brutal translate-x-[-2px] translate-y-[-2px]' 
-                    : owned 
-                    ? 'bg-white shadow-brutal-sm hover:bg-slate-50' 
-                    : 'bg-slate-200 opacity-40 shadow-none'
-                }`}
-              >
-                {active && (
-                  <span className="absolute top-1 right-1 w-3 h-3 bg-neo-lime border-2 border-black" />
-                )}
-
-                <div className="text-3xl my-1 shrink-0">
-                  {pet.avatar}
-                </div>
-
-                <div className="w-full min-w-0">
-                  <div className="font-arcade text-[10px] text-black truncate uppercase">
-                    {pet.name}
-                  </div>
-                  <div className="text-[9px] font-black text-slate-700 truncate">
-                    {owned ? `УР. ${level}` : 'ЗАКРЫТ'}
-                  </div>
-                </div>
-              </button>
-            );
-          })}
+      {/* Filter Chips & Roster Grid (Owned-First) */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between px-1">
+          <h4 className="font-arcade text-xs text-black uppercase">
+            КОЛЛЕКЦИЯ ({filteredAndSortedPets.length}):
+          </h4>
         </div>
+
+        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          {FILTERS.map(f => (
+            <button
+              key={f.key}
+              onClick={() => {
+                hapticImpact('light');
+                setFilterMode(f.key);
+              }}
+              className={`px-2.5 py-1.5 border-2 border-black font-arcade text-[11px] uppercase whitespace-nowrap shrink-0 transition-all ${
+                filterMode === f.key
+                  ? 'bg-black text-neo-yellow shadow-brutal-sm'
+                  : 'bg-white text-black [@media(hover:hover)]:hover:bg-slate-100'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        {filteredAndSortedPets.length === 0 ? (
+          <div className="bg-white border-3 border-black p-5 text-center text-xs font-bold text-slate-600 shadow-brutal-sm">
+            Пока нет открытых спутников. Нажмите «ПРИЗЫВ (40 💎)» выше!
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+            {filteredAndSortedPets.map(pet => {
+              const owned = state.ownedPets.includes(pet.id);
+              const active = state.activePetId === pet.id;
+              const selected = selectedPetId === pet.id;
+              const level = state.petLevels?.[pet.id] || 1;
+
+              return (
+                <button
+                  key={pet.id}
+                  onClick={() => {
+                    hapticImpact('light');
+                    setSelectedPetId(pet.id);
+                  }}
+                  className={`relative p-2 border-3 border-black text-center transition-all flex flex-col items-center justify-between ${
+                    selected
+                      ? 'bg-neo-yellow shadow-brutal translate-x-[-2px] translate-y-[-2px]'
+                      : owned
+                      ? 'bg-white shadow-brutal-sm [@media(hover:hover)]:hover:bg-slate-50'
+                      : 'bg-slate-200 opacity-50 shadow-none'
+                  }`}
+                >
+                  {active && (
+                    <span className="absolute top-1 right-1 w-3 h-3 bg-neo-lime border-2 border-black" />
+                  )}
+
+                  <div className="text-3xl my-1 shrink-0">
+                    {pet.avatar}
+                  </div>
+
+                  <div className="w-full min-w-0">
+                    <div className="font-arcade text-[11px] text-black truncate uppercase">
+                      {pet.name}
+                    </div>
+                    <div className="text-[11px] font-black text-slate-700 truncate">
+                      {owned ? `УР. ${level}` : 'ЗАКРЫТ'}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Summoning Modal */}
@@ -283,16 +415,16 @@ export default function PetSanctuary({
               {summonedPet.avatar}
             </div>
 
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <span className="bg-black text-white px-2.5 py-0.5 font-arcade text-[9px] uppercase">
+            <div className="flex items-center gap-1.5 flex-wrap justify-center mb-1.5">
+              <span className="bg-black text-white px-2.5 py-0.5 font-arcade text-[11px] uppercase">
                 {summonedPet.rarityName} СПУТНИК
               </span>
               {summonedPet.isDuplicate ? (
-                <span className="bg-neo-pink text-white border border-black px-2 py-0.5 font-arcade text-[9px] uppercase">
+                <span className="bg-neo-pink text-white border border-black px-2 py-0.5 font-arcade text-[11px] uppercase">
                   ДУБЛИКАТ: УР. {summonedPet.newLevel}!
                 </span>
               ) : (
-                <span className="bg-neo-lime text-black border border-black px-2 py-0.5 font-arcade text-[9px] uppercase">
+                <span className="bg-neo-lime text-black border border-black px-2 py-0.5 font-arcade text-[11px] uppercase">
                   НОВЫЙ!
                 </span>
               )}
@@ -303,9 +435,9 @@ export default function PetSanctuary({
             </h2>
 
             <p className="text-xs font-bold text-slate-800 mb-4 break-words">
-              {summonedPet.isDuplicate 
-                ? (summonedPet.isMaxCompensation 
-                    ? 'Питомец уже 20 уровня! Начислена компенсация 50 Кристаллов Бездны и 500 Золота.' 
+              {summonedPet.isDuplicate
+                ? (summonedPet.isMaxCompensation
+                    ? 'Питомец уже 20 уровня! Начислена компенсация 50 Кристаллов Бездны и 500 Золота.'
                     : `Уровень питомца повышен до ${summonedPet.newLevel}! Все бонусы усилены на +15%.`)
                 : summonedPet.description}
             </p>

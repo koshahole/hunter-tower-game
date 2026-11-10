@@ -11,7 +11,7 @@ export const BOSSES = {
     atk: 50,
     hpMultiplier: 1.65,
     atkMultiplier: 1.07,
-    specialSkill: 'Яростный Замах (двойной урон)',
+    specialSkill: 'Тяжёлый топор • Гарант. реликвия',
     goldReward: 350,
     crystalReward: 15,
     dialog: 'Мелкий человечишка! Ты думал пройдешь мои залы?! Мой топор расколет твой череп!'
@@ -22,7 +22,7 @@ export const BOSSES = {
     avatar: '💀⚔️',
     hpMultiplier: 6.0,
     atkMultiplier: 2.2,
-    specialSkill: 'Костяная Тюрьма (оглушение на 1 ход)',
+    specialSkill: 'Костяной бастион • Усиленное HP',
     goldReward: 850,
     crystalReward: 35,
     dialog: 'Твоя плоть сгниет здесь, а кости пополнят мою непобедимую армию!'
@@ -33,7 +33,7 @@ export const BOSSES = {
     avatar: '🗿🔥',
     hpMultiplier: 7.5,
     atkMultiplier: 2.5,
-    specialSkill: 'Инферно (ожог на 3 хода)',
+    specialSkill: 'Лавовая броня • Мощные удары',
     goldReward: 1800,
     crystalReward: 70,
     dialog: 'ЖАААР... ПЕПЕЛ... ТЫ СГОРИШЬ ДОТЛА!'
@@ -44,7 +44,7 @@ export const BOSSES = {
     avatar: '🕷️🕸️',
     hpMultiplier: 8.5,
     atkMultiplier: 2.8,
-    specialSkill: 'Смертельный Яд (крадет здоровье)',
+    specialSkill: 'Ядовитый натиск • Высокая живучесть',
     goldReward: 3500,
     crystalReward: 120,
     dialog: 'Еще одна беспомощная мушка попала в мою липкую паутину...'
@@ -55,7 +55,7 @@ export const BOSSES = {
     avatar: '🐲🖤',
     hpMultiplier: 10.5,
     atkMultiplier: 3.2,
-    specialSkill: 'Дыхание Пустоты (игнорирует блок щита)',
+    specialSkill: 'Дыхание Эфира • Испытание экватора',
     goldReward: 6500,
     crystalReward: 250,
     dialog: 'Половина Башни пройдена? Наивный червь. Настоящий ад только начинается!'
@@ -66,7 +66,7 @@ export const BOSSES = {
     avatar: '🤖⚡',
     hpMultiplier: 12.0,
     atkMultiplier: 3.6,
-    specialSkill: 'Лазерный Залп (высокий урон)',
+    specialSkill: 'Тяжёлая кибер-броня • Плотный урон',
     goldReward: 12000,
     crystalReward: 450,
     dialog: 'ЦЕЛЬ ОБНАРУЖЕНА. УРОВЕНЬ УГРОЗЫ: КРИТИЧЕСКИЙ. АКТИВАЦИЯ РЕЖИМА АННИГИЛЯЦИИ.'
@@ -77,7 +77,7 @@ export const BOSSES = {
     avatar: '👑🪙',
     hpMultiplier: 14.0,
     atkMultiplier: 4.0,
-    specialSkill: 'Золотое Проклятие (снижает защиту)',
+    specialSkill: 'Золотой идол • Крупная награда 🪙',
     goldReward: 22000,
     crystalReward: 850,
     dialog: 'Твое золото теперь моё... как и твоя плоть!'
@@ -88,7 +88,7 @@ export const BOSSES = {
     avatar: '🪽⚡',
     hpMultiplier: 17.0,
     atkMultiplier: 4.5,
-    specialSkill: 'Кара Небес (наносит 50% текущего HP)',
+    specialSkill: 'Небесный вердикт • Мощные атаки',
     goldReward: 40000,
     crystalReward: 1500,
     dialog: 'Твое греховное восхождение заканчивается здесь.'
@@ -99,7 +99,7 @@ export const BOSSES = {
     avatar: '👤🗡️',
     hpMultiplier: 20.0,
     atkMultiplier: 5.0,
-    specialSkill: 'Теневые клоны (двойная атака)',
+    specialSkill: 'Теневой натиск • Элитный страж',
     goldReward: 75000,
     crystalReward: 2800,
     dialog: 'Ты думал, ты единственный охотник здесь? Восстань!'
@@ -110,7 +110,7 @@ export const BOSSES = {
     avatar: '👑👁️🌌',
     hpMultiplier: 28.0,
     atkMultiplier: 6.0,
-    specialSkill: 'Судный День (абсолютный урон)',
+    specialSkill: 'Творец Башни • Финальный босс',
     goldReward: 250000,
     crystalReward: 15000,
     dialog: 'Ты преодолел 99 этажей... Покажи мне всю силу смертного!'

@@ -1,42 +1,41 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { REBIRTH_PERKS, calculateRebirthSouls, getPerkCost } from '../data/rebirth';
 import { sounds } from '../audio/soundEffects';
 import { hapticImpact, hapticNotification } from '../utils/telegram';
-import { RotateCcw, X } from 'lucide-react';
+import { RotateCcw, X, AlertTriangle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
-export default function RebirthModal({ 
-  state, 
-  onPerformRebirth, 
-  onBuyPerk, 
-  onClose, 
-  onShowToast 
+export default function RebirthModal({
+  state,
+  onPerformRebirth,
+  onBuyPerk,
+  onClose,
+  onShowToast
 }) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const earnedSouls = calculateRebirthSouls(state.maxFloor);
   const canRebirth = state.maxFloor >= 20;
 
-  const handleRebirth = () => {
+  const handleRebirthClick = () => {
     if (!canRebirth) {
       onShowToast('НУЖЕН 20 ЭТАЖ ДЛЯ ПЕРЕРОЖДЕНИЯ!', 'warning');
       return;
     }
+    hapticImpact('medium');
+    setConfirmOpen(true);
+  };
 
-    const confirm = window.confirm(
-      `СОВЕРШИТЬ ПЕРЕРОЖДЕНИЕ?\n\nВЫ ПОЛУЧИТЕ: +${earnedSouls} ОСКОЛКОВ ДУШ (🔮)!\n\nСБРОСИТСЯ ВСЁ: этажи, золото, кристаллы, питомцы, улучшения оружейной.\nОСТАНУТСЯ ТОЛЬКО: Души, Перки Душ и VIP!`
-    );
+  const executeRebirth = () => {
+    sounds.playLevelUp();
+    hapticNotification('success');
+    setConfirmOpen(false);
+    onPerformRebirth(earnedSouls);
 
-    if (confirm) {
-      sounds.playLevelUp();
-      hapticNotification('success');
-      onPerformRebirth(earnedSouls);
-      onShowToast(`ПЕРЕРОЖДЕНИЕ! +${earnedSouls} ДУШ! 🔮`, 'stars');
-
-      confetti({
-        particleCount: 100,
-        spread: 90,
-        origin: { y: 0.5 }
-      });
-    }
+    confetti({
+      particleCount: 100,
+      spread: 90,
+      origin: { y: 0.5 }
+    });
   };
 
   const handleUpgradePerk = (perk) => {
@@ -72,13 +71,13 @@ export default function RebirthModal({
               <h2 className="font-arcade text-base text-black uppercase leading-tight">
                 ХРАМ ДУШ
               </h2>
-              <p className="text-[10px] font-bold text-slate-700 uppercase">
+              <p className="text-[11px] font-bold text-slate-700 uppercase">
                 СБРОС ВСЕГО РАДИ ВЕЧНОЙ СИЛЫ
               </p>
             </div>
           </div>
 
-          <button 
+          <button
             onClick={onClose}
             className="w-8 h-8 bg-black text-white flex items-center justify-center font-arcade text-xs active:translate-x-[1px] active:translate-y-[1px]"
           >
@@ -89,7 +88,7 @@ export default function RebirthModal({
         {/* Souls Balance */}
         <div className="my-3 bg-neo-purple text-white border-3 border-black p-3 flex items-center justify-between shadow-brutal-sm">
           <div>
-            <span className="font-arcade text-[10px] text-neo-yellow uppercase block">
+            <span className="font-arcade text-[11px] text-neo-yellow uppercase block">
               БАЛАНС ДУШ:
             </span>
             <span className="font-arcade text-xl">
@@ -98,7 +97,7 @@ export default function RebirthModal({
           </div>
 
           <div className="text-right">
-            <span className="font-arcade text-[10px] text-neo-cyan uppercase block">
+            <span className="font-arcade text-[11px] text-neo-cyan uppercase block">
               РЕБИРТЫ:
             </span>
             <span className="font-arcade text-sm">
@@ -116,12 +115,12 @@ export default function RebirthModal({
               <span>НУЖЕН 20 ЭТАЖ ДЛЯ РАЗБЛОКИРОВКИ</span>
             )}
           </div>
-          <div className="text-[10px] font-bold text-slate-800 mb-2 leading-tight">
-            Сброс этажей, снаряжения, золота и питомцев.<br />Сохраняются: Души, Перки Душ и VIP.
+          <div className="text-[11px] font-bold text-slate-800 mb-2 leading-tight">
+            Сброс этажей, золота, кристаллов, экипировки (останется Простой Меч), жетонов и питомцев.<br />Сохраняются: Души, Перки Душ и VIP.
           </div>
 
           <button
-            onClick={handleRebirth}
+            onClick={handleRebirthClick}
             disabled={!canRebirth}
             className={`w-full py-3 border-3 border-black font-arcade text-xs flex items-center justify-center gap-2 uppercase transition-all ${
               canRebirth
@@ -147,7 +146,7 @@ export default function RebirthModal({
             const canAfford = state.souls >= cost;
 
             return (
-              <div 
+              <div
                 key={perk.id}
                 className="bg-white border-3 border-black p-2.5 flex items-center justify-between gap-2 shadow-brutal-sm"
               >
@@ -160,11 +159,11 @@ export default function RebirthModal({
                       <span className="font-arcade text-xs text-black uppercase truncate">
                         {perk.name}
                       </span>
-                      <span className="bg-black text-white text-[9px] font-black px-1.5 py-0.2 shrink-0">
+                      <span className="bg-black text-white text-[11px] font-black px-1.5 py-0.2 shrink-0">
                         УР. {lvl}
                       </span>
                     </div>
-                    <p className="text-[11px] font-bold text-slate-700 line-clamp-1 mt-0.5">
+                    <p className="text-[11px] font-bold text-slate-700 mt-0.5 leading-snug">
                       {perk.description}
                     </p>
                   </div>
@@ -172,7 +171,7 @@ export default function RebirthModal({
 
                 <div className="shrink-0">
                   {isMax ? (
-                    <span className="font-arcade text-[10px] bg-slate-200 border-2 border-black px-2 py-1">
+                    <span className="font-arcade text-[11px] bg-slate-200 border-2 border-black px-2 py-1">
                       МАКС
                     </span>
                   ) : (
@@ -195,6 +194,48 @@ export default function RebirthModal({
         </div>
 
       </div>
+
+      {/* Neo-Brutalist Confirmation Overlay */}
+      {confirmOpen && (
+        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-neo-yellow border-4 border-black p-5 shadow-brutal-lg max-w-xs w-full text-center space-y-3">
+            <div className="w-14 h-14 mx-auto bg-neo-pink text-white border-3 border-black flex items-center justify-center shadow-brutal-sm">
+              <AlertTriangle className="w-7 h-7 stroke-[3]" />
+            </div>
+
+            <h3 className="font-arcade text-base text-black uppercase">
+              ПОДТВЕРДИТЬ РЕБИРТ?
+            </h3>
+
+            <div className="bg-white border-2 border-black p-2.5 text-left text-xs font-bold space-y-1.5">
+              <div className="text-emerald-700">
+                🔮 Награда: <strong>+{earnedSouls} Осколков Душ</strong>
+              </div>
+              <div className="text-red-700">
+                ❌ Сбросятся: этажи (до 1), золото, кристаллы, весь лут (останется Простой Меч Ур.1), питомцы и жетоны.
+              </div>
+              <div className="text-slate-800">
+                ✅ Останутся: Души, Перки Душ и VIP-статус.
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2 pt-1">
+              <button
+                onClick={executeRebirth}
+                className="w-full py-3 bg-neo-pink text-white border-3 border-black font-arcade text-xs shadow-brutal active:translate-x-[2px] active:translate-y-[2px] uppercase"
+              >
+                ДА, ПЕРЕРОДИТЬСЯ (+{earnedSouls} 🔮)
+              </button>
+              <button
+                onClick={() => setConfirmOpen(false)}
+                className="w-full py-2.5 bg-white text-black border-3 border-black font-arcade text-xs shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] uppercase"
+              >
+                ОТМЕНА
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

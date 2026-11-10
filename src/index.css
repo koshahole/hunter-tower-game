@@ -10,7 +10,7 @@
   }
 
   html, body {
-    background-color: #FFE600;
+    background-color: #FFF7D6;
     color: #000000;
     overflow-x: hidden;
     user-select: none;
@@ -34,9 +34,9 @@
   }
 }
 
-/* Halftone dot pattern background */
+/* Softened halftone dot pattern background */
 .bg-comic-dots {
-  background-image: radial-gradient(#000000 12%, transparent 12%);
+  background-image: radial-gradient(rgba(0, 0, 0, 0.14) 12%, transparent 12%);
   background-position: 0 0, 10px 10px;
   background-size: 16px 16px;
 }
@@ -47,7 +47,7 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #FFE600;
+  background: #FFF7D6;
   border-left: 2px solid #000;
 }
 ::-webkit-scrollbar-thumb {
@@ -65,8 +65,24 @@
 
 /* Telegram safe area insets */
 .pb-safe {
-  padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), var(--app-safe-bottom, 0px), 16px);
 }
 .pt-safe {
-  padding-top: max(env(safe-area-inset-top, 0px), 8px);
+  padding-top: max(env(safe-area-inset-top, 0px), var(--app-safe-top, 0px), 8px);
+}
+
+/* Compact battle arena adjustments for short smartphone viewports (iPhone SE, 360x640, etc.) */
+@media (max-height: 700px) {
+  .battle-compact-avatar {
+    width: 5rem !important;
+    height: 5rem !important;
+    font-size: 2.5rem !important;
+  }
+  .battle-compact-arena {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+  }
+  .battle-compact-gap {
+    margin-top: 0.35rem !important;
+  }
 }

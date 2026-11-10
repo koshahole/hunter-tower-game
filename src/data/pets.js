@@ -1,5 +1,5 @@
 // Pets system with 100 pets (25 Common, 25 Rare, 25 Epic, 25 Legendary)
-export const PETS = [
+const RAW_PETS = [
   {
     "id": "volchonok",
     "name": "Волчонок",
@@ -1701,6 +1701,29 @@ export const PETS = [
     "baseCrystalBonus": 0.18
   }
 ];
+
+const formatPetPct = (val) => {
+  const pct = Math.round((val || 0) * 1000) / 10;
+  return Number.isInteger(pct) ? String(pct) : pct.toFixed(1);
+};
+
+// Authoritative pet description derived strictly from actual engine bonuses
+export function formatPetDescription(pet) {
+  if (!pet) return '';
+  const parts = [];
+  if (pet.baseHpBonus) parts.push(`+${formatPetPct(pet.baseHpBonus)}% HP`);
+  if (pet.baseAtkBonus) parts.push(`+${formatPetPct(pet.baseAtkBonus)}% ATK`);
+  if (pet.baseCritBonus) parts.push(`+${pet.baseCritBonus}% крит`);
+  if (pet.baseDodgeBonus) parts.push(`+${pet.baseDodgeBonus}% уворот`);
+  if (pet.baseGoldBonus) parts.push(`+${formatPetPct(pet.baseGoldBonus)}% золото`);
+  if (pet.baseCrystalBonus) parts.push(`+${formatPetPct(pet.baseCrystalBonus)}% кристаллы`);
+  return `Ур. 1: ${parts.join(', ')}. Каждый уровень +15% к силе бонусов.`;
+}
+
+export const PETS = RAW_PETS.map(pet => ({
+  ...pet,
+  description: formatPetDescription(pet),
+}));
 
 export const PETS_BY_ID = PETS.reduce((acc, p) => {
   acc[p.id] = p;

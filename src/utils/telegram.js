@@ -2,6 +2,18 @@
 
 export const tg = (typeof window !== 'undefined' && window.Telegram?.WebApp) || null;
 
+function syncTelegramSafeAreas() {
+  if (!tg || typeof document === 'undefined') return;
+  try {
+    const topInset = (tg.safeAreaInset?.top || 0) + (tg.contentSafeAreaInset?.top || 0);
+    const bottomInset = (tg.safeAreaInset?.bottom || 0) + (tg.contentSafeAreaInset?.bottom || 0);
+    document.documentElement.style.setProperty('--app-safe-top', `${topInset}px`);
+    document.documentElement.style.setProperty('--app-safe-bottom', `${bottomInset}px`);
+  } catch {
+    // ignore
+  }
+}
+
 export function initTelegram() {
   if (tg) {
     try {
@@ -9,10 +21,15 @@ export function initTelegram() {
       tg.expand();
       tg.enableClosingConfirmation();
       if (tg.setHeaderColor) {
-        tg.setHeaderColor('#FFE600');
+        tg.setHeaderColor('#FFF7D6');
       }
       if (tg.setBackgroundColor) {
-        tg.setBackgroundColor('#FFE600');
+        tg.setBackgroundColor('#FFF7D6');
+      }
+      syncTelegramSafeAreas();
+      if (tg.onEvent) {
+        tg.onEvent('safeAreaChanged', syncTelegramSafeAreas);
+        tg.onEvent('contentSafeAreaChanged', syncTelegramSafeAreas);
       }
     } catch (e) {
       console.warn('Telegram WebApp init warning:', e);

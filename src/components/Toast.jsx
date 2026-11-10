@@ -32,7 +32,7 @@ export default function Toast({ toast, onClose }) {
   };
 
   return (
-    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-sm pointer-events-auto animate-fadeIn font-sans select-none">
+    <div className="fixed top-[calc(12px+var(--app-safe-top,0px))] left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-sm pointer-events-auto animate-fadeIn font-sans select-none">
       <div
         onClick={onClose}
         className={`relative flex items-center justify-between gap-3 p-3 border-3 border-black shadow-brutal transition-all cursor-pointer ${
@@ -49,7 +49,7 @@ export default function Toast({ toast, onClose }) {
             onClose();
           }}
           title="Закрыть"
-          className="p-1 bg-black text-white hover:bg-slate-800 active:translate-x-[1px] active:translate-y-[1px] shrink-0 border border-black"
+          className="p-1 bg-black text-white [@media(hover:hover)]:hover:bg-slate-800 active:translate-x-[1px] active:translate-y-[1px] shrink-0 border border-black"
         >
           <X className="w-3.5 h-3.5 stroke-[3]" />
         </button>

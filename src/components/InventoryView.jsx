@@ -15,11 +15,11 @@ import {
 } from 'lucide-react';
 import {
   EQUIPMENT_CATALOG,
+  EQUIPMENT_BY_ID,
   SLOTS,
   RARITIES,
   MAX_ENHANCE_LEVEL,
   getItemStats,
-  getItemNextLevelGain,
   getEquipmentUpgradeCost,
   formatStatText,
   getSalvageValue
@@ -44,7 +44,35 @@ export default function InventoryView({
   const inventory = state.inventory || [];
 
   // Helper to get catalog template by id
-  const getTemplate = (id) => EQUIPMENT_CATALOG.find(it => it.id === id) || null;
+  const getTemplate = (id) => EQUIPMENT_BY_ID?.[id] || EQUIPMENT_CATALOG.find(it => it.id === id) || null;
+
+  const pctRound = (v) => Math.round((v || 0) * 1000) / 10;
+
+  const STAT_SHORT_NAMES = {
+    atk: ' АТК',
+    maxHp: ' HP',
+    critChance: '% КРИТ',
+    dodgeChance: '% УВОР',
+    vampirism: '% ВАМП',
+    goldBonus: '% ЗОЛ',
+    crystalBonus: '% КРИСТ'
+  };
+
+  const getComparisonDeltas = (candidateStats = {}, equippedStats = {}) => {
+    const keys = Array.from(new Set([...Object.keys(candidateStats), ...Object.keys(equippedStats)]));
+    return keys.map(key => {
+      const isRatio = key === 'vampirism' || key === 'goldBonus' || key === 'crystalBonus';
+      const candVal = isRatio ? pctRound(candidateStats[key] || 0) : Math.round((candidateStats[key] || 0) * 10) / 10;
+      const eqVal = isRatio ? pctRound(equippedStats[key] || 0) : Math.round((equippedStats[key] || 0) * 10) / 10;
+      const diff = Math.round((candVal - eqVal) * 10) / 10;
+      if (diff === 0) return null;
+      return {
+        key,
+        diff,
+        label: `${diff > 0 ? '▲ +' : '▼ '}${diff}${STAT_SHORT_NAMES[key] || ''}`
+      };
+    }).filter(Boolean);
+  };
 
   // Active equipped items with their stats
   const equippedSlots = Object.keys(SLOTS).map(slotKey => {
@@ -75,6 +103,12 @@ export default function InventoryView({
     if (s.dodgeChance) acc.dodgeChance = (acc.dodgeChance || 0) + s.dodgeChance;
     if (s.vampirism) acc.vampirism = (acc.vampirism || 0) + s.vampirism;
     if (s.goldBonus) acc.goldBonus = (acc.goldBonus || 0) + s.goldBonus;
+    if (s.crystalBonus) acc.crystalBonus = (acc.crystalBonus || 0) + s.crystalBonus;
+    return acc;
+  }, {});
+
+  const equippedSlotMap = equippedSlots.reduce((acc, curr) => {
+    acc[curr.slotKey] = curr;
     return acc;
   }, {});
 
@@ -116,37 +150,43 @@ export default function InventoryView({
     <div className="w-full space-y-3 pb-24 font-sans select-none">
 
       {/* Header Bar */}
-      <div className="bg-white border-4 border-black p-3.5 shadow-brutal flex items-center justify-between gap-2 flex-wrap">
-        <div>
-          <h2 className="font-arcade text-base text-black flex items-center gap-2 uppercase">
-            <span>🎒</span>
-            <span>ИНВЕНТАРЬ И ЭКИПИРОВКА</span>
-          </h2>
-          <p className="text-[10px] font-bold text-slate-700 mt-0.5 uppercase">
-            УЛУЧШАЙТЕ СНАРЯЖЕНИЕ ДЛЯ ШТУРМА ВЫСОКИХ ЭТАЖЕЙ
-          </p>
+      <div className="bg-white border-4 border-black p-3.5 shadow-brutal space-y-2">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div>
+            <h2 className="font-arcade text-base text-black flex items-center gap-2 uppercase">
+              <span>🎒</span>
+              <span>ИНВЕНТАРЬ И ЭКИПИРОВКА</span>
+            </h2>
+            <p className="text-[11px] font-bold text-slate-700 mt-0.5 uppercase">
+              СРАВНИВАЙТЕ И ЗАТАЧИВАЙТЕ ВЕЩИ ДЛЯ ШТУРМА
+            </p>
+          </div>
+
+          {/* Currency Badges */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="bg-neo-yellow border-2 border-black px-2 py-0.5 font-arcade text-xs text-black shadow-brutal-sm">
+              🪙 {state.gold}
+            </div>
+            <div className="bg-neo-cyan border-2 border-black px-2 py-0.5 font-arcade text-xs text-black shadow-brutal-sm">
+              💎 {state.crystals}
+            </div>
+          </div>
         </div>
 
-        {/* Currency Badges */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <div className="bg-neo-yellow border-2 border-black px-2 py-0.5 font-arcade text-xs text-black shadow-brutal-sm">
-            🪙 {state.gold}
-          </div>
-          <div className="bg-neo-cyan border-2 border-black px-2 py-0.5 font-arcade text-xs text-black shadow-brutal-sm">
-            💎 {state.crystals}
-          </div>
+        <div className="bg-neo-cream border-2 border-black px-2.5 py-1.5 text-[11px] font-bold text-slate-800 leading-snug">
+          💡 Кристаллы 💎 падают с Боссов каждые 10 этажей и даются за разбор лишних вещей (+1/+3/+10/+30 💎).
         </div>
       </div>
 
       {/* 4 Equipped Slots Grid (Paper-Doll) */}
       <div className="bg-white border-4 border-black p-3 shadow-brutal">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-2 gap-2">
           <span className="font-arcade text-xs text-black uppercase flex items-center gap-1">
             <Shield className="w-3.5 h-3.5 stroke-[3]" />
             НАДЕТАЯ ЭКИПИРОВКА
           </span>
-          <span className="text-[10px] font-bold text-slate-600 uppercase">
-            НАЖМИТЕ ДЛЯ ЗАТОЧКИ
+          <span className="text-[11px] font-bold text-slate-600 uppercase text-right">
+            ТАПНИТЕ ПО СЛОТУ
           </span>
         </div>
 
@@ -157,19 +197,23 @@ export default function InventoryView({
                 key={slotKey}
                 onClick={() => {
                   hapticImpact('light');
-                  if (template) setSelectedItem({ template, level, stats, isEquipped: true, rarity });
+                  if (template) {
+                    setSelectedItem({ template, level, stats, isEquipped: true, rarity });
+                  } else {
+                    setFilterSlot(slotKey);
+                  }
                 }}
                 className={`relative p-2.5 border-3 border-black text-left flex flex-col justify-between shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] transition-transform ${
-                  template ? (rarity?.bg || 'bg-white') : 'bg-slate-100 border-dashed'
+                  template ? (rarity?.bg || 'bg-white') : 'bg-slate-100 border-dashed [@media(hover:hover)]:hover:bg-slate-200'
                 }`}
               >
                 {/* Slot Tag */}
                 <div className="flex items-center justify-between gap-1 w-full mb-1.5">
-                  <span className="font-arcade text-[10px] text-slate-700 uppercase">
+                  <span className="font-arcade text-[11px] text-slate-700 uppercase">
                     {slotInfo.icon} {slotInfo.name}
                   </span>
                   {template && (
-                    <span className="bg-neo-pink text-white font-arcade text-[9px] px-1 py-0.2 border border-black shadow-brutal-press">
+                    <span className="bg-neo-pink text-white font-arcade text-[11px] px-1.5 py-0.2 border border-black shadow-brutal-press">
                       +{level}
                     </span>
                   )}
@@ -183,13 +227,13 @@ export default function InventoryView({
                         <div className="font-arcade text-xs text-black truncate uppercase">
                           {template.name}
                         </div>
-                        <div className="text-[9px] font-black uppercase text-slate-600 truncate">
+                        <div className="text-[11px] font-black uppercase text-slate-600 truncate">
                           {rarity?.name}
                         </div>
                       </div>
                     </div>
 
-                    <div className="mt-2 pt-1.5 border-t border-black/20 text-[10px] font-black space-y-0.5">
+                    <div className="mt-2 pt-1.5 border-t border-black/20 text-[11px] font-black space-y-0.5">
                       {Object.keys(stats).slice(0, 2).map(k => (
                         <div key={k} className="text-black truncate">
                           {formatStatText(k, stats[k])}
@@ -198,9 +242,10 @@ export default function InventoryView({
                     </div>
                   </div>
                 ) : (
-                  <div className="py-4 text-center">
+                  <div className="py-3 text-center">
                     <span className="text-2xl text-slate-400 block mb-1">{slotInfo.icon}</span>
-                    <span className="font-arcade text-[10px] text-slate-500 uppercase">ПУСТО</span>
+                    <span className="font-arcade text-[11px] text-slate-500 uppercase block">ПУСТО</span>
+                    <span className="text-[11px] font-bold text-slate-500 block">показать в сумке</span>
                   </div>
                 )}
               </button>
@@ -209,13 +254,21 @@ export default function InventoryView({
         </div>
 
         {/* Aggregate Gear Stats Bar */}
-        <div className="mt-2.5 pt-2 border-t-2 border-black flex items-center justify-around gap-1 flex-wrap font-arcade text-[10px] text-black">
-          {totalGearStats.atk > 0 && <span className="bg-neo-pink text-white px-1.5 py-0.5 border border-black">⚔️ +{totalGearStats.atk}</span>}
-          {totalGearStats.maxHp > 0 && <span className="bg-neo-lime text-black px-1.5 py-0.5 border border-black">❤️ +{totalGearStats.maxHp}</span>}
-          {totalGearStats.critChance > 0 && <span className="bg-neo-yellow text-black px-1.5 py-0.5 border border-black">🎯 +{totalGearStats.critChance}%</span>}
-          {totalGearStats.dodgeChance > 0 && <span className="bg-neo-cyan text-black px-1.5 py-0.5 border border-black">💨 +{totalGearStats.dodgeChance}%</span>}
-          {totalGearStats.vampirism > 0 && <span className="bg-red-400 text-white px-1.5 py-0.5 border border-black">🩸 +{Math.round(totalGearStats.vampirism * 100)}%</span>}
-          {totalGearStats.goldBonus > 0 && <span className="bg-amber-300 text-black px-1.5 py-0.5 border border-black">🪙 +{Math.round(totalGearStats.goldBonus * 100)}%</span>}
+        <div className="mt-2.5 pt-2 border-t-2 border-black flex items-center justify-around gap-1.5 flex-wrap font-arcade text-[11px] text-black">
+          {totalGearStats.atk > 0 && <span className="bg-neo-pink text-white px-1.5 py-0.5 border border-black">⚔️ +{Math.round(totalGearStats.atk)}</span>}
+          {totalGearStats.maxHp > 0 && <span className="bg-neo-lime text-black px-1.5 py-0.5 border border-black">❤️ +{Math.round(totalGearStats.maxHp)}</span>}
+          {totalGearStats.critChance > 0 && <span className="bg-neo-yellow text-black px-1.5 py-0.5 border border-black">🎯 +{Math.round(totalGearStats.critChance * 10) / 10}%</span>}
+          {totalGearStats.dodgeChance > 0 && <span className="bg-neo-cyan text-black px-1.5 py-0.5 border border-black">💨 +{Math.round(totalGearStats.dodgeChance * 10) / 10}%</span>}
+          {totalGearStats.vampirism > 0 && (() => {
+            const vampPct = pctRound(totalGearStats.vampirism);
+            return (
+              <span className="bg-red-400 text-white px-1.5 py-0.5 border border-black">
+                🩸 +{vampPct > 60 ? `60% (кап от ${vampPct}%)` : `${vampPct}%${vampPct === 60 ? ' (кап)' : ''}`}
+              </span>
+            );
+          })()}
+          {totalGearStats.goldBonus > 0 && <span className="bg-amber-300 text-black px-1.5 py-0.5 border border-black">🪙 +{pctRound(totalGearStats.goldBonus)}%</span>}
+          {totalGearStats.crystalBonus > 0 && <span className="bg-purple-200 text-black px-1.5 py-0.5 border border-black">💎 +{pctRound(totalGearStats.crystalBonus)}%</span>}
         </div>
       </div>
 
@@ -230,11 +283,11 @@ export default function InventoryView({
           <div className="bg-neo-lime border-3 border-black p-2.5 shadow-brutal-sm flex items-center gap-2.5">
             <span className="text-3xl shrink-0">🧪</span>
             <div className="min-w-0">
-              <div className="font-arcade text-xs text-black uppercase">
+              <div className="font-arcade text-xs text-black uppercase leading-tight">
                 ЗЕЛЬЯ ЖИЗНИ ({state.potions || 0})
               </div>
-              <div className="text-[10px] font-bold text-slate-800 leading-tight">
-                Восстанавливают 50% HP посреди боя
+              <div className="text-[11px] font-bold text-slate-800 leading-tight mt-0.5">
+                +50% HP посреди боя
               </div>
             </div>
           </div>
@@ -243,11 +296,11 @@ export default function InventoryView({
           <div className="bg-neo-yellow border-3 border-black p-2.5 shadow-brutal-sm flex items-center gap-2.5">
             <span className="text-3xl shrink-0">🪶</span>
             <div className="min-w-0">
-              <div className="font-arcade text-xs text-black uppercase">
-                ПЕРЬЯ ВОСКРЕШЕНИЯ ({state.reviveTokens || 0})
+              <div className="font-arcade text-xs text-black uppercase leading-tight">
+                ПЕРЬЯ ({state.reviveTokens || 0})
               </div>
-              <div className="text-[10px] font-bold text-slate-800 leading-tight">
-                Бесплатное воскрешение на месте гибели
+              <div className="text-[11px] font-bold text-slate-800 leading-tight mt-0.5">
+                Бесплатное воскрешение
               </div>
             </div>
           </div>
@@ -256,7 +309,7 @@ export default function InventoryView({
         {/* Active Run Relics (collected in current run) */}
         {runArtifacts && runArtifacts.length > 0 && (
           <div className="mt-2 pt-2 border-t-2 border-black">
-            <span className="font-arcade text-[10px] text-neo-purple uppercase block mb-1.5">
+            <span className="font-arcade text-[11px] text-neo-purple uppercase block mb-1.5">
               👑 АКТИВНЫЕ РЕЛИКВИИ ЭТОГО ЗАБЕГА:
             </span>
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -267,10 +320,10 @@ export default function InventoryView({
                 >
                   <span className="text-base">{art.icon}</span>
                   <div className="min-w-0">
-                    <span className="font-arcade text-[10px] text-black uppercase block truncate">
+                    <span className="font-arcade text-[11px] text-black uppercase block truncate">
                       {art.name}
                     </span>
-                    <span className="text-[9px] font-bold text-slate-600 block">
+                    <span className="text-[11px] font-bold text-slate-600 block">
                       {art.description}
                     </span>
                   </div>
@@ -303,10 +356,10 @@ export default function InventoryView({
                   hapticImpact('light');
                   setFilterSlot(f.id);
                 }}
-                className={`px-2 py-0.5 border-2 border-black font-arcade text-[9px] uppercase shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] ${
+                className={`px-2 py-1 border-2 border-black font-arcade text-[11px] uppercase shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] ${
                   filterSlot === f.id
                     ? 'bg-neo-pink text-white'
-                    : 'bg-white text-black hover:bg-slate-100'
+                    : 'bg-white text-black [@media(hover:hover)]:hover:bg-slate-100'
                 }`}
               >
                 {f.label}
@@ -316,63 +369,99 @@ export default function InventoryView({
         </div>
 
         {/* Bag Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {bagItems.map(({ template, level, stats, isEquipped, rarity }) => {
-            return (
-              <div
-                key={template.id}
-                onClick={() => {
-                  hapticImpact('light');
-                  setSelectedItem({ template, level, stats, isEquipped, rarity });
-                }}
-                className={`p-2.5 border-3 border-black flex items-center justify-between gap-2 shadow-brutal-sm cursor-pointer active:translate-x-[1px] active:translate-y-[1px] transition-all ${
-                  isEquipped ? 'bg-amber-100/90 ring-2 ring-black' : rarity.bg
-                }`}
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-10 h-10 bg-white border-2 border-black flex items-center justify-center text-xl shrink-0 shadow-brutal-sm">
-                    {template.icon}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-arcade text-xs text-black uppercase truncate">
-                        {template.name}
-                      </span>
-                      <span className="bg-neo-pink text-white font-arcade text-[9px] px-1 py-0.2 border border-black">
-                        +{level}
-                      </span>
-                    </div>
-                    <div className="text-[10px] font-black text-slate-600 uppercase flex items-center gap-1">
-                      <span>{rarity.name}</span>
-                      <span>•</span>
-                      <span>{SLOTS[template.slot]?.name}</span>
-                    </div>
-                  </div>
-                </div>
+        {bagItems.length === 0 ? (
+          <div className="bg-slate-100 border-2 border-dashed border-slate-400 p-4 text-center text-xs font-bold text-slate-600">
+            В этой категории пока нет предметов. Победите Вожаков и Боссов в Башне, чтобы выбить добычу!
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {bagItems.map(({ template, level, stats, isEquipped, rarity }) => {
+              const currentEquipped = equippedSlotMap[template.slot];
+              const deltas = isEquipped ? [] : getComparisonDeltas(stats, currentEquipped?.stats || {});
 
-                <div className="shrink-0 flex items-center gap-1">
-                  {isEquipped ? (
-                    <span className="bg-neo-lime text-black border border-black px-1.5 py-0.5 font-arcade text-[9px] uppercase">
-                      НАДЕТО
-                    </span>
-                  ) : (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        hapticNotification('success');
-                        onEquipItem(template);
-                        onShowToast(`ЭКИПИРОВАНО: ${template.name.toUpperCase()}! ⚔️`, 'success');
-                      }}
-                      className="bg-white hover:bg-neo-yellow border-2 border-black px-2 py-1 font-arcade text-[10px] uppercase shadow-brutal-sm"
-                    >
-                      НАДЕТЬ
-                    </button>
-                  )}
+              return (
+                <div
+                  key={template.id}
+                  onClick={() => {
+                    hapticImpact('light');
+                    setSelectedItem({ template, level, stats, isEquipped, rarity });
+                  }}
+                  className={`p-2.5 border-3 border-black flex flex-col gap-2 shadow-brutal-sm cursor-pointer active:translate-x-[1px] active:translate-y-[1px] transition-all ${
+                    isEquipped ? 'bg-amber-100/90 ring-2 ring-black' : rarity.bg
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-10 h-10 bg-white border-2 border-black flex items-center justify-center text-xl shrink-0 shadow-brutal-sm">
+                        {template.icon}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-arcade text-xs text-black uppercase truncate">
+                            {template.name}
+                          </span>
+                          <span className="bg-neo-pink text-white font-arcade text-[11px] px-1.5 py-0.2 border border-black">
+                            +{level}
+                          </span>
+                        </div>
+                        <div className="text-[11px] font-black text-slate-600 uppercase flex items-center gap-1">
+                          <span>{rarity.name}</span>
+                          <span>•</span>
+                          <span>{SLOTS[template.slot]?.name}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 flex items-center gap-1">
+                      {isEquipped ? (
+                        <span className="bg-neo-lime text-black border border-black px-2 py-0.5 font-arcade text-[11px] uppercase">
+                          НАДЕТО
+                        </span>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            hapticNotification('success');
+                            onEquipItem(template);
+                          }}
+                          className="bg-white [@media(hover:hover)]:hover:bg-neo-yellow border-2 border-black px-2.5 py-1 font-arcade text-[11px] uppercase shadow-brutal-sm"
+                        >
+                          НАДЕТЬ
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Stats preview & Comparison deltas */}
+                  <div className="pt-1.5 border-t border-black/20 flex items-center justify-between gap-1.5 flex-wrap text-[11px] font-black">
+                    <div className="flex items-center gap-1 flex-wrap">
+                      {Object.keys(stats).map(k => (
+                        <span key={k} className="bg-white/90 border border-black px-1.5 py-0.2 text-black">
+                          {formatStatText(k, stats[k])}
+                        </span>
+                      ))}
+                    </div>
+
+                    {!isEquipped && deltas.length > 0 && (
+                      <div className="flex items-center gap-1 flex-wrap">
+                        {deltas.slice(0, 2).map(d => (
+                          <span
+                            key={d.key}
+                            className={`px-1.5 py-0.2 border border-black font-arcade text-[11px] ${
+                              d.diff > 0 ? 'bg-neo-lime text-black' : 'bg-neo-pink text-white'
+                            }`}
+                          >
+                            {d.label}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Item Inspect / Enhance Modal */}
@@ -389,11 +478,11 @@ export default function InventoryView({
                     <h3 className="font-arcade text-sm text-black uppercase truncate">
                       {selectedItem.template.name}
                     </h3>
-                    <span className="bg-neo-pink text-white font-arcade text-[10px] px-1.5 py-0.2 border border-black">
+                    <span className="bg-neo-pink text-white font-arcade text-[11px] px-1.5 py-0.2 border border-black">
                       +{selectedItem.level}
                     </span>
                   </div>
-                  <span className="text-[10px] font-black uppercase text-neo-purple">
+                  <span className="text-[11px] font-black uppercase text-neo-purple">
                     {selectedItem.rarity.name} • {SLOTS[selectedItem.template.slot]?.name}
                   </span>
                 </div>
@@ -401,7 +490,7 @@ export default function InventoryView({
 
               <button
                 onClick={() => setSelectedItem(null)}
-                className="w-7 h-7 bg-black text-white flex items-center justify-center font-arcade text-xs shrink-0"
+                className="w-8 h-8 bg-black text-white flex items-center justify-center font-arcade text-xs shrink-0"
               >
                 <X className="w-4 h-4 stroke-[3]" />
               </button>
@@ -414,7 +503,7 @@ export default function InventoryView({
 
             {/* Current Stats */}
             <div className="space-y-1.5 mb-3">
-              <span className="font-arcade text-[10px] text-black uppercase block">ТЕКУЩИЕ СВОЙСТВА:</span>
+              <span className="font-arcade text-[11px] text-black uppercase block">ТЕКУЩИЕ СВОЙСТВА:</span>
               <div className="grid grid-cols-2 gap-1.5">
                 {Object.keys(selectedItem.stats).map(k => (
                   <div key={k} className="bg-neo-yellow border-2 border-black p-1.5 text-[11px] font-black text-black">
@@ -424,19 +513,52 @@ export default function InventoryView({
               </div>
             </div>
 
+            {/* Comparison against currently equipped item in same slot */}
+            {!selectedItem.isEquipped && (() => {
+              const curSlot = equippedSlotMap[selectedItem.template.slot];
+              const deltas = getComparisonDeltas(selectedItem.stats, curSlot?.stats || {});
+              return (
+                <div className="bg-slate-50 border-2 border-black p-2.5 mb-3">
+                  <span className="font-arcade text-[11px] text-black uppercase block mb-1">
+                    {curSlot?.template
+                      ? `ЕСЛИ НАДЕТЬ ВМЕСТО «${curSlot.template.name}»:`
+                      : `СЛОТ «${SLOTS[selectedItem.template.slot]?.name.toUpperCase()}» СВОБОДЕН:`}
+                  </span>
+                  {deltas.length > 0 ? (
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {deltas.map(d => (
+                        <span
+                          key={d.key}
+                          className={`px-2 py-0.5 border border-black font-arcade text-[11px] ${
+                            d.diff > 0 ? 'bg-neo-lime text-black' : 'bg-neo-pink text-white'
+                          }`}
+                        >
+                          {d.label}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-[11px] font-bold text-slate-600">
+                      Характеристики равны текущему предмету.
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
+
             {/* Next Level Upgrade Preview */}
             {selectedItem.level < MAX_ENHANCE_LEVEL ? (
               <div className="bg-slate-50 border-2 border-black p-2.5 mb-3">
-                <div className="flex items-center justify-between font-arcade text-[10px] text-black uppercase mb-1">
+                <div className="flex items-center justify-between font-arcade text-[11px] text-black uppercase mb-1">
                   <span>ЗАТОЧКА ДО +{selectedItem.level + 1} ДАСТ:</span>
                   <span className="text-neo-pink">
                     {selectedItem.level + 1} / {MAX_ENHANCE_LEVEL}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap text-[10px] font-black text-emerald-700">
+                <div className="flex items-center gap-2 flex-wrap text-[11px] font-black text-emerald-700">
                   {Object.keys(selectedItem.template.growth || {}).map(k => (
-                    <span key={k} className="bg-emerald-100 border border-emerald-600 px-1.5 py-0.2">
-                      +{formatStatText(k, selectedItem.template.growth[k])}
+                    <span key={k} className="bg-emerald-100 border border-emerald-600 px-1.5 py-0.5">
+                      {formatStatText(k, selectedItem.template.growth[k])}
                     </span>
                   ))}
                 </div>
@@ -465,7 +587,7 @@ export default function InventoryView({
                     disabled={!canAfford}
                     className={`w-full py-2.5 px-3 border-3 border-black font-arcade text-xs shadow-brutal active:translate-x-[1px] active:translate-y-[1px] flex items-center justify-between uppercase transition-all ${
                       canAfford
-                        ? 'bg-neo-lime text-black hover:bg-lime-400'
+                        ? 'bg-neo-lime text-black [@media(hover:hover)]:hover:bg-lime-400'
                         : 'bg-slate-200 text-slate-500 shadow-none cursor-not-allowed'
                     }`}
                   >
@@ -484,7 +606,6 @@ export default function InventoryView({
                   onClick={() => {
                     hapticNotification('success');
                     onEquipItem(selectedItem.template);
-                    onShowToast(`ЭКИПИРОВАНО: ${selectedItem.template.name.toUpperCase()}! ⚔️`, 'success');
                     setSelectedItem(prev => ({ ...prev, isEquipped: true }));
                   }}
                   className="w-full py-2.5 bg-neo-pink text-white border-3 border-black font-arcade text-xs shadow-brutal active:translate-x-[1px] active:translate-y-[1px] uppercase transition-all"
@@ -499,7 +620,7 @@ export default function InventoryView({
 
               {/* Salvage / Dismantle Button (1/3/10/30 Crystals) */}
               {selectedItem.template.id === 'rusty_dagger' ? (
-                <div className="w-full py-2 bg-slate-100 text-slate-500 border-2 border-dashed border-slate-400 font-arcade text-[10px] text-center uppercase">
+                <div className="w-full py-2 bg-slate-100 text-slate-500 border-2 border-dashed border-slate-400 font-arcade text-[11px] text-center uppercase">
                   🔒 СТАРТОВЫЙ МЕЧ НЕЛЬЗЯ РАЗОБРАТЬ
                 </div>
               ) : (
@@ -508,7 +629,7 @@ export default function InventoryView({
                     hapticImpact('medium');
                     setSalvageConfirmItem(selectedItem.template);
                   }}
-                  className="w-full py-2 bg-neo-cyan hover:bg-cyan-300 text-black border-3 border-black font-arcade text-xs shadow-brutal active:translate-x-[1px] active:translate-y-[1px] flex items-center justify-between uppercase transition-all"
+                  className="w-full py-2.5 px-3 bg-neo-cyan [@media(hover:hover)]:hover:bg-cyan-300 text-black border-3 border-black font-arcade text-xs shadow-brutal active:translate-x-[1px] active:translate-y-[1px] flex items-center justify-between uppercase transition-all"
                 >
                   <span className="flex items-center gap-1.5">
                     <Trash2 className="w-3.5 h-3.5" />
@@ -535,7 +656,7 @@ export default function InventoryView({
                 <h4 className="font-arcade text-xs text-black uppercase truncate">
                   {salvageConfirmItem.name}
                 </h4>
-                <span className="text-[10px] font-bold text-neo-purple uppercase">
+                <span className="text-[11px] font-bold text-neo-purple uppercase">
                   {RARITIES[salvageConfirmItem.rarity]?.name} • {SLOTS[salvageConfirmItem.slot]?.name}
                 </span>
               </div>
@@ -552,16 +673,7 @@ export default function InventoryView({
               </span>.
             </p>
 
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => {
-                  hapticImpact('light');
-                  setSalvageConfirmItem(null);
-                }}
-                className="flex-1 py-2 bg-slate-200 hover:bg-slate-300 text-black border-2 border-black font-arcade text-[10px] uppercase shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px]"
-              >
-                ОТМЕНА
-              </button>
+            <div className="flex flex-col gap-2">
               <button
                 onClick={() => {
                   hapticImpact('heavy');
@@ -571,9 +683,18 @@ export default function InventoryView({
                   setSalvageConfirmItem(null);
                   setSelectedItem(null); // Closes item detail modal automatically!
                 }}
-                className="flex-1 py-2 bg-neo-cyan hover:bg-cyan-300 text-black border-2 border-black font-arcade text-[10px] uppercase shadow-brutal active:translate-x-[1px] active:translate-y-[1px] font-black"
+                className="w-full py-2.5 bg-neo-cyan [@media(hover:hover)]:hover:bg-cyan-300 text-black border-2 border-black font-arcade text-xs uppercase shadow-brutal active:translate-x-[1px] active:translate-y-[1px] font-black"
               >
-                ДА, РАЗОБРАТЬ (+{getSalvageValue(salvageConfirmItem.rarity)} 💎)
+                РАЗОБРАТЬ (+{getSalvageValue(salvageConfirmItem.rarity)} 💎)
+              </button>
+              <button
+                onClick={() => {
+                  hapticImpact('light');
+                  setSalvageConfirmItem(null);
+                }}
+                className="w-full py-2.5 bg-slate-200 [@media(hover:hover)]:hover:bg-slate-300 text-black border-2 border-black font-arcade text-xs uppercase shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px]"
+              >
+                ОТМЕНА
               </button>
             </div>
           </div>

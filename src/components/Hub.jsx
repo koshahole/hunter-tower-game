@@ -15,7 +15,9 @@ import {
   Shield,
   Award,
   ChevronRight,
-  Package
+  Package,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import { sounds } from '../audio/soundEffects';
 import { hapticImpact, hapticNotification, shareInviteLink } from '../utils/telegram';
@@ -28,6 +30,8 @@ export default function Hub({
   state,
   playerStats,
   user,
+  soundEnabled = true,
+  onToggleSound,
   onStartRun,
   activeTab,
   setActiveTab,
@@ -85,80 +89,116 @@ export default function Hub({
   const handleInvite = () => {
     hapticImpact('medium');
     shareInviteLink('my_hunter_tower_bot', user.id);
-    onShowToast('ССЫЛКА ПРИГЛАШЕНИЯ СКОПИРОВАНА! 🔥', 'success');
+    onShowToast('ОКНО ПРИГЛАШЕНИЯ ОТКРЫТО! 🔥', 'info');
   };
 
   const nextBossFloor = Math.ceil(Math.max(1, state.maxFloor) / 10) * 10;
   const nextBoss = BOSSES[nextBossFloor] || BOSSES[10];
   const availableSouls = calculateRebirthSouls(state.maxFloor);
+  const isFirstRun = (state.stats?.totalRuns || 0) === 0;
 
   return (
     <div className="w-full space-y-3 pb-24 font-sans select-none">
 
-      {/* Neo-Brutalist Arcade Header Strip */}
-      <div className="bg-white border-4 border-black p-3 shadow-brutal flex items-center justify-between gap-2">
+      {/* Neo-Brutalist 2-Row Mobile Header */}
+      <div className="bg-white border-4 border-black p-3 shadow-brutal">
+        {/* Row 1: Hunter Identity + Quick Actions */}
+        <div className="flex items-center justify-between gap-2">
+          <button
+            onClick={() => {
+              hapticImpact('light');
+              onOpenProfile();
+            }}
+            className="flex items-center gap-2.5 min-w-0 text-left active:translate-x-[2px] active:translate-y-[2px] transition-transform"
+          >
+            <div className="w-11 h-11 bg-neo-cyan border-3 border-black shadow-brutal-sm flex items-center justify-center text-2xl shrink-0">
+              {state.hunterAvatar || '🧙‍♂️'}
+            </div>
 
-        {/* Hunter Profile Button */}
-        <button
-          onClick={() => {
-            hapticImpact('light');
-            onOpenProfile();
-          }}
-          className="flex items-center gap-2.5 min-w-0 text-left active:translate-x-[2px] active:translate-y-[2px] transition-transform"
-        >
-          <div className="w-12 h-12 bg-neo-cyan border-3 border-black shadow-brutal-sm flex items-center justify-center text-2xl shrink-0">
-            {state.hunterAvatar || '🧙‍♂️'}
-          </div>
-
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="font-arcade text-sm text-black truncate uppercase">
-                {state.hunterName || user.name}
-              </span>
-              {state.vip && (
-                <span className="bg-neo-pink text-white border-2 border-black text-[9px] font-black px-1.5 py-0.2 shadow-brutal-sm">
-                  VIP
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="font-arcade text-sm text-black truncate uppercase">
+                  {state.hunterName || user.name}
                 </span>
-              )}
+                {state.vip && (
+                  <span className="bg-neo-pink text-white border-2 border-black text-[11px] font-black px-1.5 py-0.2 shadow-brutal-sm shrink-0 leading-tight">
+                    VIP
+                  </span>
+                )}
+              </div>
+              <div className="text-[11px] font-black text-neo-purple flex items-center gap-1 uppercase tracking-tight truncate">
+                <span className="truncate">{state.hunterTitle || currentRank.name}</span>
+                <Settings className="w-3.5 h-3.5 text-black shrink-0" />
+              </div>
             </div>
-            <div className="text-[11px] font-black text-neo-purple flex items-center gap-1 uppercase tracking-tight">
-              <span>{state.hunterTitle || currentRank.name}</span>
-              <Settings className="w-3.5 h-3.5 text-black" />
-            </div>
-          </div>
-        </button>
+          </button>
 
-        {/* Currency Badges & Trophy */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          <div className="flex items-center gap-1 bg-neo-yellow border-3 border-black px-2 py-0.5 shadow-brutal-sm font-arcade text-xs text-black">
+          <div className="flex items-center gap-1.5 shrink-0">
+            {onToggleSound && (
+              <button
+                onClick={() => {
+                  hapticImpact('light');
+                  onToggleSound();
+                }}
+                title={soundEnabled ? 'Выключить звук' : 'Включить звук'}
+                className="w-9 h-9 bg-white [@media(hover:hover)]:hover:bg-neo-yellow border-3 border-black shadow-brutal-sm flex items-center justify-center active:translate-x-[1px] active:translate-y-[1px]"
+              >
+                {soundEnabled ? <Volume2 className="w-4 h-4 stroke-[3]" /> : <VolumeX className="w-4 h-4 stroke-[3] text-slate-500" />}
+              </button>
+            )}
+
+            <button
+              onClick={() => {
+                hapticImpact('light');
+                onOpenLeaderboard();
+              }}
+              title="Зал Славы"
+              className="w-9 h-9 bg-neo-pink text-white border-3 border-black shadow-brutal-sm flex items-center justify-center active:translate-x-[1px] active:translate-y-[1px]"
+            >
+              <Trophy className="w-4 h-4 stroke-[3]" />
+            </button>
+          </div>
+        </div>
+
+        {/* Row 2: Dedicated Currency Strip */}
+        <div className="flex items-center gap-2 mt-2.5 pt-2 border-t-2 border-black flex-wrap">
+          <div className="flex items-center gap-1 bg-neo-yellow border-2 border-black px-2.5 py-0.5 shadow-brutal-sm font-arcade text-xs text-black">
             <span>🪙</span>
             <span>{state.gold}</span>
           </div>
 
-          <div className="flex items-center gap-1 bg-neo-cyan border-3 border-black px-2 py-0.5 shadow-brutal-sm font-arcade text-xs text-black">
+          <div className="flex items-center gap-1 bg-neo-cyan border-2 border-black px-2.5 py-0.5 shadow-brutal-sm font-arcade text-xs text-black">
             <span>💎</span>
             <span>{state.crystals}</span>
           </div>
 
           {state.souls > 0 && (
-            <div className="flex items-center gap-1 bg-neo-purple text-white border-3 border-black px-2 py-0.5 shadow-brutal-sm font-arcade text-xs">
+            <div className="flex items-center gap-1 bg-neo-purple text-white border-2 border-black px-2.5 py-0.5 shadow-brutal-sm font-arcade text-xs">
               <span>🔮</span>
               <span>{state.souls}</span>
             </div>
           )}
 
-          <button
-            onClick={() => {
-              hapticImpact('light');
-              onOpenLeaderboard();
-            }}
-            className="w-9 h-9 bg-neo-pink text-white border-3 border-black shadow-brutal-sm flex items-center justify-center active:translate-x-[1px] active:translate-y-[1px]"
-          >
-            <Trophy className="w-4 h-4 stroke-[3]" />
-          </button>
+          <div className="ml-auto font-arcade text-[11px] text-slate-700 uppercase">
+            🧪 {state.potions || 0} • 🪶 {state.reviveTokens || 0}
+          </div>
         </div>
-
       </div>
+
+      {/* FTUE First-Run Guide Banner */}
+      {isFirstRun && (
+        <div className="bg-neo-yellow border-4 border-black p-3.5 shadow-brutal space-y-1.5">
+          <div className="font-arcade text-xs text-black uppercase flex items-center gap-1.5">
+            <span>📜</span>
+            <span>ПАМЯТКА НОВОГО ОХОТНИКА</span>
+          </div>
+          <ul className="text-xs font-bold text-black space-y-1 leading-snug">
+            <li>1️⃣ Нажми <strong>«ШТУРМОВАТЬ»</strong> — 1 забег стоит 1 ⚡ (восстановление 3 мин).</li>
+            <li>2️⃣ <strong>Вожаки и Боссы</strong> роняют экипировку, а Боссы каждые 10 эт. — 💎 и реликвии.</li>
+            <li>3️⃣ Надевай и затачивай вещи во вкладке <strong>«ЭКИП»</strong>, лишнее разбирай на 💎!</li>
+          </ul>
+        </div>
+      )}
 
       {/* Energy Ticker & Floor Record Pills */}
       <div className="grid grid-cols-2 gap-2.5">
@@ -166,11 +206,11 @@ export default function Hub({
         {/* 3-Min Energy Card */}
         <div className="bg-white border-3 border-black p-3 shadow-brutal flex items-center justify-between gap-1.5">
           <div className="min-w-0">
-            <div className="flex items-center gap-1">
-              <span className="font-arcade text-[10px] text-black uppercase">ЭНЕРГИЯ</span>
+            <div className="flex items-center gap-1 flex-wrap">
+              <span className="font-arcade text-[11px] text-black uppercase">ЭНЕРГИЯ</span>
               {state.energy < state.maxEnergy && (
-                <span className="bg-black text-neo-yellow text-[9px] font-black px-1 py-0.2 flex items-center gap-0.5">
-                  <Clock className="w-2.5 h-2.5" />
+                <span className="bg-black text-neo-yellow text-[11px] font-black px-1.5 py-0.2 flex items-center gap-0.5">
+                  <Clock className="w-3 h-3" />
                   <span>{formatTimer(secondsLeft)}</span>
                 </span>
               )}
@@ -182,16 +222,16 @@ export default function Hub({
 
           <button
             onClick={onOpenStarsShop}
-            className="bg-neo-lime text-black border-2 border-black font-arcade text-[10px] px-2 py-1 shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] shrink-0"
+            className="bg-neo-lime text-black border-2 border-black font-arcade text-[11px] px-2 py-1 shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] shrink-0 whitespace-nowrap"
           >
-            +10⭐️
+            ⚡ ЗА 10⭐️
           </button>
         </div>
 
         {/* Floor Record Card */}
         <div className="bg-white border-3 border-black p-3 shadow-brutal flex items-center justify-between gap-1.5">
           <div className="min-w-0">
-            <span className="font-arcade text-[10px] text-black uppercase block">РЕКОРД БАШНИ</span>
+            <span className="font-arcade text-[11px] text-black uppercase block">РЕКОРД БАШНИ</span>
             <div className="font-arcade text-lg text-neo-pink mt-0.5 truncate">
               ЭТАЖ {state.maxFloor}
             </div>
@@ -199,7 +239,7 @@ export default function Hub({
 
           <button
             onClick={onOpenLeaderboard}
-            className="bg-neo-cyan text-black border-2 border-black font-arcade text-[10px] px-2 py-1 shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] shrink-0"
+            className="bg-neo-cyan text-black border-2 border-black font-arcade text-[11px] px-2.5 py-1 shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] shrink-0"
           >
             ТОП
           </button>
@@ -213,15 +253,15 @@ export default function Hub({
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-2xl shrink-0">{currentRank.badge}</span>
             <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="font-arcade text-xs text-black uppercase truncate">
                   {currentRank.name}
                 </span>
-                <span className="bg-neo-lime text-black border border-black font-arcade text-[9px] px-1 py-0.2">
+                <span className="bg-neo-lime text-black border border-black font-arcade text-[11px] px-1.5 py-0.2">
                   {rankInfo.currentMultiplierText}
                 </span>
               </div>
-              <div className="text-[10px] font-bold text-slate-600 uppercase truncate">
+              <div className="text-[11px] font-bold text-slate-600 uppercase truncate">
                 {rankInfo.isMax
                   ? 'ДОСТИГНУТ ВЫСШИЙ РАНГ ОХОТНИКОВ!'
                   : `СЛЕДУЮЩИЙ: ${rankInfo.nextRank.badge} ${rankInfo.nextRank.name}`}
@@ -230,7 +270,7 @@ export default function Hub({
           </div>
 
           {!rankInfo.isMax && (
-            <span className="bg-neo-pink text-white font-arcade text-[10px] px-2 py-0.5 border border-black shrink-0">
+            <span className="bg-neo-pink text-white font-arcade text-[11px] px-2 py-0.5 border border-black shrink-0">
               +{rankInfo.nextRank.bonusPercent}%
             </span>
           )}
@@ -238,9 +278,9 @@ export default function Hub({
 
         {/* Progress Bar with Percent & Floor counter */}
         <div className="space-y-1">
-          <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-700">
-            <span>ПРОГРЕСС ДО СЛЕД. РАНГА</span>
-            <span>{rankInfo.isMax ? '100%' : `${rankInfo.progressPercent}% (${state.maxFloor} / ${rankInfo.nextRank?.minFloor || 100} эт)`}</span>
+          <div className="flex justify-between items-center text-[11px] font-black uppercase text-slate-700">
+            <span>ПРОГРЕСС РАНГА (ДАЁТ СТАТЫ)</span>
+            <span>{rankInfo.isMax ? '100%' : `${rankInfo.progressPercent}% (${state.maxFloor}/${rankInfo.nextRank?.minFloor || 100})`}</span>
           </div>
 
           <div className="relative h-4 bg-white border-3 border-black p-[1px] shadow-brutal-sm overflow-hidden">
@@ -257,7 +297,7 @@ export default function Hub({
         onClick={onOpenProfile}
         className="bg-white border-4 border-black p-4 shadow-brutal-lg cursor-pointer active:translate-x-[2px] active:translate-y-[2px] transition-transform text-center relative overflow-hidden"
       >
-        <div className="absolute top-2 right-2 bg-black text-white px-2 py-0.5 font-arcade text-[9px] uppercase shadow-brutal-sm">
+        <div className="absolute top-2 right-2 bg-black text-white px-2 py-0.5 font-arcade text-[11px] uppercase shadow-brutal-sm">
           НАСТРОИТЬ ✎
         </div>
 
@@ -278,38 +318,50 @@ export default function Hub({
           {state.hunterName || user.name}
         </h3>
         <p className="text-xs font-bold text-slate-700 uppercase">
-          {state.hunterTitle || currentRank.name}
+          Титул: {state.hunterTitle || currentRank.name} • {currentRank.name}
         </p>
 
         {/* Arcade Combat Stats Grid */}
         <div className="grid grid-cols-4 gap-2 mt-3 pt-3 border-t-3 border-black">
           <div className="bg-neo-pink text-white border-2 border-black p-1.5 shadow-brutal-sm">
-            <div className="text-[9px] font-black uppercase">УРОН</div>
+            <div className="text-[11px] font-black uppercase">УРОН</div>
             <div className="font-arcade text-sm mt-0.5">{playerStats.atk}</div>
           </div>
 
           <div className="bg-neo-lime text-black border-2 border-black p-1.5 shadow-brutal-sm">
-            <div className="text-[9px] font-black uppercase">HP</div>
+            <div className="text-[11px] font-black uppercase">HP</div>
             <div className="font-arcade text-sm mt-0.5">{playerStats.maxHp}</div>
           </div>
 
           <div className="bg-neo-yellow text-black border-2 border-black p-1.5 shadow-brutal-sm">
-            <div className="text-[9px] font-black uppercase">КРИТ</div>
+            <div className="text-[11px] font-black uppercase">КРИТ</div>
             <div className="font-arcade text-sm mt-0.5">{playerStats.critChance}%</div>
           </div>
 
           <div className="bg-neo-cyan text-black border-2 border-black p-1.5 shadow-brutal-sm">
-            <div className="text-[9px] font-black uppercase">УВОРОТ</div>
+            <div className="text-[11px] font-black uppercase">УВОР</div>
             <div className="font-arcade text-sm mt-0.5">{playerStats.dodgeChance}%</div>
           </div>
         </div>
 
-        {/* Real-time Gold Buff Badge */}
-        <div className="mt-2 bg-neo-yellow border-2 border-black py-1 px-2 text-[10px] sm:text-xs font-black uppercase flex items-center justify-center gap-1.5 shadow-brutal-sm">
-          <span>🪙 ВСЕ БАФФЫ К ЗОЛОТУ:</span>
-          <span className="font-arcade text-neo-pink text-xs">
-            +{Math.round(((playerStats.goldMultiplier || 1.0) - 1) * 100)}%
-          </span>
+        {/* Secondary Combat & Economy Buffs Strip */}
+        <div className="mt-2 grid grid-cols-3 gap-1.5 text-[11px] font-black uppercase">
+          <div className="bg-red-100 border-2 border-black py-1 px-1.5 shadow-brutal-sm flex flex-col items-center">
+            <span className="text-slate-700">🩸 ВАМП</span>
+            <span className="font-arcade text-xs text-neo-pink">{playerStats.vampirism || 0}%</span>
+          </div>
+          <div className="bg-neo-yellow border-2 border-black py-1 px-1.5 shadow-brutal-sm flex flex-col items-center">
+            <span className="text-slate-700">🪙 ЗОЛОТО</span>
+            <span className="font-arcade text-xs text-black">
+              +{Math.round(((playerStats.goldMultiplier || 1.0) - 1) * 100)}%
+            </span>
+          </div>
+          <div className="bg-neo-cyan border-2 border-black py-1 px-1.5 shadow-brutal-sm flex flex-col items-center">
+            <span className="text-slate-700">💎 КРИСТ</span>
+            <span className="font-arcade text-xs text-black">
+              +{Math.round(((playerStats.crystalMultiplier || 1.0) - 1) * 100)}%
+            </span>
+          </div>
         </div>
       </div>
 
@@ -336,16 +388,16 @@ export default function Hub({
                     hapticImpact('light');
                     setSelectedCheckpoint(cp.floor);
                   }}
-                  className={`px-3 py-1.5 border-3 border-black font-arcade text-xs shrink-0 shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] flex flex-col items-center min-w-[85px] transition-all ${
+                  className={`px-3 py-1.5 border-3 border-black font-arcade text-xs shrink-0 shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] flex flex-col items-center min-w-[92px] transition-all ${
                     isSelected
                       ? 'bg-neo-pink text-white ring-2 ring-black'
-                      : 'bg-white text-black hover:bg-slate-100'
+                      : 'bg-white text-black [@media(hover:hover)]:hover:bg-slate-100'
                   }`}
                 >
                   <span className="text-[11px] uppercase">{cp.floor === 1 ? '1 СТАРТ' : `${cp.floor} ЭТ`}</span>
                   {cp.bonusRelics > 0 && (
-                    <span className={`text-[8px] font-black px-1 mt-0.5 ${isSelected ? 'bg-black text-neo-yellow' : 'bg-slate-200 text-slate-700'}`}>
-                      +{cp.bonusRelics} РЕЛИКВИЙ
+                    <span className={`text-[11px] font-black px-1.5 mt-0.5 ${isSelected ? 'bg-black text-neo-yellow' : 'bg-slate-200 text-slate-700'}`}>
+                      +{cp.bonusRelics} РЕЛ
                     </span>
                   )}
                 </button>
@@ -354,7 +406,7 @@ export default function Hub({
           </div>
 
           {activeCheckpointObj.bonusRelics > 0 && (
-            <div className="bg-neo-lime/30 border border-black p-2 text-[10px] font-black text-slate-800 flex items-center gap-1.5">
+            <div className="bg-neo-lime/30 border border-black p-2 text-[11px] font-black text-slate-800 flex items-center gap-1.5">
               <span>🎁</span>
               <span>
                 ДАР АВАНГАРДА: Старт с этажа {selectedCheckpoint} дает +{activeCheckpointObj.bonusRelics} случайных босс-реликвий
@@ -369,7 +421,7 @@ export default function Hub({
       <div className="space-y-2.5">
         <button
           onClick={handleStart}
-          className="w-full py-4 bg-neo-pink hover:bg-pink-600 active:translate-x-[3px] active:translate-y-[3px] active:shadow-brutal-press text-white border-4 border-black shadow-brutal-lg font-arcade text-lg flex items-center justify-center gap-3 transition-all"
+          className="w-full py-4 bg-neo-pink [@media(hover:hover)]:hover:bg-pink-600 active:translate-x-[3px] active:translate-y-[3px] active:shadow-brutal-press text-white border-4 border-black shadow-brutal-lg font-arcade text-lg flex items-center justify-center gap-3 transition-all"
         >
           <Swords className="w-6 h-6 stroke-[3]" />
           <span>ШТУРМОВАТЬ ЭТАЖ {selectedCheckpoint}!</span>
@@ -398,25 +450,33 @@ export default function Hub({
         </div>
       </div>
 
-      {/* Rebirth Temple Card */}
-      <div className="bg-neo-purple text-white border-4 border-black p-3.5 shadow-brutal flex items-center justify-between gap-2">
+      {/* Rebirth Temple Card (calm before floor 20 unlock, vibrant once unlocked) */}
+      <div className={`border-4 border-black p-3.5 shadow-brutal flex items-center justify-between gap-2 ${
+        state.maxFloor >= 20 ? 'bg-neo-purple text-white' : 'bg-slate-100 text-black'
+      }`}>
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-10 h-10 bg-black text-white border-2 border-white flex items-center justify-center text-xl shrink-0 shadow-brutal-sm">
+          <div className={`w-10 h-10 border-2 flex items-center justify-center text-xl shrink-0 shadow-brutal-sm ${
+            state.maxFloor >= 20 ? 'bg-black text-white border-white' : 'bg-white text-black border-black'
+          }`}>
             🔮
           </div>
           <div className="min-w-0">
             <div className="font-arcade text-xs uppercase truncate">ХРАМ ПЕРЕРОЖДЕНИЯ</div>
-            <div className="text-[11px] font-bold text-neo-yellow truncate">
-              {state.maxFloor >= 20 ? `ДОСТУПНО: +${availableSouls} ДУШ` : 'ОТКРОЕТСЯ НА 20 ЭТАЖЕ'}
+            <div className={`text-[11px] font-bold truncate ${
+              state.maxFloor >= 20 ? 'text-neo-yellow' : 'text-slate-600'
+            }`}>
+              {state.maxFloor >= 20 ? `ДОСТУПНО: +${availableSouls} ДУШ` : '🔒 Откроется на 20 этаже'}
             </div>
           </div>
         </div>
 
         <button
           onClick={onOpenRebirthModal}
-          className="bg-neo-yellow text-black border-3 border-black px-3 py-1.5 font-arcade text-xs shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] shrink-0"
+          className={`border-3 border-black px-3 py-1.5 font-arcade text-xs shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] shrink-0 ${
+            state.maxFloor >= 20 ? 'bg-neo-yellow text-black' : 'bg-white text-black'
+          }`}
         >
-          ВОЙТИ
+          {state.maxFloor >= 20 ? 'ВОЙТИ' : 'ОБЗОР'}
         </button>
       </div>
 
@@ -424,7 +484,9 @@ export default function Hub({
       <div className="bg-white border-3 border-black p-3 shadow-brutal flex items-center justify-between gap-2">
         <div className="min-w-0">
           <div className="font-arcade text-xs text-black uppercase truncate">ПОЗОВИ ДРУЗЕЙ</div>
-          <div className="text-[11px] font-bold text-slate-600 truncate">+3 ЭНЕРГИИ И 50 🪙 ЗА ДРУГА!</div>
+          <div className="text-[11px] font-bold text-slate-600 leading-tight">
+            Сравните рекорды этажей в Зале Славы!
+          </div>
         </div>
 
         <button

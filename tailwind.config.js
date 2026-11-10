@@ -15,6 +15,7 @@ export default {
       colors: {
         neo: {
           yellow: '#FFE600',
+          cream: '#FFF7D6',
           pink: '#FF3399',
           cyan: '#00F0FF',
           lime: '#39FF14',

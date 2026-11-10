@@ -43,7 +43,7 @@ export default function RunSummaryModal({ summary, onClose }) {
         <div className="w-full my-3 space-y-2 text-left">
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-neo-yellow border-2 border-black p-2 shadow-brutal-sm">
-              <span className="text-[9px] font-black uppercase text-slate-700 block">ДОБЫТО ЗОЛОТА</span>
+              <span className="text-[11px] font-black uppercase text-slate-700 block">ДОБЫТО ЗОЛОТА</span>
               <div className="font-arcade text-sm text-black flex items-center gap-1 mt-0.5">
                 <span>🪙</span>
                 <span>+{goldEarned}</span>
@@ -51,7 +51,7 @@ export default function RunSummaryModal({ summary, onClose }) {
             </div>
 
             <div className="bg-neo-cyan border-2 border-black p-2 shadow-brutal-sm">
-              <span className="text-[9px] font-black uppercase text-slate-700 block">КРИСТАЛЛЫ БЕЗДНЫ</span>
+              <span className="text-[11px] font-black uppercase text-slate-700 block">КРИСТАЛЛЫ БЕЗДНЫ</span>
               <div className="font-arcade text-sm text-black flex items-center gap-1 mt-0.5">
                 <span>💎</span>
                 <span>+{crystalsEarned}</span>
@@ -61,14 +61,14 @@ export default function RunSummaryModal({ summary, onClose }) {
 
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-slate-100 border-2 border-black p-2 shadow-brutal-sm">
-              <span className="text-[9px] font-black uppercase text-slate-700 block">ЗАЧИЩЕНО ЭТАЖЕЙ</span>
+              <span className="text-[11px] font-black uppercase text-slate-700 block">ЗАЧИЩЕНО ЭТАЖЕЙ</span>
               <div className="font-arcade text-sm text-black mt-0.5">
                 {floorsCleared} ЭТ.
               </div>
             </div>
 
             <div className="bg-slate-100 border-2 border-black p-2 shadow-brutal-sm">
-              <span className="text-[9px] font-black uppercase text-slate-700 block">ВРАГОВ ПОВЕРЖЕНО</span>
+              <span className="text-[11px] font-black uppercase text-slate-700 block">ВРАГОВ ПОВЕРЖЕНО</span>
               <div className="font-arcade text-sm text-black mt-0.5">
                 ⚔️ {monstersDefeated}
               </div>
@@ -77,7 +77,7 @@ export default function RunSummaryModal({ summary, onClose }) {
 
           {/* Loot Found */}
           <div className="bg-slate-50 border-2 border-black p-2.5 shadow-brutal-sm">
-            <div className="flex items-center justify-between font-arcade text-[10px] text-black uppercase mb-1.5">
+            <div className="flex items-center justify-between font-arcade text-[11px] text-black uppercase mb-1.5">
               <span>🎁 НАЙДЕНО СНАРЯЖЕНИЯ:</span>
               <span className="text-neo-pink">
                 {itemsFound.length > 0 ? `${itemsFound.length} ШТ.` : 'НЕТ'}
@@ -95,11 +95,11 @@ export default function RunSummaryModal({ summary, onClose }) {
                     >
                       <div className="flex items-center gap-1.5 min-w-0">
                         <span className="text-base shrink-0">{item.icon}</span>
-                        <span className="font-arcade text-[10px] text-black truncate uppercase">
+                        <span className="font-arcade text-[11px] text-black truncate uppercase">
                           {item.name}
                         </span>
                       </div>
-                      <span className={`text-[8px] font-black uppercase px-1 border border-black shrink-0 ${rarity.bg} ${rarity.text}`}>
+                      <span className={`text-[11px] font-black uppercase px-1.5 border border-black shrink-0 ${rarity.bg} ${rarity.text}`}>
                         {rarity.name}
                       </span>
                     </div>
@@ -107,7 +107,7 @@ export default function RunSummaryModal({ summary, onClose }) {
                 })}
               </div>
             ) : (
-              <p className="text-[10px] font-bold text-slate-500 italic">
+              <p className="text-[11px] font-bold text-slate-600 italic">
                 В этой вылазке экипировка не выпала. В Башне ценный лут падает с Вожаков и Боссов!
               </p>
             )}

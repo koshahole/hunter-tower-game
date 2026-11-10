@@ -15,14 +15,18 @@ export default function BossRelicModal({ relics, onSelectRelic }) {
           👑
         </div>
 
-        <div className="bg-neo-pink text-white border-2 border-black font-arcade text-[10px] px-3 py-0.5 uppercase shadow-brutal-sm mb-1">
+        <div className="bg-neo-pink text-white border-2 border-black font-arcade text-[11px] px-3 py-0.5 uppercase shadow-brutal-sm mb-1">
           СОКРОВИЩНИЦА БОССА
         </div>
 
         <h2 className="font-arcade text-lg text-black uppercase mb-1 text-center">
           ВЫБЕРИ ДАР БАШНИ!
         </h2>
-        
+
+        <div className="bg-black text-neo-yellow font-arcade text-[11px] px-2.5 py-0.5 uppercase mb-2">
+          ⏳ ДЕЙСТВУЕТ ТОЛЬКО В ЭТОМ ЗАБЕГЕ
+        </div>
+
         <p className="text-xs font-bold text-slate-800 mb-3 text-center">
           Выберите 1 из 3 древних реликвий для усиления этого забега:
         </p>
@@ -38,9 +42,9 @@ export default function BossRelicModal({ relics, onSelectRelic }) {
                 hapticNotification('success');
                 onSelectRelic(relic);
               }}
-              className="w-full bg-white hover:bg-slate-50 border-3 border-black p-3 flex items-center justify-between gap-3 text-left shadow-brutal active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all group"
+              className="w-full bg-white [@media(hover:hover)]:hover:bg-slate-50 border-3 border-black p-3 flex items-center justify-between gap-3 text-left shadow-brutal active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all group"
             >
-              <div className="w-12 h-12 border-2 border-black flex items-center justify-center text-3xl shrink-0 shadow-brutal-sm bg-neo-light group-hover:scale-105 transition-transform">
+              <div className="w-12 h-12 border-2 border-black flex items-center justify-center text-3xl shrink-0 shadow-brutal-sm bg-neo-light [@media(hover:hover)]:group-hover:scale-105 transition-transform">
                 {relic.icon}
               </div>
 
@@ -49,9 +53,9 @@ export default function BossRelicModal({ relics, onSelectRelic }) {
                   <span className="font-arcade text-xs text-black uppercase truncate">
                     {relic.name}
                   </span>
-                  <span 
-                    className="border border-black font-arcade text-[8px] px-1 py-0.2 uppercase"
-                    style={{ backgroundColor: relic.color, color: relic.rarity === 'legendary' ? '#000' : '#000' }}
+                  <span
+                    className="border border-black font-arcade text-[11px] px-1.5 py-0.2 uppercase text-black"
+                    style={{ backgroundColor: relic.color }}
                   >
                     {relic.rarityName}
                   </span>
@@ -61,7 +65,7 @@ export default function BossRelicModal({ relics, onSelectRelic }) {
                 </p>
               </div>
 
-              <div className="shrink-0 bg-neo-pink group-hover:bg-pink-600 text-white font-arcade text-[10px] px-2 py-1.5 border-2 border-black shadow-brutal-sm uppercase">
+              <div className="shrink-0 bg-neo-pink [@media(hover:hover)]:group-hover:bg-pink-600 text-white font-arcade text-[11px] px-2.5 py-1.5 border-2 border-black shadow-brutal-sm uppercase">
                 ВЗЯТЬ
               </div>
             </button>

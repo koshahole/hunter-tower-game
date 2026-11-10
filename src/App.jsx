@@ -40,6 +40,7 @@ export default function App() {
   const [isRebirthOpen, setIsRebirthOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [hasNewLoot, setHasNewLoot] = useState(false);
   const [toast, setToast] = useState(null);
 
   // Active run live trackers for the summary screen
@@ -114,6 +115,27 @@ export default function App() {
     saveGameState(state);
   }, [state]);
 
+  // Keep Web Audio engine synchronized with saved sound preference
+  useEffect(() => {
+    sounds.enabled = state.sound !== false;
+  }, [state.sound]);
+
+  // Clear unread loot badge once player visits Inventory in Hub
+  useEffect(() => {
+    if (view === 'hub' && activeTab === 'inventory' && hasNewLoot) {
+      setHasNewLoot(false);
+    }
+  }, [view, activeTab, hasNewLoot]);
+
+  const handleToggleSound = useCallback(() => {
+    setState(prev => {
+      const nextSound = !(prev.sound !== false);
+      sounds.enabled = nextSound;
+      showToast(nextSound ? 'ЗВУКИ ВКЛЮЧЕНЫ! 🔊' : 'ЗВУКИ ВЫКЛЮЧЕНЫ! 🔇', 'info');
+      return { ...prev, sound: nextSound };
+    });
+  }, [showToast]);
+
   // Compute total effective player stats dynamically from equipment & progression
   // Hardcore tuning: without a weapon, hunter's unarmed baseAtk is 8 (very weak).
   const playerStats = useMemo(() => {
@@ -130,7 +152,7 @@ export default function App() {
     const levels = state.equipmentLevels || {};
     Object.values(equipped).forEach(itemId => {
       if (!itemId) return;
-      const itemTemplate = EQUIPMENT_CATALOG.find(it => it.id === itemId) || EQUIPMENT_CATALOG[itemId];
+      const itemTemplate = EQUIPMENT_BY_ID?.[itemId] || EQUIPMENT_CATALOG.find(it => it.id === itemId);
       if (!itemTemplate) return;
       const lvl = levels[itemId] || 1;
       const stats = getItemStats(itemTemplate, lvl);
@@ -302,6 +324,7 @@ export default function App() {
     });
 
     if (droppedEquipment.length > 0) {
+      setHasNewLoot(true);
       const itemName = droppedEquipment[0]?.name || 'Снаряжение';
       showToast(`ДОБЫЧА: ${itemName.toUpperCase()}! 🛡️`, 'stars');
     }
@@ -327,7 +350,7 @@ export default function App() {
       setState(prev => ({ ...prev, reviveTokens: (prev.reviveTokens || 0) + 1 }));
       showToast('ПОЛУЧЕНО ПЕРО ВОЗРОЖДЕНИЯ! 🪶', 'stars');
     } else if (relic.effectType === 'maxHp') {
-      setRunHp(prev => (prev || playerStats.maxHp) + (relic.value || 120));
+      setRunHp(99999999);
       showToast(`РЕЛИКВИЯ: +${relic.value} HP И ПОЛНЫЙ ОТХИЛ! 🛡️`, 'success');
     } else {
       showToast(`РЕЛИКВИЯ АКТИВИРОВАНА: ${relic.name.toUpperCase()}! 👑`, 'stars');
@@ -389,6 +412,10 @@ export default function App() {
       vip: Boolean(state.vip)
     }).catch(() => {});
 
+    if (droppedEquipment.length > 0) {
+      setHasNewLoot(true);
+    }
+
     // Show Run Summary screen in Hub
     setRunSummary({ ...tracker });
     setView('hub');
@@ -397,7 +424,7 @@ export default function App() {
   const handleEquipItem = (itemOrId) => {
     const template = typeof itemOrId === 'object' && itemOrId
       ? itemOrId
-      : EQUIPMENT_CATALOG[itemOrId];
+      : (EQUIPMENT_BY_ID?.[itemOrId] || EQUIPMENT_CATALOG.find(it => it.id === itemOrId));
     if (!template) return;
 
     setState(prev => ({
@@ -413,7 +440,7 @@ export default function App() {
   const handleUpgradeItem = (itemOrId, goldCost, crystalCost) => {
     const template = typeof itemOrId === 'object' && itemOrId
       ? itemOrId
-      : EQUIPMENT_CATALOG[itemOrId];
+      : (EQUIPMENT_BY_ID?.[itemOrId] || EQUIPMENT_CATALOG.find(it => it.id === itemOrId));
     if (!template) return;
 
     const itemId = template.id;
@@ -600,25 +627,23 @@ export default function App() {
       const forceRarity = Math.random() < 0.6 ? 'epic' : 'legendary';
       const dropped = rollEquipmentDrop(Math.max(30, state.maxFloor || 1), forceRarity);
       if (dropped) {
-        let isDup = false;
-        let newLvl = 1;
+        const isDup = (state.inventory || []).includes(dropped.id);
+        const newLvl = isDup ? Math.min(20, (state.equipmentLevels?.[dropped.id] || 1) + 1) : 1;
         setState(prev => {
           const inv = prev.inventory || [];
-          isDup = inv.includes(dropped.id);
-          const newInv = isDup ? inv : [...inv, dropped.id];
+          const alreadyHas = inv.includes(dropped.id);
+          const newInv = alreadyHas ? inv : [...inv, dropped.id];
           const levels = { ...(prev.equipmentLevels || {}) };
-          if (isDup) {
-            newLvl = Math.min(20, (levels[dropped.id] || 1) + 1);
-            levels[dropped.id] = newLvl;
-          } else {
-            levels[dropped.id] = 1;
-          }
+          levels[dropped.id] = alreadyHas
+            ? Math.min(20, (levels[dropped.id] || 1) + 1)
+            : 1;
           return {
             ...prev,
             inventory: newInv,
             equipmentLevels: levels
           };
         });
+        setHasNewLoot(true);
         if (isDup) {
           showToast(`ДУБЛИКАТ: ${dropped.name.toUpperCase()} УЛУЧШЕН ДО +${newLvl}! 👑`, 'stars');
         } else {
@@ -635,10 +660,15 @@ export default function App() {
     } else if (action === 'egg') {
       const pet = rollPetGacha();
       const isDuplicate = (state.ownedPets || []).includes(pet.id);
+      const currentLvl = state.petLevels?.[pet.id] || 1;
       handleUnlockPet(pet.id);
       handleEquipPet(pet.id);
       if (isDuplicate) {
-        showToast(`ДУБЛИКАТ: ${pet.name.toUpperCase()} ПОВЫСИЛ УРОВЕНЬ! 🐾`, 'stars');
+        if (currentLvl >= 20) {
+          showToast(`ДУБЛИКАТ МАКС. УРОВНЯ: ${pet.name.toUpperCase()} -> +50 💎 И +500 🪙!`, 'stars');
+        } else {
+          showToast(`ДУБЛИКАТ: ${pet.name.toUpperCase()} УЛУЧШЕН ДО УР. ${currentLvl + 1}! 🐾`, 'stars');
+        }
       } else {
         showToast(`ВЫЛУПИЛСЯ: ${pet.name.toUpperCase()}! ЭКИПИРОВАН! 🐾`, 'stars');
       }
@@ -671,7 +701,7 @@ export default function App() {
   };
 
   return (
-    <div className="w-full min-h-dvh bg-neo-yellow text-black flex flex-col font-sans antialiased bg-comic-dots">
+    <div className="w-full min-h-dvh bg-neo-cream text-black flex flex-col font-sans antialiased bg-comic-dots pt-safe">
 
       {/* Toast notifications */}
       <Toast toast={toast} onClose={handleCloseToast} />
@@ -686,7 +716,10 @@ export default function App() {
             playerStats={playerStats}
             activePetId={state.activePetId}
             potions={state.potions}
+            reviveTokens={state.reviveTokens || 0}
             runArtifacts={runArtifacts}
+            soundEnabled={state.sound !== false}
+            onToggleSound={handleToggleSound}
             onUsePotion={() => setState(prev => ({ ...prev, potions: Math.max(0, prev.potions - 1) }))}
             onFloorCleared={handleFloorCleared}
             onRunEnd={handleRunEnd}
@@ -699,6 +732,8 @@ export default function App() {
                 state={state}
                 playerStats={playerStats}
                 user={user}
+                soundEnabled={state.sound !== false}
+                onToggleSound={handleToggleSound}
                 onStartRun={handleStartRun}
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
@@ -710,7 +745,7 @@ export default function App() {
               />
             )}
 
-            {(activeTab === 'inventory' || activeTab === 'upgrades') && (
+            {activeTab === 'inventory' && (
               <InventoryView
                 state={state}
                 runArtifacts={runArtifacts}
@@ -728,6 +763,7 @@ export default function App() {
                 onUnlockPet={handleUnlockPet}
                 onUpgradePet={handleUpgradePet}
                 onSpendCrystals={handleSpendCrystals}
+                onBuyStarsEgg={() => handleStarsPurchaseSuccess('egg')}
                 onOpenStarsShop={() => setActiveTab('shop')}
                 onShowToast={showToast}
               />
@@ -757,6 +793,8 @@ export default function App() {
         <ProfileModal
           state={state}
           user={user}
+          soundEnabled={state.sound !== false}
+          onToggleSound={handleToggleSound}
           onSaveProfile={handleSaveProfile}
           onClose={() => setIsProfileOpen(false)}
           onShowToast={showToast}
@@ -821,26 +859,30 @@ export default function App() {
               className={`flex flex-col items-center justify-center py-2 border-2 border-black transition-all ${
                 activeTab === 'tower'
                   ? 'bg-neo-pink text-white shadow-brutal-sm'
-                  : 'bg-white text-black hover:bg-slate-100'
+                  : 'bg-white text-black [@media(hover:hover)]:hover:bg-slate-100'
               }`}
             >
               <Home className="w-5 h-5 mb-0.5 stroke-[3]" />
-              <span className="font-arcade text-[10px] uppercase">БАШНЯ</span>
+              <span className="font-arcade text-[11px] uppercase leading-none">БАШНЯ</span>
             </button>
 
             <button
               onClick={() => {
                 hapticImpact('light');
                 setActiveTab('inventory');
+                setHasNewLoot(false);
               }}
-              className={`flex flex-col items-center justify-center py-2 border-2 border-black transition-all ${
-                activeTab === 'inventory' || activeTab === 'upgrades'
+              className={`relative flex flex-col items-center justify-center py-2 border-2 border-black transition-all ${
+                activeTab === 'inventory'
                   ? 'bg-neo-cyan text-black shadow-brutal-sm'
-                  : 'bg-white text-black hover:bg-slate-100'
+                  : 'bg-white text-black [@media(hover:hover)]:hover:bg-slate-100'
               }`}
             >
+              {hasNewLoot && (
+                <span className="absolute top-1 right-1.5 w-2.5 h-2.5 bg-neo-pink border border-black rounded-full animate-pulse" aria-label="Новая добыча" />
+              )}
               <Shield className="w-5 h-5 mb-0.5 stroke-[3]" />
-              <span className="font-arcade text-[10px] uppercase">СНАРЯЖЕНИЕ</span>
+              <span className="font-arcade text-[11px] uppercase leading-none">ЭКИП</span>
             </button>
 
             <button
@@ -851,11 +893,11 @@ export default function App() {
               className={`flex flex-col items-center justify-center py-2 border-2 border-black transition-all ${
                 activeTab === 'pets'
                   ? 'bg-neo-lime text-black shadow-brutal-sm'
-                  : 'bg-white text-black hover:bg-slate-100'
+                  : 'bg-white text-black [@media(hover:hover)]:hover:bg-slate-100'
               }`}
             >
               <Sparkles className="w-5 h-5 mb-0.5 stroke-[3]" />
-              <span className="font-arcade text-[10px] uppercase">ПИТОМЦЫ</span>
+              <span className="font-arcade text-[11px] uppercase leading-none">ПИТОМЦЫ</span>
             </button>
 
             <button
@@ -866,11 +908,11 @@ export default function App() {
               className={`flex flex-col items-center justify-center py-2 border-2 border-black transition-all ${
                 activeTab === 'shop'
                   ? 'bg-neo-yellow text-black shadow-brutal-sm'
-                  : 'bg-white text-black hover:bg-slate-100'
+                  : 'bg-white text-black [@media(hover:hover)]:hover:bg-slate-100'
               }`}
             >
               <Star className="w-5 h-5 mb-0.5 fill-black stroke-[3]" />
-              <span className="font-arcade text-[10px] uppercase">ЗВЕЗДЫ</span>
+              <span className="font-arcade text-[11px] uppercase leading-none">ЗВЕЗДЫ</span>
             </button>
 
           </div>

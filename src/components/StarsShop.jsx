@@ -79,7 +79,7 @@ export default function StarsShop({ state, onPurchaseSuccess, onShowToast }) {
     {
       id: 'stars_vip',
       name: 'VIP-СТАТУС ОХОТНИКА',
-      description: 'Вечная золотая корона в профиле, статус в Зале Славы и +25% к золоту НАВСЕГДА.',
+      description: 'Вечная золотая корона в профиле, статус в Зале Славы и +25% к золоту и кристаллам НАВСЕГДА.',
       price: 50,
       iconComponent: Crown,
       iconBg: 'bg-neo-yellow text-black',
@@ -98,7 +98,6 @@ export default function StarsShop({ state, onPurchaseSuccess, onShowToast }) {
         sounds.playStarsPurchase();
         hapticNotification('success');
         onPurchaseSuccess(item.action);
-        onShowToast(`КУПЛЕНО: ${item.name}! ⭐️`, 'stars');
       },
       (error) => {
         if (error !== 'cancelled') {
@@ -141,7 +140,7 @@ export default function StarsShop({ state, onPurchaseSuccess, onShowToast }) {
               }`}
             >
               {item.badge && (
-                <span className="absolute -top-3 right-3 bg-neo-pink text-white border-2 border-black font-arcade text-[9px] px-2 py-0.5 shadow-brutal-sm uppercase">
+                <span className="absolute -top-3 right-3 bg-neo-pink text-white border-2 border-black font-arcade text-[11px] px-2 py-0.5 shadow-brutal-sm uppercase">
                   {item.badge}
                 </span>
               )}
@@ -170,7 +169,7 @@ export default function StarsShop({ state, onPurchaseSuccess, onShowToast }) {
                   ) : (
                     <button
                       onClick={() => handleBuy(item)}
-                      className="w-full sm:w-auto flex items-center justify-center gap-1.5 py-2.5 px-4 bg-neo-yellow hover:bg-yellow-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-brutal-press text-black border-3 border-black font-arcade text-xs shadow-brutal transition-all uppercase whitespace-nowrap"
+                      className="w-full sm:w-auto flex items-center justify-center gap-1.5 py-2.5 px-4 bg-neo-yellow [@media(hover:hover)]:hover:bg-yellow-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-brutal-press text-black border-3 border-black font-arcade text-xs shadow-brutal transition-all uppercase whitespace-nowrap"
                     >
                       <Star className="w-4 h-4 fill-black stroke-[3] shrink-0" />
                       <span>{item.price} ⭐️</span>

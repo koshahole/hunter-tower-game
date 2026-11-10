@@ -14,23 +14,30 @@ export const TITLE_OPTIONS = [
   'Легендарный S-Ранг'
 ];
 
-export default function ProfileModal({ 
-  state, 
-  user, 
-  onSaveProfile, 
-  onClose, 
-  onShowToast 
+export default function ProfileModal({
+  state,
+  user,
+  soundEnabled: propSoundEnabled,
+  onToggleSound,
+  onSaveProfile,
+  onClose,
+  onShowToast
 }) {
   const [name, setName] = useState(state.hunterName || user.name || 'Охотник');
   const [avatar, setAvatar] = useState(state.hunterAvatar || '🧙‍♂️');
   const [title, setTitle] = useState(state.hunterTitle || 'Искатель Башни');
-  const [soundEnabled, setSoundEnabled] = useState(sounds.enabled);
+  const [localSoundEnabled, setLocalSoundEnabled] = useState(sounds.enabled);
 
+  const isSoundOn = onToggleSound ? propSoundEnabled !== false : localSoundEnabled;
   const currentRank = getRankByMaxFloor(state.maxFloor);
 
   const handleToggleSound = () => {
+    if (onToggleSound) {
+      onToggleSound();
+      return;
+    }
     const val = sounds.toggleSound();
-    setSoundEnabled(val);
+    setLocalSoundEnabled(val);
     onShowToast(val ? 'ЗВУКИ ВКЛЮЧЕНЫ! 🔊' : 'ЗВУКИ ВЫКЛЮЧЕНЫ! 🔇', 'info');
   };
 
@@ -62,13 +69,13 @@ export default function ProfileModal({
               <h2 className="font-arcade text-base text-black uppercase leading-tight">
                 НАСТРОЙКИ
               </h2>
-              <p className="text-[10px] font-bold text-slate-700 uppercase">
+              <p className="text-[11px] font-bold text-slate-700 uppercase">
                 КАСТОМИЗАЦИЯ ОХОТНИКА
               </p>
             </div>
           </div>
 
-          <button 
+          <button
             onClick={onClose}
             className="w-8 h-8 bg-black text-white flex items-center justify-center font-arcade text-xs active:translate-x-[1px] active:translate-y-[1px]"
           >
@@ -88,9 +95,9 @@ export default function ProfileModal({
                 key={av}
                 onClick={() => setAvatar(av)}
                 className={`w-9 h-9 border-2 border-black flex items-center justify-center text-xl transition-all ${
-                  avatar === av 
-                    ? 'bg-neo-pink text-white shadow-brutal-sm scale-105' 
-                    : 'bg-white hover:bg-slate-100'
+                  avatar === av
+                    ? 'bg-neo-pink text-white shadow-brutal-sm scale-105'
+                    : 'bg-white [@media(hover:hover)]:hover:bg-slate-100'
                 }`}
               >
                 {av}
@@ -102,7 +109,7 @@ export default function ProfileModal({
         {/* Form Inputs */}
         <div className="space-y-3">
           <div>
-            <label className="font-arcade text-[10px] text-black uppercase block mb-1">
+            <label className="font-arcade text-[11px] text-black uppercase block mb-1">
               ПОЗЫВНОЙ ОХОТНИКА:
             </label>
             <input
@@ -115,24 +122,34 @@ export default function ProfileModal({
           </div>
 
           <div>
-            <label className="font-arcade text-[10px] text-black uppercase block mb-1">
-              ТИТУЛ:
+            <label className="font-arcade text-[11px] text-black uppercase block mb-1">
+              ТИТУЛ (виден в Зале Славы, косметический):
             </label>
-            <select
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 bg-neo-light border-3 border-black font-sans font-bold text-xs text-black focus:outline-none focus:bg-neo-yellow shadow-brutal-sm"
-            >
-              {TITLE_OPTIONS.map(t => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
+            <div className="grid grid-cols-2 gap-1.5">
+              {TITLE_OPTIONS.map(t => {
+                const isSelected = title === t;
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setTitle(t)}
+                    className={`px-2 py-2 border-2 border-black text-[11px] font-bold text-left transition-all leading-tight ${
+                      isSelected
+                        ? 'bg-neo-yellow text-black shadow-brutal-sm font-black'
+                        : 'bg-neo-light text-slate-800 [@media(hover:hover)]:hover:bg-slate-100'
+                    }`}
+                  >
+                    {t}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Sound Toggle */}
           <div className="bg-neo-lime border-3 border-black p-2.5 flex items-center justify-between shadow-brutal-sm">
             <div className="flex items-center gap-2">
-              {soundEnabled ? <Volume2 className="w-5 h-5 text-black stroke-[3]" /> : <VolumeX className="w-5 h-5 text-black stroke-[3]" />}
+              {isSoundOn ? <Volume2 className="w-5 h-5 text-black stroke-[3]" /> : <VolumeX className="w-5 h-5 text-black stroke-[3]" />}
               <span className="font-arcade text-xs text-black uppercase">ЗВУКИ БОЯ</span>
             </div>
 
@@ -140,7 +157,7 @@ export default function ProfileModal({
               onClick={handleToggleSound}
               className="px-3 py-1 bg-black text-white font-arcade text-xs shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px]"
             >
-              {soundEnabled ? 'ВКЛ' : 'ВЫКЛ'}
+              {isSoundOn ? 'ВКЛ' : 'ВЫКЛ'}
             </button>
           </div>
 
@@ -150,7 +167,7 @@ export default function ProfileModal({
               ДОСЬЕ ОХОТНИКА:
             </div>
             <div className="flex justify-between">
-              <span>РАНГ:</span>
+              <span>РАНГ (даёт бонус статов):</span>
               <span className="font-arcade text-neo-pink">{currentRank.name}</span>
             </div>
             <div className="flex justify-between">

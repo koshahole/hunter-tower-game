@@ -72,7 +72,7 @@ export default function LeaderboardModal({ state, user, onClose }) {
               </h2>
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <p className="text-[10px] font-bold text-slate-700 uppercase">
+                <p className="text-[11px] font-bold text-slate-700 uppercase">
                   {lastUpdated ? 'ОНЛАЙН РЕЙТИНГ' : 'ТОП ПОКОРИТЕЛЕЙ'}
                 </p>
               </div>
@@ -84,14 +84,14 @@ export default function LeaderboardModal({ state, user, onClose }) {
               onClick={() => fetchLiveLeaderboard(true)}
               disabled={isLoading}
               title="Обновить список"
-              className="w-8 h-8 bg-neo-yellow hover:bg-yellow-300 text-black border-2 border-black flex items-center justify-center shadow-brutal-xs active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50"
+              className="w-8 h-8 bg-neo-yellow [@media(hover:hover)]:hover:bg-yellow-300 text-black border-2 border-black flex items-center justify-center shadow-brutal-xs active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50"
             >
               <RotateCw className={`w-4 h-4 stroke-[2.5] ${isLoading ? 'animate-spin' : ''}`} />
             </button>
 
             <button
               onClick={onClose}
-              className="w-8 h-8 bg-black hover:bg-slate-800 text-white flex items-center justify-center font-arcade text-xs active:translate-x-[1px] active:translate-y-[1px]"
+              className="w-8 h-8 bg-black [@media(hover:hover)]:hover:bg-slate-800 text-white flex items-center justify-center font-arcade text-xs active:translate-x-[1px] active:translate-y-[1px]"
             >
               <X className="w-4 h-4 stroke-[3]" />
             </button>
@@ -99,7 +99,7 @@ export default function LeaderboardModal({ state, user, onClose }) {
         </div>
 
         {/* Tab Selector */}
-        <div className="grid grid-cols-2 gap-1.5 p-1 bg-black border-2 border-black my-3">
+        <div className="grid grid-cols-2 gap-1.5 p-1 bg-black border-2 border-black my-2.5">
           <button
             onClick={() => {
               hapticImpact('light');
@@ -108,7 +108,7 @@ export default function LeaderboardModal({ state, user, onClose }) {
             className={`py-1.5 font-arcade text-xs uppercase transition-all flex items-center justify-center gap-1.5 ${
               tab === 'all'
                 ? 'bg-neo-yellow text-black'
-                : 'text-white hover:text-neo-yellow'
+                : 'text-white [@media(hover:hover)]:hover:text-neo-yellow'
             }`}
           >
             <span>ВСЕ ВРЕМЯ</span>
@@ -122,13 +122,19 @@ export default function LeaderboardModal({ state, user, onClose }) {
             className={`py-1.5 font-arcade text-xs uppercase transition-all flex items-center justify-center gap-1.5 ${
               tab === 'weekly'
                 ? 'bg-neo-pink text-white'
-                : 'text-white hover:text-neo-pink'
+                : 'text-white [@media(hover:hover)]:hover:text-neo-pink'
             }`}
           >
             <span>ТУРНИР</span>
-            <span className="text-[9px] bg-black/40 px-1 rounded">PTS</span>
+            <span className="text-[11px] bg-black/40 px-1 rounded">PTS</span>
           </button>
         </div>
+
+        {tab === 'weekly' && (
+          <div className="bg-slate-100 border-2 border-black px-2.5 py-1 mb-2 text-[11px] font-bold text-slate-800 text-center">
+            📊 Формула: <strong>PTS = 100×Этаж + 10×Души + 500×VIP</strong>
+          </div>
+        )}
 
         {/* Player Standing Card */}
         <div className={`p-3 flex items-center justify-between gap-2 shadow-brutal-sm mb-3 border-3 ${
@@ -146,13 +152,13 @@ export default function LeaderboardModal({ state, user, onClose }) {
                   {state.hunterName || user?.name || 'Охотник'} (ВЫ)
                 </span>
                 {state.vip && (
-                  <span className="bg-neo-pink text-white border border-black text-[9px] font-black px-1 flex items-center gap-0.5 shrink-0">
-                    <Crown className="w-2.5 h-2.5 fill-neo-yellow stroke-black" />
+                  <span className="bg-neo-pink text-white border border-black text-[11px] font-black px-1 flex items-center gap-0.5 shrink-0">
+                    <Crown className="w-3 h-3 fill-neo-yellow stroke-black" />
                     <span>VIP</span>
                   </span>
                 )}
               </div>
-              <div className="text-[10px] font-bold text-slate-800 uppercase truncate">
+              <div className="text-[11px] font-bold text-slate-800 uppercase truncate">
                 {state.hunterTitle || 'ИСКАТЕЛЬ БАШНИ'}
               </div>
             </div>
@@ -163,12 +169,12 @@ export default function LeaderboardModal({ state, user, onClose }) {
               {state.maxFloor || 1} ЭТАЖ
             </span>
             {tab === 'weekly' && (
-              <span className="font-arcade text-[10px] text-neo-pink block">
+              <span className="font-arcade text-[11px] text-neo-pink block">
                 {((state.maxFloor || 1) * 100 + (state.souls || 0) * 10 + (state.vip ? 500 : 0))} PTS
               </span>
             )}
             {tab === 'all' && (state.souls || 0) > 0 && (
-              <span className="font-arcade text-[10px] text-neo-purple block">
+              <span className="font-arcade text-[11px] text-neo-purple block">
                 {state.souls} 🔮
               </span>
             )}
@@ -204,7 +210,7 @@ export default function LeaderboardModal({ state, user, onClose }) {
                       <Crown className="w-3.5 h-3.5 fill-neo-yellow stroke-black shrink-0" />
                     )}
                   </div>
-                  <div className="text-[10px] font-bold text-slate-600 truncate uppercase">
+                  <div className="text-[11px] font-bold text-slate-600 truncate uppercase">
                     {leader.title || 'Искатель'}
                   </div>
                 </div>
@@ -215,12 +221,12 @@ export default function LeaderboardModal({ state, user, onClose }) {
                   {leader.maxFloor} ЭТ.
                 </span>
                 {tab === 'weekly' && leader.points !== undefined && (
-                  <span className="font-arcade text-[10px] text-neo-pink block">
+                  <span className="font-arcade text-[11px] text-neo-pink block">
                     {leader.points} PTS
                   </span>
                 )}
                 {tab === 'all' && leader.souls !== undefined && leader.souls > 0 && (
-                  <span className="font-arcade text-[10px] text-neo-purple block">
+                  <span className="font-arcade text-[11px] text-neo-purple block">
                     {leader.souls} 🔮
                   </span>
                 )}

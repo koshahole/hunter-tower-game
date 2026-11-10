@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Shield,
   Sparkles,
@@ -12,7 +12,10 @@ import {
   Award,
   ChevronRight,
   TrendingUp,
-  Package
+  Package,
+  Volume2,
+  VolumeX,
+  X
 } from 'lucide-react';
 import { sounds } from '../audio/soundEffects';
 import { hapticImpact, hapticNotification } from '../utils/telegram';
@@ -28,7 +31,10 @@ export default function Battle({
   activePetId,
   initialHp,
   potions = 1,
+  reviveTokens = 0,
   runArtifacts = [],
+  soundEnabled = true,
+  onToggleSound,
   onUsePotion,
   onRunEnd,
   onFloorCleared,
@@ -42,8 +48,9 @@ export default function Battle({
   const [monsterHp, setMonsterHp] = useState(currentMonster?.hp || 100);
   const [monsterGhostHp, setMonsterGhostHp] = useState(currentMonster?.maxHp || 100);
 
-  const [playerHp, setPlayerHp] = useState(initialHp || playerStats.maxHp);
-  const [playerGhostHp, setPlayerGhostHp] = useState(initialHp || playerStats.maxHp);
+  const resolvedInitialHp = Math.min(playerStats.maxHp, initialHp ?? playerStats.maxHp);
+  const [playerHp, setPlayerHp] = useState(resolvedInitialHp);
+  const [playerGhostHp, setPlayerGhostHp] = useState(resolvedInitialHp);
 
   // Accumulated floor bounty across all monsters in the pack
   const [accumulatedGold, setAccumulatedGold] = useState(0);
@@ -62,11 +69,60 @@ export default function Battle({
   const [isMonsterAttacking, setIsMonsterAttacking] = useState(false);
   const [isPlayerHurt, setIsPlayerHurt] = useState(false);
   const [battleState, setBattleState] = useState('fighting');
+  const [confirmRetreat, setConfirmRetreat] = useState(false);
+
+  // Synchronous state refs prevent stale React closures inside 400ms setTimeout turns
+  const playerHpRef = useRef(resolvedInitialHp);
+  const isDefendingRef = useRef(false);
+  const monsterStunnedRef = useRef(false);
+  const battleStateRef = useRef('fighting');
+  const turnTimeoutRef = useRef(null);
+  const prevInitialHpRef = useRef(initialHp);
+
+  const setSyncedPlayerHp = (nextHp) => {
+    const clamped = Math.max(0, Math.min(playerStats.maxHp, nextHp));
+    playerHpRef.current = clamped;
+    setPlayerHp(clamped);
+    return clamped;
+  };
+
+  const setSyncedDefending = (val) => {
+    isDefendingRef.current = val;
+    setIsDefending(val);
+  };
+
+  const setSyncedMonsterStunned = (val) => {
+    monsterStunnedRef.current = val;
+    setMonsterStunned(val);
+  };
+
+  const setSyncedBattleState = (val) => {
+    battleStateRef.current = val;
+    setBattleState(val);
+  };
 
   const activePet = PETS.find(p => p.id === activePetId);
 
+  // Clear pending turn timers on unmount
+  useEffect(() => {
+    return () => {
+      if (turnTimeoutRef.current) clearTimeout(turnTimeoutRef.current);
+    };
+  }, []);
+
+  // Sync player HP if initialHp updates post-mount (e.g. Boss Relic Titan Cuirass full heal)
+  useEffect(() => {
+    if (initialHp !== undefined && initialHp !== null && initialHp !== prevInitialHpRef.current) {
+      prevInitialHpRef.current = initialHp;
+      const clamped = setSyncedPlayerHp(initialHp);
+      setPlayerGhostHp(clamped);
+    }
+  }, [initialHp, playerStats.maxHp]);
+
   // Initialize floor pack and relic triggers
   useEffect(() => {
+    if (turnTimeoutRef.current) clearTimeout(turnTimeoutRef.current);
+
     const pack = generateFloorMonsters(floor);
     setMonsterPack(pack);
     setMonsterIdx(0);
@@ -84,10 +140,10 @@ export default function Battle({
 
     setMonsterHp(startHp);
     setMonsterGhostHp(startHp);
-    setBattleState('fighting');
+    setSyncedBattleState('fighting');
     setIsAttacking(false);
-    setIsDefending(false);
-    setMonsterStunned(false);
+    setSyncedDefending(false);
+    setSyncedMonsterStunned(false);
     setIsMonsterHurt(false);
     setIsMonsterAttacking(false);
     setIsPlayerHurt(false);
@@ -169,12 +225,12 @@ export default function Battle({
       sounds.playCrit();
       hapticImpact('medium');
 
-      setTimeout(() => {
+      turnTimeoutRef.current = setTimeout(() => {
         const nextMon = monsterPack[nextIndex];
         setMonsterIdx(nextIndex);
         setMonsterHp(nextMon.maxHp);
         setMonsterGhostHp(nextMon.maxHp);
-        setMonsterStunned(false);
+        setSyncedMonsterStunned(false);
         setIsAttacking(false);
         addLog(`⚔️ В БОЙ ВСТУПАЕТ: ${nextMon.name}!`);
       }, 400);
@@ -186,7 +242,7 @@ export default function Battle({
   };
 
   const handleAttack = () => {
-    if (battleState !== 'fighting' || isAttacking) return;
+    if (battleStateRef.current !== 'fighting' || isAttacking) return;
     setIsAttacking(true);
     hapticImpact('medium');
 
@@ -210,24 +266,29 @@ export default function Battle({
     setTimeout(() => setIsMonsterHurt(false), 250);
 
     // Vampirism from equipment & Relics (playerStats.vampirism is standardized in percentage 0..100)
+    let actualHeal = 0;
     const vampPercent = playerStats.vampirism || 0;
     if (vampPercent > 0) {
       const vHeal = Math.max(1, Math.floor(damage * (vampPercent / 100)));
-      const healedHp = Math.min(playerStats.maxHp, playerHp + vHeal);
-      setPlayerHp(healedHp);
-      addFloatingText(`+${vHeal} HP`, 'heal', true);
+      const prevHp = playerHpRef.current;
+      const healedHp = setSyncedPlayerHp(prevHp + vHeal);
+      actualHeal = healedHp - prevHp;
+      if (actualHeal > 0) {
+        addFloatingText(`+${actualHeal} HP`, 'heal', true);
+      }
     }
 
     const newMonsterHp = Math.max(0, monsterHp - damage);
     setMonsterHp(newMonsterHp);
-    addLog(`ВЫ НАНЕСЛИ ${damage} УРОНА! ${isCrit ? '💥 КРИТИЧЕСКИЙ УДАР!' : ''}`);
+    const healTag = actualHeal > 0 ? ` • 🩸 +${actualHeal} HP` : '';
+    addLog(`ВЫ НАНЕСЛИ ${damage} УРОНА${isCrit ? ' 💥 КРИТ!' : ''}${healTag}`);
 
     tickCooldowns();
 
     if (newMonsterHp <= 0) {
       handleMonsterDefeated();
     } else {
-      setTimeout(() => {
+      turnTimeoutRef.current = setTimeout(() => {
         monsterTurn();
         setIsAttacking(false);
       }, 400);
@@ -235,7 +296,7 @@ export default function Battle({
   };
 
   const handleSkill = (skill) => {
-    if (battleState !== 'fighting' || isAttacking || skill.currentCd > 0) return;
+    if (battleStateRef.current !== 'fighting' || isAttacking || skill.currentCd > 0) return;
     setIsAttacking(true);
     hapticImpact('heavy');
     sounds.playSkill();
@@ -262,36 +323,46 @@ export default function Battle({
 
     // Life-steal: combines skill inherent healRatio + player equipment/relic vampirism
     const totalVampRatio = (skill.healRatio || 0) + ((playerStats.vampirism || 0) / 100);
+    let actualHeal = 0;
+    let isFullHpVamp = false;
     if (totalVampRatio > 0) {
       const healAmt = Math.max(1, Math.floor(damage * totalVampRatio));
-      const newHp = Math.min(playerStats.maxHp, playerHp + healAmt);
-      setPlayerHp(newHp);
-      sounds.playHeal();
-      addFloatingText(`+${healAmt} HP`, 'heal', true);
-      addLog(`${skill.healRatio > 0 ? 'ВАМПИРИЗМ' : 'ПОХИЩЕНИЕ ЖИЗНИ'}: +${healAmt} HP!`);
+      const prevHp = playerHpRef.current;
+      const newHp = setSyncedPlayerHp(prevHp + healAmt);
+      actualHeal = newHp - prevHp;
+      if (actualHeal > 0) {
+        sounds.playHeal();
+        addFloatingText(`+${actualHeal} HP`, 'heal', true);
+      } else if (skill.healRatio > 0) {
+        isFullHpVamp = true;
+      }
     }
 
     if (skill.shieldRatio > 0) {
-      setIsDefending(true);
-      addLog(`🛡️ БАРЬЕР ТИТАНА АКТИВИРОВАН (-70% УРОНА)!`);
+      setSyncedDefending(true);
     }
 
     if (skill.id === 'thunder_strike') {
-      setMonsterStunned(true);
+      setSyncedMonsterStunned(true);
       addFloatingText('ОГЛУШЕНИЕ! ⚡', 'dodge', false);
-      addLog(`⚡ КАРА МОЛНИИ: ${currentMonster.name} ОГЛУШЕН!`);
     }
 
     const newMonsterHp = Math.max(0, monsterHp - damage);
     setMonsterHp(newMonsterHp);
-    addLog(`[${skill.name.toUpperCase()}] НАНЕС ${damage} УРОНА!`);
+
+    const skillExtras = [];
+    if (actualHeal > 0) skillExtras.push(`🩸 +${actualHeal} HP`);
+    else if (isFullHpVamp) skillExtras.push('🩸 HP МАКС');
+    if (skill.shieldRatio > 0) skillExtras.push('🛡️ ЩИТ −70%');
+    if (skill.id === 'thunder_strike') skillExtras.push('⚡ СТАН');
+    addLog(`[${skill.name.toUpperCase()}] −${damage} HP${skillExtras.length ? ` • ${skillExtras.join(' • ')}` : ''}`);
 
     setSkills(prev => prev.map(s => s.id === skill.id ? { ...s, currentCd: s.cooldown } : { ...s, currentCd: Math.max(0, s.currentCd - 1) }));
 
     if (newMonsterHp <= 0) {
       handleMonsterDefeated();
     } else {
-      setTimeout(() => {
+      turnTimeoutRef.current = setTimeout(() => {
         monsterTurn();
         setIsAttacking(false);
       }, 400);
@@ -299,21 +370,24 @@ export default function Battle({
   };
 
   const handlePotion = () => {
-    if (battleState !== 'fighting' || potions <= 0 || playerHp >= playerStats.maxHp) return;
+    if (battleStateRef.current !== 'fighting' || isAttacking || potions <= 0 || playerHpRef.current >= playerStats.maxHp) return;
     sounds.playHeal();
     hapticImpact('light');
     const healAmt = Math.floor(playerStats.maxHp * 0.5);
-    const newHp = Math.min(playerStats.maxHp, playerHp + healAmt);
-    setPlayerHp(newHp);
+    const prevHp = playerHpRef.current;
+    const newHp = setSyncedPlayerHp(prevHp + healAmt);
+    const actualHeal = Math.max(0, newHp - prevHp);
     if (onUsePotion) onUsePotion();
-    addFloatingText(`+${healAmt} HP`, 'heal', true);
-    addLog(`ЗЕЛЬЕ: +${healAmt} HP!`);
+    addFloatingText(`+${actualHeal || healAmt} HP`, 'heal', true);
+    addLog(`ЗЕЛЬЕ: +${actualHeal || healAmt} HP!`);
     tickCooldowns();
   };
 
   const monsterTurn = () => {
-    if (monsterStunned) {
-      setMonsterStunned(false);
+    if (battleStateRef.current !== 'fighting') return;
+
+    if (monsterStunnedRef.current) {
+      setSyncedMonsterStunned(false);
       sounds.playSkill();
       addFloatingText('ОГЛУШЕН! ⚡', 'dodge', false);
       addLog(`⚡ ${currentMonster.name.toUpperCase()} ОГЛУШЕН И ПРОПУСКАЕТ ХОД!`);
@@ -335,9 +409,9 @@ export default function Battle({
     setCombo(0);
 
     let monsterDmg = Math.floor(currentMonster.atk * (0.85 + Math.random() * 0.3));
-    if (isDefending) {
+    if (isDefendingRef.current) {
       monsterDmg = Math.floor(monsterDmg * 0.3);
-      setIsDefending(false);
+      setSyncedDefending(false);
       addLog(`🛡️ ЩИТ ТИТАНА ПОГЛОТИЛ 70% УРОНА!`);
     }
 
@@ -346,8 +420,7 @@ export default function Battle({
     setIsPlayerHurt(true);
     setTimeout(() => setIsPlayerHurt(false), 250);
 
-    const newPlayerHp = Math.max(0, playerHp - monsterDmg);
-    setPlayerHp(newPlayerHp);
+    const newPlayerHp = setSyncedPlayerHp(playerHpRef.current - monsterDmg);
     addFloatingText(`-${monsterDmg}`, 'damage', true);
     addLog(`${currentMonster.name} НАНЕС ${monsterDmg} УРОНА!`);
 
@@ -357,7 +430,7 @@ export default function Battle({
   };
 
   const handleVictory = (finalGold, finalCrystals, allDropped) => {
-    setBattleState('won');
+    setSyncedBattleState('won');
     sounds.playVictory();
     hapticNotification('success');
     setIsAttacking(false);
@@ -374,7 +447,7 @@ export default function Battle({
   };
 
   const handleDefeat = () => {
-    setBattleState('lost');
+    setSyncedBattleState('lost');
     sounds.playDefeat();
     hapticNotification('error');
     setIsAttacking(false);
@@ -382,9 +455,11 @@ export default function Battle({
   };
 
   const handleReviveAction = () => {
-    setPlayerHp(playerStats.maxHp);
-    setPlayerGhostHp(playerStats.maxHp);
-    setBattleState('fighting');
+    const fullHp = setSyncedPlayerHp(playerStats.maxHp);
+    setPlayerGhostHp(fullHp);
+    setSyncedDefending(false);
+    setSyncedMonsterStunned(false);
+    setSyncedBattleState('fighting');
     sounds.playHeal();
     hapticNotification('success');
     addFloatingText('ВОСКРЕШЕН!', 'heal', true);
@@ -392,7 +467,7 @@ export default function Battle({
   };
 
   return (
-    <div className="w-full min-h-[calc(100dvh-20px)] flex flex-col justify-between py-1 select-none font-sans">
+    <div className="w-full min-h-[calc(100dvh-28px)] flex flex-col justify-between py-1 select-none font-sans">
 
       {/* Top Bar - Clean display with Floor number, bounty, and exit */}
       <div className="bg-white border-4 border-black p-2.5 shadow-brutal flex items-center justify-between gap-2">
@@ -401,8 +476,12 @@ export default function Battle({
             {floor}
           </div>
           <div className="min-w-0">
-            <div className="font-arcade text-[10px] text-neo-purple uppercase truncate">
-              {currentMonster.isBoss ? '⚠️ БОСС ЭТАЖА' : 'БАШНЯ ИСПЫТАНИЙ'}
+            <div className="font-arcade text-[11px] text-neo-purple uppercase truncate leading-tight">
+              {currentMonster.isBoss
+                ? '⚠️ БОСС ЭТАЖА'
+                : monsterPack.length > 1
+                ? `ВРАГ ${monsterIdx + 1} / ${monsterPack.length}`
+                : 'БАШНЯ ИСПЫТАНИЙ'}
             </div>
             <div className="font-arcade text-xs text-black truncate uppercase">
               {currentMonster.isBoss ? currentMonster.title : `ЭТАЖ ${floor}`}
@@ -410,7 +489,7 @@ export default function Battle({
           </div>
         </div>
 
-        {/* Current accumulated bounty and retreat button */}
+        {/* Current accumulated bounty, quick mute, and retreat button */}
         <div className="flex items-center gap-1.5 shrink-0">
           <div className="flex items-center gap-1 bg-neo-yellow border-2 border-black px-2 py-0.5 shadow-brutal-sm font-arcade text-xs text-black">
             <span>🪙</span>
@@ -424,13 +503,26 @@ export default function Battle({
             </div>
           )}
 
+          {onToggleSound && (
+            <button
+              onClick={() => {
+                hapticImpact('light');
+                onToggleSound();
+              }}
+              title={soundEnabled ? 'Выключить звук' : 'Включить звук'}
+              className="w-8 h-8 bg-white [@media(hover:hover)]:hover:bg-neo-yellow border-2 border-black flex items-center justify-center shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] transition-colors"
+            >
+              {soundEnabled ? <Volume2 className="w-4 h-4 stroke-[2.5]" /> : <VolumeX className="w-4 h-4 stroke-[2.5] text-slate-500" />}
+            </button>
+          )}
+
           <button
             onClick={() => {
               hapticImpact('light');
-              onRunEnd({ gold: accumulatedGold, crystals: accumulatedCrystals, floor, droppedEquipment: droppedItems, droppedItems });
+              setConfirmRetreat(true);
             }}
             title="Отступить в лагерь"
-            className="w-7 h-7 bg-white hover:bg-neo-pink hover:text-white border-2 border-black flex items-center justify-center font-arcade text-xs shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] transition-colors"
+            className="w-8 h-8 bg-white [@media(hover:hover)]:hover:bg-neo-pink [@media(hover:hover)]:hover:text-white border-2 border-black flex items-center justify-center font-arcade text-xs shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] transition-colors"
           >
             ✕
           </button>
@@ -438,7 +530,7 @@ export default function Battle({
       </div>
 
       {/* Main Arcade Arena Display */}
-      <div className="relative my-auto flex flex-col items-center justify-center py-2">
+      <div className="relative my-auto flex flex-col items-center justify-center py-2 battle-compact-arena">
 
         {/* Floating Combat Numbers */}
         <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
@@ -462,9 +554,9 @@ export default function Battle({
 
         {/* Combo Multiplier Badge */}
         {combo > 1 && (
-          <div className="absolute top-0 right-2 z-20 flex items-center gap-1 bg-black text-neo-yellow border-2 border-white px-3 py-1 font-arcade text-xs shadow-brutal animate-combo-pop">
-            <Flame className="w-4 h-4 fill-neo-yellow" />
-            <span>COMBO x{combo}!</span>
+          <div className="absolute top-0 right-1 z-20 flex items-center gap-1 bg-black text-neo-yellow border-2 border-white px-2.5 py-1 font-arcade text-[11px] shadow-brutal animate-combo-pop">
+            <Flame className="w-3.5 h-3.5 fill-neo-yellow shrink-0" />
+            <span>COMBO x{combo} (+{(combo - 1) * 5}%)</span>
           </div>
         )}
 
@@ -474,19 +566,19 @@ export default function Battle({
         } ${isMonsterAttacking ? 'animate-monster-lunge' : ''}`}>
 
           {monsterStunned && (
-            <div className="absolute -top-7 bg-neo-yellow text-black border-2 border-black px-2.5 py-0.5 font-arcade text-[10px] shadow-brutal-sm uppercase z-20 animate-bounce">
+            <div className="absolute -top-7 bg-neo-yellow text-black border-2 border-black px-2.5 py-0.5 font-arcade text-[11px] shadow-brutal-sm uppercase z-20 animate-bounce">
               ⚡ ОГЛУШЕН!
             </div>
           )}
 
           {currentMonster.isBoss && (
-            <div className="absolute -top-3.5 bg-neo-pink text-white border-2 border-black px-3 py-0.5 font-arcade text-[10px] shadow-brutal-sm uppercase z-10">
+            <div className="absolute -top-3.5 bg-neo-pink text-white border-2 border-black px-3 py-0.5 font-arcade text-[11px] shadow-brutal-sm uppercase z-10">
               ГЛАВНЫЙ БОСС
             </div>
           )}
 
           {/* Monster Avatar Frame */}
-          <div className={`w-28 h-28 sm:w-32 sm:h-32 border-4 border-black shadow-brutal-lg flex items-center justify-center text-5xl sm:text-6xl ${
+          <div className={`w-28 h-28 sm:w-32 sm:h-32 battle-compact-avatar border-4 border-black shadow-brutal-lg flex items-center justify-center text-5xl sm:text-6xl ${
             currentMonster.isBoss ? 'bg-neo-pink' : (currentMonster.isLeader ? 'bg-neo-yellow' : 'bg-white')
           }`}>
             <span className="select-none filter drop-shadow-md">{currentMonster.avatar}</span>
@@ -497,16 +589,16 @@ export default function Battle({
               {currentMonster.name}
             </h3>
 
-            {/* Boss Dialogue */}
-            {currentMonster.isBoss && currentMonster.dialog && (
-              <div className="mt-1.5 bg-neo-yellow text-black border-2 border-black px-3 py-1 shadow-brutal-sm font-sans font-black text-xs max-w-[280px] break-words">
+            {/* Boss Dialogue (shown at encounter start to keep short mobile screens compact) */}
+            {currentMonster.isBoss && currentMonster.dialog && combo === 0 && (
+              <div className="mt-1 bg-neo-yellow text-black border-2 border-black px-3 py-1 shadow-brutal-sm font-sans font-black text-xs max-w-[300px] break-words">
                 "{currentMonster.dialog}"
               </div>
             )}
 
             {currentMonster.isBoss && currentMonster.specialSkill && (
-              <div className="mt-1 bg-black text-neo-pink border border-white px-2 py-0.5 font-arcade text-[10px] uppercase">
-                ⚡ НАВЫК: {currentMonster.specialSkill}
+              <div className="mt-1 bg-black text-neo-yellow border border-white px-2.5 py-0.5 font-arcade text-[11px] uppercase">
+                💀 СТИЛЬ: {currentMonster.specialSkill}
               </div>
             )}
 
@@ -517,11 +609,15 @@ export default function Battle({
             )}
           </div>
 
-          {/* Monster HP Bar */}
-          <div className="w-56 sm:w-64 mt-2">
-            <div className="flex justify-between text-xs font-black mb-1 uppercase">
-              <span className="text-neo-pink">HP ВРАГА</span>
-              <span>{monsterHp} / {currentMonster.maxHp}</span>
+          {/* Monster HP Bar + ATK indicator */}
+          <div className="w-60 sm:w-72 mt-2">
+            <div className="flex justify-between items-center text-xs font-black mb-1 uppercase gap-2">
+              <span className="bg-black text-neo-yellow border border-black px-1.5 py-0.2 font-arcade text-[11px] shrink-0">
+                ⚔️ ~{currentMonster.atk} АТК
+              </span>
+              <span className="text-black font-arcade text-xs">
+                {monsterHp} / {currentMonster.maxHp} HP
+              </span>
             </div>
 
             <div className="relative h-4 bg-white border-3 border-black p-[1px] shadow-brutal-sm overflow-hidden">
@@ -537,9 +633,16 @@ export default function Battle({
           </div>
         </div>
 
-        {/* Combat Ticker */}
-        <div className="w-full bg-black text-neo-yellow border-3 border-white px-3 py-1.5 mt-3 text-center shadow-brutal font-arcade text-xs truncate">
-          {combatLog[0] || 'БОЙ ИДЕТ...'}
+        {/* Combat Ticker (2-line mobile readable) */}
+        <div className="w-full bg-black text-neo-yellow border-3 border-white px-3 py-1.5 mt-3 battle-compact-gap text-center shadow-brutal min-h-[42px] flex flex-col items-center justify-center">
+          <div className="font-arcade text-xs leading-tight line-clamp-2 break-words">
+            {combatLog[0] || 'БОЙ ИДЕТ...'}
+          </div>
+          {combatLog[1] && (
+            <div className="text-[11px] font-bold text-slate-300 leading-tight truncate max-w-full mt-0.5">
+              {combatLog[1]}
+            </div>
+          )}
         </div>
       </div>
 
@@ -554,12 +657,12 @@ export default function Battle({
             <div className="flex items-center gap-1.5 min-w-0 overflow-x-auto scrollbar-none">
               <span className="font-arcade text-xs text-black uppercase shrink-0">ОХОТНИК</span>
               {isDefending && (
-                <span className="bg-neo-cyan text-black border-2 border-black px-1.5 py-0.2 font-arcade text-[10px] shrink-0 shadow-brutal-sm animate-pulse">
+                <span className="bg-neo-cyan text-black border-2 border-black px-1.5 py-0.2 font-arcade text-[11px] shrink-0 shadow-brutal-sm animate-pulse">
                   🛡️ БАРЬЕР (-70%)
                 </span>
               )}
               {activePet && (
-                <span className="bg-neo-yellow text-black border-2 border-black px-1.5 py-0.2 font-arcade text-[10px] shrink-0">
+                <span className="bg-neo-yellow text-black border-2 border-black px-1.5 py-0.2 font-arcade text-[11px] shrink-0">
                   {activePet.avatar} {activePet.name}
                 </span>
               )}
@@ -588,6 +691,16 @@ export default function Battle({
               style={{ width: `${(playerHp / playerStats.maxHp) * 100}%` }}
             />
           </div>
+
+          {/* Active Combat Passives Strip */}
+          <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px] font-black text-slate-700 uppercase">
+            <span>⚔️ {playerStats.atk} АТК</span>
+            <span>🎯 {playerStats.critChance}% КРИТ</span>
+            <span>💨 {playerStats.dodgeChance}% УВОР</span>
+            <span className={playerStats.vampirism > 0 ? 'text-neo-pink' : ''}>
+              🩸 {playerStats.vampirism || 0}% ВАМП
+            </span>
+          </div>
         </div>
 
         {/* Primary Action Buttons */}
@@ -595,7 +708,7 @@ export default function Battle({
           <button
             onClick={handleAttack}
             disabled={battleState !== 'fighting' || isAttacking}
-            className="flex items-center justify-center gap-2 bg-neo-pink hover:bg-pink-600 active:translate-x-[2px] active:translate-y-[2px] active:shadow-brutal-press text-white py-3 px-3 border-3 border-black shadow-brutal font-arcade text-sm disabled:opacity-50 transition-all uppercase"
+            className="flex items-center justify-center gap-2 bg-neo-pink [@media(hover:hover)]:hover:bg-pink-600 active:translate-x-[2px] active:translate-y-[2px] active:shadow-brutal-press text-white py-3 px-3 border-3 border-black shadow-brutal font-arcade text-sm disabled:opacity-50 transition-all uppercase"
           >
             <Swords className="w-5 h-5 stroke-[3]" />
             <span>УДАР!</span>
@@ -603,8 +716,8 @@ export default function Battle({
 
           <button
             onClick={handlePotion}
-            disabled={battleState !== 'fighting' || potions <= 0 || playerHp >= playerStats.maxHp}
-            className="flex items-center justify-center gap-2 bg-neo-lime hover:bg-lime-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-brutal-press text-black py-3 px-3 border-3 border-black shadow-brutal font-arcade text-sm disabled:opacity-50 transition-all uppercase"
+            disabled={battleState !== 'fighting' || isAttacking || potions <= 0 || playerHp >= playerStats.maxHp}
+            className="flex items-center justify-center gap-2 bg-neo-lime [@media(hover:hover)]:hover:bg-lime-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-brutal-press text-black py-3 px-3 border-3 border-black shadow-brutal font-arcade text-sm disabled:opacity-50 transition-all uppercase"
           >
             <Heart className="w-5 h-5 fill-black stroke-[3]" />
             <span>ЗЕЛЬЕ ({potions})</span>
@@ -623,7 +736,7 @@ export default function Battle({
                 className={`relative overflow-hidden flex items-center justify-between p-2 border-3 border-black font-sans text-left transition-all ${
                   onCd
                     ? 'bg-slate-200 text-slate-500 shadow-none'
-                    : 'bg-white hover:bg-neo-yellow active:translate-x-[1px] active:translate-y-[1px] active:shadow-none text-black shadow-brutal-sm'
+                    : 'bg-white [@media(hover:hover)]:hover:bg-neo-yellow active:translate-x-[1px] active:translate-y-[1px] active:shadow-none text-black shadow-brutal-sm'
                 }`}
               >
                 {onCd && (
@@ -635,10 +748,10 @@ export default function Battle({
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="text-xl shrink-0">{skill.icon}</span>
                   <div className="min-w-0">
-                    <div className="font-arcade text-[11px] text-black uppercase truncate">
+                    <div className="font-arcade text-[11px] text-black uppercase leading-tight">
                       {skill.name}
                     </div>
-                    <div className="text-[9px] font-bold text-slate-700 truncate">
+                    <div className="text-[11px] font-bold text-slate-700 leading-tight mt-0.5">
                       {skill.description}
                     </div>
                   </div>
@@ -648,6 +761,52 @@ export default function Battle({
           })}
         </div>
       </div>
+
+      {/* Retreat Confirmation Modal */}
+      {confirmRetreat && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-xs z-50 flex items-center justify-center p-4 text-center animate-fadeIn">
+          <div className="bg-white border-4 border-black p-4 shadow-brutal-lg max-w-xs w-full">
+            <div className="w-12 h-12 bg-neo-yellow border-3 border-black flex items-center justify-center text-2xl mx-auto mb-2 shadow-brutal-sm">
+              🏕️
+            </div>
+            <h3 className="font-arcade text-base text-black uppercase mb-1">
+              ОТСТУПИТЬ В ЛАГЕРЬ?
+            </h3>
+            <p className="text-xs font-bold text-slate-700 mb-3">
+              Забег завершится на этаже <strong className="font-arcade text-black">{floor}</strong>. Вся добыча с зачищенных этажей и этого этажа сохранится!
+            </p>
+
+            <div className="bg-neo-light border-2 border-black p-2.5 mb-3 flex items-center justify-center gap-3 text-xs font-arcade">
+              <span>🪙 +{accumulatedGold}</span>
+              <span>💎 +{accumulatedCrystals}</span>
+              <span>🎁 {droppedItems.length} шт.</span>
+            </div>
+
+            <div className="space-y-2">
+              <button
+                onClick={() => {
+                  hapticImpact('medium');
+                  setConfirmRetreat(false);
+                  onRunEnd({ gold: accumulatedGold, crystals: accumulatedCrystals, floor, droppedEquipment: droppedItems, droppedItems });
+                }}
+                className="w-full py-2.5 bg-neo-pink text-white border-3 border-black font-arcade text-xs shadow-brutal active:translate-x-[2px] active:translate-y-[2px] uppercase"
+              >
+                ОТСТУПИТЬ С ДОБЫЧЕЙ
+              </button>
+
+              <button
+                onClick={() => {
+                  hapticImpact('light');
+                  setConfirmRetreat(false);
+                }}
+                className="w-full py-2.5 bg-neo-lime text-black border-2 border-black font-arcade text-xs shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] uppercase"
+              >
+                ПРОДОЛЖИТЬ БОЙ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Victory Modal */}
       {battleState === 'won' && (
@@ -681,12 +840,12 @@ export default function Battle({
               {/* Dropped Equipment Badge if any */}
               {droppedItems.length > 0 && (
                 <div className="w-full mt-1.5 pt-1.5 border-t border-black text-left">
-                  <span className="font-arcade text-[10px] text-black uppercase block mb-1">
+                  <span className="font-arcade text-[11px] text-black uppercase block mb-1">
                     🎁 НАЙДЕНО СНАРЯЖЕНИЕ:
                   </span>
                   <div className="space-y-1">
                     {droppedItems.map((item, idx) => (
-                      <div key={idx} className="bg-neo-pink text-white border border-black px-2 py-0.5 font-arcade text-[10px] flex items-center gap-1">
+                      <div key={idx} className="bg-neo-pink text-white border border-black px-2 py-0.5 font-arcade text-[11px] flex items-center gap-1">
                         <span>{item.icon}</span>
                         <span className="truncate">{item.name}</span>
                       </div>
@@ -747,10 +906,14 @@ export default function Battle({
             <div className="w-full space-y-2">
               <button
                 onClick={() => onOpenReviveModal(handleReviveAction)}
-                className="w-full py-3 bg-neo-yellow text-black border-3 border-black font-arcade text-sm shadow-brutal active:translate-x-[2px] active:translate-y-[2px] flex items-center justify-center gap-2 uppercase"
+                className={`w-full py-3 ${reviveTokens > 0 ? 'bg-neo-lime' : 'bg-neo-yellow'} text-black border-3 border-black font-arcade text-sm shadow-brutal active:translate-x-[2px] active:translate-y-[2px] flex items-center justify-center gap-2 uppercase`}
               >
-                <Sparkles className="w-4 h-4 stroke-[3]" />
-                <span>ВОСКРЕСНУТЬ (15 ⭐️)</span>
+                <Sparkles className="w-4 h-4 stroke-[3] shrink-0" />
+                <span>
+                  {reviveTokens > 0
+                    ? `ВОСКРЕСНУТЬ (БЕСПЛАТНО • 🪶 ${reviveTokens})`
+                    : 'ВОСКРЕСНУТЬ (15 ⭐️)'}
+                </span>
               </button>
 
               <button

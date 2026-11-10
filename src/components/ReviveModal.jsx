@@ -40,7 +40,7 @@ export default function ReviveModal({ floor, reviveTokens = 0, onUseToken, onCon
           ✨
         </div>
 
-        <div className="bg-neo-pink text-white border-2 border-black font-arcade text-[10px] px-3 py-1 uppercase shadow-brutal-sm mb-2">
+        <div className="bg-neo-pink text-white border-2 border-black font-arcade text-[11px] px-3 py-1 uppercase shadow-brutal-sm mb-2">
           ОХОТНИК ПАЛ НА ЭТАЖЕ {floor}
         </div>
 

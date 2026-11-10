@@ -86,7 +86,7 @@ export const ARTIFACTS = [
     rarity: 'epic',
     rarityName: 'Эпический',
     color: '#EF4444',
-    description: '+15% вампиризма ко всем базовым атакам охотника.',
+    description: '+15% вампиризма ко всем атакам и навыкам охотника (кап 60%).',
     effectType: 'vampirism',
     value: 0.15,
   },
@@ -130,7 +130,7 @@ export const ARTIFACTS = [
     rarity: 'legendary',
     rarityName: 'Легендарный',
     color: '#10B981',
-    description: 'Редкая удача: удваивает шанс выпадения Кристаллов Бездны!',
+    description: 'Редкая удача: удваивает все получаемые Кристаллы Бездны (x2 💎)!',
     effectType: 'doubleCrystals',
     value: 2,
   }

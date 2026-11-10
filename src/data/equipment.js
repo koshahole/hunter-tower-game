@@ -72,13 +72,41 @@ export const SLOTS = {
   },
 };
 
-// All 400 equipment items combined
+// Format decimal percentage cleanly (e.g. 0.005 -> "0.5", 0.04 -> "4")
+export function formatPercentValue(value) {
+  const pct = Math.round((value || 0) * 1000) / 10;
+  return Number.isInteger(pct) ? String(pct) : pct.toFixed(1);
+}
+
+// Authoritative item description derived strictly from actual engine baseStats
+export function formatEquipmentDescription(item) {
+  if (!item) return '';
+  const s = item.baseStats || {};
+  const parts = [];
+  if (s.atk) parts.push(`+${s.atk} ATK`);
+  if (s.maxHp) parts.push(`+${s.maxHp} HP`);
+  if (s.critChance) parts.push(`+${s.critChance}% крит`);
+  if (s.dodgeChance) parts.push(`+${s.dodgeChance}% уворот`);
+  if (s.vampirism) parts.push(`+${formatPercentValue(s.vampirism)}% вампиризм`);
+  if (s.goldBonus) parts.push(`+${formatPercentValue(s.goldBonus)}% золото`);
+  if (s.crystalBonus) parts.push(`+${formatPercentValue(s.crystalBonus)}% кристаллы`);
+
+  if (item.id === 'rusty_dagger') {
+    return `Стартовый клинок (${parts.join(', ')} на ур. 1). Надёжен в бою — неразборный.`;
+  }
+  return `База ур. 1: ${parts.join(', ')}. Заточка усиливает характеристики.`;
+}
+
+// All 400 equipment items combined with engine-synced descriptions
 export const EQUIPMENT_ITEMS = [
   ...WEAPONS,
   ...ARMORS,
   ...HELMETS,
   ...ACCESSORIES
-];
+].map(item => ({
+  ...item,
+  description: formatEquipmentDescription(item),
+}));
 
 export const EQUIPMENT_CATALOG = [...EQUIPMENT_ITEMS];
 EQUIPMENT_ITEMS.forEach(item => {
@@ -160,19 +188,19 @@ export function getEquipmentUpgradeCost(itemTemplate, currentLevel = 1) {
 export function formatStatText(key, value) {
   switch (key) {
     case 'atk':
-      return `+${value} Урона`;
+      return `+${Math.round((value || 0) * 10) / 10} Урона`;
     case 'maxHp':
-      return `+${value} HP`;
+      return `+${Math.round((value || 0) * 10) / 10} HP`;
     case 'critChance':
-      return `+${value}% Крита`;
+      return `+${Math.round((value || 0) * 10) / 10}% Крита`;
     case 'dodgeChance':
-      return `+${value}% Уворота`;
+      return `+${Math.round((value || 0) * 10) / 10}% Уворота`;
     case 'vampirism':
-      return `+${Math.round(value * 100)}% Вампиризма`;
+      return `+${formatPercentValue(value)}% Вампиризма`;
     case 'goldBonus':
-      return `+${Math.round(value * 100)}% Золота`;
+      return `+${formatPercentValue(value)}% Золота`;
     case 'crystalBonus':
-      return `+${Math.round(value * 100)}% Кристаллов`;
+      return `+${formatPercentValue(value)}% Кристаллов`;
     default:
       return `+${value}`;
   }
