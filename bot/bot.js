@@ -315,28 +315,9 @@ bot.command('myid', async (ctx) => {
     `• <b>Имя:</b> ${ctx.from.first_name || 'Охотник'}\n` +
     `• <b>Username:</b> @${ctx.from.username || 'нет'}\n` +
     `• <b>Статус:</b> ${adminStatus ? '👑 Администратор' : 'Обычный игрок'}\n\n` +
-    (adminStatus ? 'Вам доступна команда /admin' : 'Для получения прав администратора используйте пароль: <code>/claim_admin hunter_admin_secret_2026</code>'),
+    (adminStatus ? 'Вам доступна команда /admin' : ''),
     { parse_mode: 'HTML' }
   );
-});
-
-// Claim Admin rights with password
-bot.command('claim_admin', async (ctx) => {
-  const secret = (ctx.match || '').trim();
-  const validSecret = process.env.ADMIN_PASSWORD || 'hunter_admin_secret_2026';
-  const admins = await getAdminsFromRedis();
-
-  if (admins.length === 0 || secret === validSecret) {
-    await addAdminToRedis(ctx.from.id);
-    await ctx.reply(
-      `🎉 <b>Авторизация успешна!</b>\n\n` +
-      `Вы зарегистрированы как 👑 <b>Администратор Башни</b>.\n` +
-      `Введите /admin для открытия панели управления.`,
-      { parse_mode: 'HTML' }
-    );
-  } else {
-    await ctx.reply(`❌ Неверный пароль администратора. Доступ отклонён.`);
-  }
 });
 
 // Add another admin (Only for existing admins)
@@ -357,9 +338,7 @@ bot.command('admin', async (ctx) => {
   if (!await isUserAdmin(ctx.from.id)) {
     return ctx.reply(
       `⛔ <b>Доступ запрещён!</b>\n\n` +
-      `Ваш ID: <code>${ctx.from.id}</code> не числится в списке администраторов.\n` +
-      `Если вы владелец, авторизуйтесь командой:\n` +
-      `<code>/claim_admin hunter_admin_secret_2026</code>`,
+      `Ваш ID: <code>${ctx.from.id}</code> не числится в списке администраторов.`,
       { parse_mode: 'HTML' }
     );
   }
