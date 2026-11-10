@@ -462,9 +462,28 @@ bot.command('promo', async (ctx) => {
   }
 
   const parts = (ctx.match || '').trim().split(/\s+/).filter(Boolean);
-  const type = parts[0] || 'vip_egg';
-  const customCode = parts[1];
-  const maxUses = parseInt(parts[2] || '1', 10);
+  const knownTypes = ['vip_egg', 'vip', 'egg', 'crystals', 'smith', 'gear'];
+  let type = 'vip_egg';
+  let customCode = null;
+  let maxUses = 1;
+
+  if (parts.length === 1) {
+    if (knownTypes.includes(parts[0].toLowerCase())) {
+      type = parts[0].toLowerCase();
+    } else {
+      customCode = parts[0];
+    }
+  } else if (parts.length >= 2) {
+    if (knownTypes.includes(parts[0].toLowerCase())) {
+      type = parts[0].toLowerCase();
+      customCode = parts[1];
+      if (parts[2]) maxUses = parseInt(parts[2], 10);
+    } else {
+      customCode = parts[0];
+      type = knownTypes.includes(parts[1].toLowerCase()) ? parts[1].toLowerCase() : 'vip_egg';
+      if (parts[2]) maxUses = parseInt(parts[2], 10);
+    }
+  }
 
   const code = (customCode || `PROMO-${Math.random().toString(36).substring(2, 7).toUpperCase()}`).toUpperCase();
 
