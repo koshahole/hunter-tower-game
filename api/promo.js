@@ -10,6 +10,38 @@ const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_RES
 // In-memory fallback if Redis is unavailable
 const memoryPromos = new Map();
 
+// Built-in starter promo codes available for all players (1 activation per userId)
+const BUILTIN_PROMOS = {
+  'VIP-EGG': {
+    code: 'VIP-EGG',
+    reward: 'vip_egg',
+    maxUses: 1000000,
+    usedCount: 0,
+    usedBy: []
+  },
+  'VIP': {
+    code: 'VIP',
+    reward: 'vip',
+    maxUses: 1000000,
+    usedCount: 0,
+    usedBy: []
+  },
+  'EGG': {
+    code: 'EGG',
+    reward: 'egg',
+    maxUses: 1000000,
+    usedCount: 0,
+    usedBy: []
+  },
+  'HUNTER2026': {
+    code: 'HUNTER2026',
+    reward: 'smith',
+    maxUses: 1000000,
+    usedCount: 0,
+    usedBy: []
+  }
+};
+
 export async function getPromoFromRedis(code) {
   const normCode = (code || '').trim().toUpperCase();
   if (!normCode) return null;
@@ -28,6 +60,10 @@ export async function getPromoFromRedis(code) {
     } catch (err) {
       console.warn('Upstash GET promo error:', err.message);
     }
+  }
+
+  if (BUILTIN_PROMOS[normCode]) {
+    return { ...BUILTIN_PROMOS[normCode] };
   }
 
   return memoryPromos.get(normCode) || null;
@@ -243,7 +279,13 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'GET') {
-    const code = req.query?.code;
+    let code = req.query?.code;
+    if (!code && req.url) {
+      try {
+        const u = new URL(req.url, 'http://localhost');
+        code = u.searchParams.get('code');
+      } catch {}
+    }
     if (!code) {
       return res.status(400).json({ ok: false, error: 'Код не указан' });
     }
