@@ -109,12 +109,15 @@ export default function RebirthModal({
 
         {/* Rebirth Button Card */}
         <div className="mb-4 bg-neo-yellow border-3 border-black p-3 text-center shadow-brutal-sm">
-          <div className="text-xs font-bold text-black mb-2 uppercase">
+          <div className="text-xs font-bold text-black mb-1 uppercase">
             {canRebirth ? (
               <span>НАГРАДА ЗА РЕБИРТ: <strong className="font-arcade text-sm text-neo-pink">+{earnedSouls} ДУШ</strong></span>
             ) : (
               <span>НУЖЕН 20 ЭТАЖ ДЛЯ РАЗБЛОКИРОВКИ</span>
             )}
+          </div>
+          <div className="text-[10px] font-bold text-slate-800 mb-2 leading-tight">
+            Сброс этажей, снаряжения, золота и питомцев.<br />Сохраняются: Души, Перки Душ и VIP.
           </div>
 
           <button

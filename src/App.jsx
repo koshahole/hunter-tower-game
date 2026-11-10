@@ -542,14 +542,24 @@ export default function App() {
       gold: 0,
       crystals: 0,
       potions: 1,
+      reviveTokens: 0,
+      artifacts: [],
       energy: prev.maxEnergy,
-      equipped: prev.equipped,
-      equipmentLevels: prev.equipmentLevels,
-      inventory: prev.inventory,
-      ownedPets: prev.ownedPets,
-      activePetId: prev.activePetId,
-      petLevels: prev.petLevels
+      equipped: {
+        weapon: 'rusty_dagger',
+        armor: null,
+        helmet: null,
+        accessory: null,
+      },
+      equipmentLevels: {
+        rusty_dagger: 1,
+      },
+      inventory: ['rusty_dagger'],
+      ownedPets: [],
+      activePetId: null,
+      petLevels: {}
     }));
+    setRunArtifacts([]);
     setIsRebirthOpen(false);
     showToast(`ПЕРЕРОЖДЕНИЕ СОВЕРШЕНО! ПОЛУЧЕНО +${earnedSouls} ДУШ 🔮`, 'stars');
   };
