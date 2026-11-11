@@ -1,4 +1,5 @@
 import React from 'react';
+import { CrossedSwordsSvg, ShieldPlateSvg, CrownSvg } from './equipment';
 
 const STROKE = {
   stroke: '#000000',
@@ -6,6 +7,58 @@ const STROKE = {
   strokeLinecap: 'round',
   strokeLinejoin: 'round'
 };
+
+export function GoldenEggSvg({ className = 'w-full h-full', ...props }) {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} {...props}>
+      {/* Drop Shadow */}
+      <ellipse cx="24" cy="42" rx="14" ry="4" fill="#000000" />
+      {/* Golden Egg Body */}
+      <path
+        d="M24 6C15 6 9 18 9 29C9 37 15 42 24 42C33 42 39 37 39 29C39 18 33 6 24 6Z"
+        fill="#FFE600"
+        {...STROKE}
+      />
+      {/* Faceted Shading on Right */}
+      <path
+        d="M24 6C30 9 37 19 37 29C37 36 32 41 24 42C30 40 35 34 35 28C35 18 29 8 24 6Z"
+        fill="#EAB308"
+      />
+      {/* Specular Left Highlight */}
+      <path
+        d="M15 16C12 22 13 30 16 35"
+        stroke="#FFFFFF"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+      {/* Mystic Glowing Star Sparkle on Egg */}
+      <polygon points="25,18 27,24 33,26 27,28 25,34 23,28 17,26 23,24" fill="#FF0055" stroke="#000000" strokeWidth="1.5" />
+      <circle cx="25" cy="26" r="2" fill="#FFFFFF" />
+      {/* Tiny Sparkle Star */}
+      <polygon points="34,14 35,17 38,18 35,19 34,22 33,19 30,18 33,17" fill="#00F5FF" />
+    </svg>
+  );
+}
+
+export function BackpackSvg({ className = 'w-full h-full', ...props }) {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} {...props}>
+      {/* Heavy drop shadow */}
+      <rect x="12" y="16" width="24" height="26" rx="4" fill="#000000" />
+      {/* Main Leather Pack */}
+      <rect x="10" y="14" width="28" height="28" rx="4" fill="#92400E" {...STROKE} />
+      {/* Front Flap */}
+      <path d="M10 14H38V26C38 26 30 30 24 30C18 30 10 26 10 26V14Z" fill="#B45309" {...STROKE} />
+      {/* Top Handle Loop */}
+      <path d="M19 14V8C19 6 29 6 29 8V14" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
+      {/* Straps with Brass Buckles */}
+      <rect x="15" y="14" width="3" height="26" fill="#451A03" />
+      <rect x="30" y="14" width="3" height="26" fill="#451A03" />
+      <rect x="14" y="24" width="5" height="4" fill="#FFE600" {...STROKE} />
+      <rect x="29" y="24" width="5" height="4" fill="#FFE600" {...STROKE} />
+    </svg>
+  );
+}
 
 export function TrophySvg({ className = 'w-full h-full', ...props }) {
   return (
@@ -152,9 +205,21 @@ export const MISC_SVG_MAP = {
   scroll: ScrollSvg,
   tent: TentSvg,
   sparkle: SparkleSvg,
+  sparkles: SparkleSvg,
   target: TargetSvg,
   wind: WindSvg,
   blood: BloodSvg,
+  backpack: BackpackSvg,
+  egg: GoldenEggSvg,
+  golden_egg: GoldenEggSvg,
+  stars_egg: GoldenEggSvg,
+  crown: CrownSvg,
+  vip: CrownSvg,
+  crossed_swords: CrossedSwordsSvg,
+  swords: CrossedSwordsSvg,
+  sword: CrossedSwordsSvg,
+  shield_plate: ShieldPlateSvg,
+  shield: ShieldPlateSvg,
 
   '🏆': TrophySvg,
   '💀': SkullSvg,
@@ -164,5 +229,11 @@ export const MISC_SVG_MAP = {
   '✨': SparkleSvg,
   '🎯': TargetSvg,
   '💨': WindSvg,
-  '🩸': BloodSvg
+  '🩸': BloodSvg,
+  '🎒': BackpackSvg,
+  '🥚': GoldenEggSvg,
+  '🪺': GoldenEggSvg,
+  '👑': CrownSvg,
+  '⚔️': CrossedSwordsSvg,
+  '🛡️': ShieldPlateSvg
 };

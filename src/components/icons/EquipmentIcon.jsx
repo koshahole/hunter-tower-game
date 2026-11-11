@@ -127,6 +127,7 @@ export default function EquipmentIcon({
   empty = false,
   level = 0,
   className = '',
+  inline = false,
   ...props
 }) {
   const resolvedSlot = slot || item?.slot || 'weapon';
@@ -172,8 +173,10 @@ export default function EquipmentIcon({
     );
   }
 
+  const inlineClass = inline ? 'inline-block align-middle -mt-0.5' : 'inline-flex items-center justify-center';
+
   return (
-    <span className={`inline-flex items-center justify-center ${sizeClass} ${className}`} {...props}>
+    <span className={`${inlineClass} ${sizeClass} ${className}`} {...props}>
       <SvgComponent rarity={resolvedRarity} className="w-full h-full object-contain" />
     </span>
   );

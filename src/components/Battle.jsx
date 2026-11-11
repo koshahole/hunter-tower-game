@@ -534,11 +534,11 @@ export default function Battle({
       <div className="relative my-auto flex flex-col items-center justify-center py-2 battle-compact-arena">
 
         {/* Floating Combat Numbers */}
-        <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
+        <div className="absolute inset-0 pointer-events-none z-30 overflow-visible flex items-center justify-center">
           {floatingText.map(item => (
             <div
               key={item.id}
-              className={`absolute font-arcade text-2xl sm:text-3xl animate-damage-pop ${
+              className={`absolute font-arcade text-2xl sm:text-3xl animate-damage-pop whitespace-nowrap select-none left-1/2 -translate-x-1/2 ${
                 item.type === 'crit'
                   ? 'text-neo-yellow drop-shadow-[2px_2px_0px_#000]'
                   : item.type === 'heal'
@@ -546,7 +546,7 @@ export default function Battle({
                   : item.type === 'dodge'
                   ? 'text-neo-cyan drop-shadow-[2px_2px_0px_#000]'
                   : 'text-neo-pink drop-shadow-[2px_2px_0px_#000]'
-              } ${item.isPlayer ? '-bottom-10' : '-top-10'}`}
+              } ${item.isPlayer ? 'bottom-2 sm:bottom-4' : 'top-2 sm:top-4'}`}
             >
               {item.text}
             </div>

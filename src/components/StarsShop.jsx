@@ -16,7 +16,7 @@ export default function StarsShop({ state, onPurchaseSuccess, onShowToast, onApp
       case 'revive':
         return <CurrencyIcon type="feather" size="md" />;
       case 'egg':
-        return <GameIcon icon="sparkles" size="md" />;
+        return <GameIcon icon="golden_egg" size="md" />;
       case 'energy':
         return <CurrencyIcon type="energy" size="md" />;
       case 'potions':

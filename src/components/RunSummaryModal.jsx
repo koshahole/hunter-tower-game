@@ -70,9 +70,9 @@ export default function RunSummaryModal({ summary, onClose }) {
 
             <div className="bg-slate-100 border-2 border-black p-2 shadow-brutal-sm">
               <span className="text-[11px] font-black uppercase text-slate-700 block">ВРАГОВ ПОВЕРЖЕНО</span>
-              <div className="font-arcade text-sm text-black mt-0.5 inline-flex items-center gap-1">
-                <GameIcon icon="crossed_swords" size="xs" inline />
-                <span>{monstersDefeated}</span>
+              <div className="font-arcade text-sm text-black mt-0.5 flex items-center gap-1.5">
+                <GameIcon icon="skull" size="xs" inline />
+                <span>{monstersDefeated} ВРАГОВ</span>
               </div>
             </div>
           </div>

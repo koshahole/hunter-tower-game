@@ -409,8 +409,8 @@ export default function PetSanctuary({
       {/* Summoning Modal */}
       {summoning && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex flex-col items-center justify-center p-4 text-center animate-fadeIn">
-          <div className="w-24 h-24 bg-neo-yellow border-4 border-black flex items-center justify-center animate-bounce shadow-brutal-lg mb-3 p-4">
-            <GameIcon icon="sparkles" size="full" />
+          <div className="w-24 h-24 bg-neo-yellow border-4 border-black flex items-center justify-center animate-bounce shadow-brutal-lg mb-3 p-3">
+            <GameIcon icon="golden_egg" size="full" />
           </div>
           <h3 className="font-arcade text-lg text-white uppercase">
             ПРИЗЫВ СПУТНИКА...

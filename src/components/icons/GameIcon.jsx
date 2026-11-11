@@ -53,10 +53,20 @@ export default function GameIcon({
     return <CurrencyIcon type={cleanKey || lowerKey} size={size} className={className} inline={inline} {...props} />;
   }
 
+  // Misc UI, Combat & Store Badges (trophy, skull, crossed_swords, egg, crown, etc.)
+  if (MISC_SVG_MAP[cleanKey] || MISC_SVG_MAP[rawKey] || MISC_SVG_MAP[lowerKey]) {
+    const MiscSvg = MISC_SVG_MAP[cleanKey] || MISC_SVG_MAP[rawKey] || MISC_SVG_MAP[lowerKey];
+    return (
+      <span className={`${inlineClass} ${sizeClass} ${className}`} {...props}>
+        <MiscSvg className="w-full h-full object-contain filter drop-shadow" />
+      </span>
+    );
+  }
+
   // Equipment Archetypes & Slot Emojis
-  if (EMOJI_TO_ARCHETYPE[cleanKey] || EMOJI_TO_ARCHETYPE[rawKey]) {
-    const arch = EMOJI_TO_ARCHETYPE[cleanKey] || EMOJI_TO_ARCHETYPE[rawKey];
-    return <EquipmentIcon archetype={arch} size={size} className={className} {...props} />;
+  if (EMOJI_TO_ARCHETYPE[cleanKey] || EMOJI_TO_ARCHETYPE[rawKey] || lowerKey in EMOJI_TO_ARCHETYPE) {
+    const arch = EMOJI_TO_ARCHETYPE[cleanKey] || EMOJI_TO_ARCHETYPE[rawKey] || lowerKey;
+    return <EquipmentIcon archetype={arch} size={size} className={className} inline={inline} {...props} />;
   }
 
   // Player Avatars
