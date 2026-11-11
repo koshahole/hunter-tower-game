@@ -278,11 +278,11 @@ export default function PetSanctuary({
         </div>
 
         {/* Action Controls */}
-        <div className="mt-3.5 flex flex-wrap gap-2">
+        <div className="mt-3.5 flex items-center gap-2 min-w-0">
           {isOwned ? (
             <>
               {isActive ? (
-                <div className="flex-1 py-2.5 bg-neo-lime border-3 border-black text-black font-arcade text-xs flex items-center justify-center gap-1.5 shadow-brutal-sm uppercase">
+                <div className="shrink-0 px-3 sm:px-4 py-2.5 bg-neo-lime border-3 border-black text-black font-arcade text-xs flex items-center justify-center gap-1.5 shadow-brutal-sm uppercase whitespace-nowrap">
                   <Check className="w-4 h-4 stroke-[3]" />
                   <span>В БОЮ</span>
                 </div>
@@ -294,7 +294,7 @@ export default function PetSanctuary({
                     onEquipPet(selectedPet.id);
                     onShowToast(`${selectedPet.name} ВЗЯТ В БОЙ!`, 'success');
                   }}
-                  className="flex-1 py-2.5 bg-black text-white border-3 border-black font-arcade text-xs shadow-brutal active:translate-x-[2px] active:translate-y-[2px] uppercase"
+                  className="shrink-0 px-3 sm:px-4 py-2.5 bg-black text-white border-3 border-black font-arcade text-xs shadow-brutal active:translate-x-[2px] active:translate-y-[2px] uppercase whitespace-nowrap"
                 >
                   ВЫБРАТЬ
                 </button>
@@ -304,14 +304,14 @@ export default function PetSanctuary({
                 <button
                   onClick={handleLevelUp}
                   disabled={!canUpgrade}
-                  className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 py-2.5 px-3 border-3 border-black font-arcade text-xs shadow-brutal active:translate-x-[1px] active:translate-y-[1px] ${
+                  className={`flex-1 min-w-0 flex items-center justify-center gap-1 sm:gap-1.5 py-2.5 px-2 sm:px-3 border-3 border-black font-arcade text-[11px] sm:text-xs shadow-brutal active:translate-x-[1px] active:translate-y-[1px] whitespace-nowrap ${
                     canUpgrade
                       ? 'bg-neo-pink text-white'
                       : 'bg-slate-200 text-slate-500 cursor-not-allowed shadow-none'
                   }`}
                 >
-                  <ArrowUpCircle className="w-4 h-4 stroke-[3]" />
-                  <span className="inline-flex items-center gap-1">
+                  <ArrowUpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3] shrink-0" />
+                  <span className="inline-flex items-center gap-0.5 sm:gap-1 whitespace-nowrap">
                     <span>ПРОКАЧАТЬ (</span>
                     <CurrencyIcon type="gold" size="xs" inline />
                     <span>{upGold}</span>

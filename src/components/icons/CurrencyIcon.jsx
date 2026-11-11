@@ -10,13 +10,14 @@ import {
 } from './svg/currencies';
 
 export const SIZE_PRESETS = {
-  xs: 'w-3.5 h-3.5 min-w-[14px]',
-  sm: 'w-4 h-4 min-w-[16px]',
-  md: 'w-5 h-5 min-w-[20px]',
-  lg: 'w-7 h-7 min-w-[28px]',
-  xl: 'w-9 h-9 min-w-[36px]',
+  xs: 'w-4 h-4 min-w-[16px]',
+  sm: 'w-5 h-5 min-w-[20px]',
+  md: 'w-6 h-6 min-w-[24px]',
+  lg: 'w-8 h-8 min-w-[32px]',
+  xl: 'w-10 h-10 min-w-[40px]',
   '2xl': 'w-12 h-12 min-w-[48px]',
-  '3xl': 'w-16 h-16 min-w-[64px]'
+  '3xl': 'w-16 h-16 min-w-[64px]',
+  full: 'w-full h-full'
 };
 
 export default function CurrencyIcon({

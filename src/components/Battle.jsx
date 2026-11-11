@@ -901,7 +901,7 @@ export default function Battle({
       {/* Defeat Screen */}
       {battleState === 'lost' && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-40 flex items-center justify-center p-4 text-center animate-fadeIn">
-          <div className="bg-white border-4 border-black p-5 shadow-brutal-lg max-w-xs w-full flex flex-col items-center">
+          <div className="bg-white border-4 border-black p-4 sm:p-5 shadow-brutal-lg max-w-sm w-full flex flex-col items-center">
             <div className="w-16 h-16 bg-neo-pink text-white border-3 border-black flex items-center justify-center mb-3 shadow-brutal p-2.5">
               <GameIcon icon="skull" size="full" />
             </div>
@@ -915,18 +915,18 @@ export default function Battle({
             <div className="w-full space-y-2">
               <button
                 onClick={() => onOpenReviveModal(handleReviveAction)}
-                className={`w-full py-3 ${reviveTokens > 0 ? 'bg-neo-lime' : 'bg-neo-yellow'} text-black border-3 border-black font-arcade text-sm shadow-brutal active:translate-x-[2px] active:translate-y-[2px] flex items-center justify-center gap-2 uppercase`}
+                className={`w-full py-2.5 sm:py-3 px-2 ${reviveTokens > 0 ? 'bg-neo-lime' : 'bg-neo-yellow'} text-black border-3 border-black font-arcade text-xs sm:text-sm shadow-brutal active:translate-x-[2px] active:translate-y-[2px] flex items-center justify-center gap-1.5 uppercase whitespace-nowrap`}
               >
                 <Sparkles className="w-4 h-4 stroke-[3] shrink-0" />
-                <span>
+                <span className="whitespace-nowrap">
                   {reviveTokens > 0 ? (
-                    <span className="inline-flex items-center gap-1">
+                    <span className="inline-flex items-center gap-1 whitespace-nowrap">
                       <span>ВОСКРЕСНУТЬ (БЕСПЛАТНО • </span>
                       <CurrencyIcon type="feather" size="xs" inline />
                       <span>{reviveTokens})</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1">
+                    <span className="inline-flex items-center gap-1 whitespace-nowrap">
                       <span>ВОСКРЕСНУТЬ (15 </span>
                       <CurrencyIcon type="star" size="xs" inline />
                       <span>)</span>
@@ -943,7 +943,7 @@ export default function Battle({
                   droppedEquipment: droppedItems,
                   droppedItems
                 })}
-                className="w-full py-2 bg-slate-100 text-black border-2 border-black font-arcade text-xs shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] uppercase"
+                className="w-full py-2 bg-slate-100 text-black border-2 border-black font-arcade text-xs shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] uppercase whitespace-nowrap"
               >
                 СДАТЬСЯ И УЙТИ В ХАБ
               </button>

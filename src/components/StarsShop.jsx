@@ -10,24 +10,24 @@ export default function StarsShop({ state, onPurchaseSuccess, onShowToast, onApp
   const renderShopItemIcon = (item) => {
     switch (item.action) {
       case 'gear_chest':
-        return <GameIcon icon="chest" size="md" />;
+        return <GameIcon icon="chest" size="lg" />;
       case 'smith_pack':
-        return <EquipmentIcon archetype="hammer" size="md" />;
+        return <EquipmentIcon archetype="hammer" size="lg" />;
       case 'revive':
-        return <CurrencyIcon type="feather" size="md" />;
+        return <CurrencyIcon type="feather" size="lg" />;
       case 'egg':
-        return <GameIcon icon="golden_egg" size="md" />;
+        return <GameIcon icon="golden_egg" size="lg" />;
       case 'energy':
-        return <CurrencyIcon type="energy" size="md" />;
+        return <CurrencyIcon type="energy" size="lg" />;
       case 'potions':
-        return <CurrencyIcon type="potion" size="md" />;
+        return <CurrencyIcon type="potion" size="lg" />;
       case 'crystals':
-        return <CurrencyIcon type="crystal" size="md" />;
+        return <CurrencyIcon type="crystal" size="lg" />;
       case 'vip':
-        return <GameIcon icon="crown" size="md" />;
+        return <GameIcon icon="crown" size="lg" />;
       default:
         const Icon = item.iconComponent;
-        return <Icon className="w-6 h-6 stroke-[3]" />;
+        return <Icon className="w-7 h-7 stroke-[3]" />;
     }
   };
 

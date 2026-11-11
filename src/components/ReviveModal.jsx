@@ -35,8 +35,8 @@ export default function ReviveModal({ floor, reviveTokens = 0, onUseToken, onCon
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 text-center animate-fadeIn font-sans select-none">
-      <div className="bg-white border-4 border-black p-5 shadow-brutal-lg max-w-xs w-full flex flex-col items-center">
-        
+      <div className="bg-white border-4 border-black p-4 sm:p-5 shadow-brutal-lg max-w-sm w-full flex flex-col items-center">
+
         <div className="w-16 h-16 bg-neo-yellow border-3 border-black flex items-center justify-center mb-3 shadow-brutal p-3">
           <GameIcon icon="sparkles" size="full" />
         </div>
@@ -57,10 +57,10 @@ export default function ReviveModal({ floor, reviveTokens = 0, onUseToken, onCon
           {reviveTokens > 0 ? (
             <button
               onClick={handleUseToken}
-              className="w-full py-3 bg-neo-lime text-black border-3 border-black font-arcade text-xs shadow-brutal active:translate-x-[2px] active:translate-y-[2px] flex items-center justify-center gap-2 uppercase"
+              className="w-full py-2.5 sm:py-3 px-2 bg-neo-lime text-black border-3 border-black font-arcade text-xs sm:text-sm shadow-brutal active:translate-x-[2px] active:translate-y-[2px] flex items-center justify-center gap-1.5 uppercase whitespace-nowrap"
             >
-              <Sparkles className="w-4 h-4 stroke-[3]" />
-              <span className="inline-flex items-center gap-1">
+              <Sparkles className="w-4 h-4 stroke-[3] shrink-0" />
+              <span className="inline-flex items-center gap-1 whitespace-nowrap">
                 <span>ИСПОЛЬЗОВАТЬ ПЕРО (</span>
                 <CurrencyIcon type="feather" size="xs" inline />
                 <span>{reviveTokens} шт)</span>
@@ -69,10 +69,10 @@ export default function ReviveModal({ floor, reviveTokens = 0, onUseToken, onCon
           ) : (
             <button
               onClick={handleBuyRevive}
-              className="w-full py-3 bg-neo-yellow text-black border-3 border-black font-arcade text-xs shadow-brutal active:translate-x-[2px] active:translate-y-[2px] flex items-center justify-center gap-2 uppercase"
+              className="w-full py-2.5 sm:py-3 px-2 bg-neo-yellow text-black border-3 border-black font-arcade text-xs sm:text-sm shadow-brutal active:translate-x-[2px] active:translate-y-[2px] flex items-center justify-center gap-1.5 uppercase whitespace-nowrap"
             >
               <Sparkles className="w-4 h-4 stroke-[3] shrink-0" />
-              <span className="inline-flex items-center gap-1">
+              <span className="inline-flex items-center gap-1 whitespace-nowrap">
                 <span>ВОСКРЕСНУТЬ (15</span>
                 <CurrencyIcon type="star" size="xs" inline />
                 <span>)</span>
@@ -82,9 +82,9 @@ export default function ReviveModal({ floor, reviveTokens = 0, onUseToken, onCon
 
           <button
             onClick={onCancel}
-            className="w-full py-2.5 bg-slate-100 text-black border-2 border-black font-arcade text-xs shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] flex items-center justify-center gap-1.5 uppercase"
+            className="w-full py-2.5 bg-slate-100 text-black border-2 border-black font-arcade text-xs shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] flex items-center justify-center gap-1.5 uppercase whitespace-nowrap"
           >
-            <ArrowLeft className="w-3.5 h-3.5 stroke-[3]" />
+            <ArrowLeft className="w-3.5 h-3.5 stroke-[3] shrink-0" />
             <span>СДАТЬСЯ В ХАБ</span>
           </button>
         </div>
