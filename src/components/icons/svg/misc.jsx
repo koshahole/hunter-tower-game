@@ -1,5 +1,5 @@
 import React from 'react';
-import { CrossedSwordsSvg, ShieldPlateSvg, CrownSvg } from './equipment';
+import { CrossedSwordsSvg, SwordSvg, ShieldPlateSvg, CrownSvg } from './equipment';
 
 const STROKE = {
   stroke: '#000000',
@@ -217,7 +217,7 @@ export const MISC_SVG_MAP = {
   vip: CrownSvg,
   crossed_swords: CrossedSwordsSvg,
   swords: CrossedSwordsSvg,
-  sword: CrossedSwordsSvg,
+  sword: SwordSvg,
   shield_plate: ShieldPlateSvg,
   shield: ShieldPlateSvg,
 

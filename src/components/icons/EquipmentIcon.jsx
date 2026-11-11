@@ -1,35 +1,137 @@
 import React from 'react';
 import {
+  // Weapons
+  SwordSvg,
+  BladeSvg,
+  ScimitarSvg,
   CrossedSwordsSvg,
   DaggerSvg,
+  RapierSvg,
   AxeSvg,
   HammerSvg,
-  WandSvg,
+  MaceSvg,
+  ScytheSvg,
+  SpearSvg,
   TridentSvg,
-  SawSvg,
+  WandSvg,
+  BowSvg,
   PickaxeSvg,
+  SawSvg,
+
+  // Armors
+  FullArmorSvg,
   ShieldPlateSvg,
-  GiSvg,
+  CuirassSvg,
+  ChainmailSvg,
+  CarapaceSvg,
+  MageRobeSvg,
+  CloakSvg,
   VestSvg,
+  TunicSvg,
+  GiSvg,
   CoatLabSvg,
   CoatSvg,
-  TunicSvg,
+
+  // Helmets
+  KnightHelmSvg,
   HelmSoldierSvg,
   CrownSvg,
+  DiademSvg,
+  HoodSvg,
+  WizardHatSvg,
   TophatSvg,
-  CapSvg,
-  HatWideSvg,
   MaskSvg,
+  HeadbandSvg,
+  CapSvg,
+  MinerCapSvg,
   GogglesSvg,
+  FurCapSvg,
+  HatWideSvg,
+
+  // Accessories
   RingSvg,
-  NecklaceSvg,
+  AmuletSvg,
   GemAmuletSvg,
+  NecklaceSvg,
+  SealCoinSvg,
   CoinAmuletSvg,
   EvilEyeSvg,
+  HeartGemSvg,
+  CrystalOrbSvg,
+  CrystalBallSvg,
+  CloverSvg,
   SparkleCharmSvg,
-  CrystalBallSvg
+  HourglassSvg,
+  BracerSvg
 } from './svg/equipment';
 import { SIZE_PRESETS } from './CurrencyIcon';
+
+/**
+ * Intelligent semantic analyzer for Russian item names to assign 100% accurate visual fantasy archetypes
+ */
+export function resolveItemArchetype(item, slot) {
+  if (typeof item === 'string') return item;
+  const s = slot || item?.slot || 'weapon';
+  const name = String(item?.name || '').toLowerCase();
+
+  if (s === 'weapon') {
+    if (name.includes('коса') || name.includes('серп') || name.includes('жнец') || name.includes('смерт')) return 'scythe';
+    if (name.includes('рапир') || name.includes('шпаг')) return 'rapier';
+    if (name.includes('кинжал') || name.includes('нож') || name.includes('стилет')) return 'dagger';
+    if (name.includes('топор') || name.includes('секир') || name.includes('палач') || name.includes('берсерк')) return 'axe';
+    if (name.includes('молот') || name.includes('ковал')) return 'hammer';
+    if (name.includes('булав') || name.includes('дубин') || name.includes('моргенштерн') || name.includes('прут') || name.includes('лом')) return 'mace';
+    if (name.includes('копь') || name.includes('пик') || name.includes('трезубец')) return 'spear';
+    if (name.includes('кирк') || name.includes('лопат')) return 'pickaxe';
+    if (name.includes('тесак') || name.includes('сабл') || name.includes('палаш') || name.includes('мачет')) return 'scimitar';
+    if (name.includes('лук') || name.includes('арбалет') || name.includes('стрел')) return 'bow';
+    if (name.includes('посох') || name.includes('жезл') || name.includes('сфер')) return 'wand';
+    if (name.includes('клинок')) return 'blade';
+    if (name.includes('меч') || name.includes('двуруч') || name.includes('экскалибур') || name.includes('эсток')) return 'sword';
+    return 'sword';
+  }
+
+  if (s === 'armor') {
+    if (name.includes('манти') || name.includes('роб') || name.includes('хитон')) return 'mage_robe';
+    if (name.includes('кольчуг') || name.includes('кольц')) return 'chainmail';
+    if (name.includes('кирас') || name.includes('нагрудник')) return 'cuirass';
+    if (name.includes('панцир') || name.includes('чешу')) return 'carapace';
+    if (name.includes('плащ') || name.includes('накидк')) return 'cloak';
+    if (name.includes('жилет') || name.includes('дублет') || name.includes('дублёт') || name.includes('куртк') || name.includes('кафтан') || name.includes('штаны')) return 'vest';
+    if (name.includes('туник') || name.includes('рубах') || name.includes('фартук') || name.includes('тканев') || name.includes('полотно') || name.includes('стёган') || name.includes('ремень')) return 'tunic';
+    if (name.includes('доспех') || name.includes('эгид') || name.includes('брон')) return 'full_armor';
+    return 'full_armor';
+  }
+
+  if (s === 'helmet') {
+    if (name.includes('корон')) return 'crown';
+    if (name.includes('диадем') || name.includes('венец') || name.includes('тиар')) return 'diadem';
+    if (name.includes('капюшон') || name.includes('вуал')) return 'hood';
+    if (name.includes('колпак') || name.includes('шляп') || name.includes('цилиндр')) return 'wizard_hat';
+    if (name.includes('маск') || name.includes('личина')) return 'mask';
+    if (name.includes('повязк') || name.includes('обруч') || name.includes('лент')) return 'headband';
+    if (name.includes('каск') || name.includes('очки')) return 'miner_cap';
+    if (name.includes('шапк') || name.includes('ушанк') || name.includes('колпач')) return 'fur_cap';
+    if (name.includes('шлем') || name.includes('салад') || name.includes('бацинет') || name.includes('латн')) return 'knight_helm';
+    return 'knight_helm';
+  }
+
+  if (s === 'accessory') {
+    if (name.includes('кольц') || name.includes('перстень')) return 'ring';
+    if (name.includes('амулет') || name.includes('оберег') || name.includes('талисман') || name.includes('кулон') || name.includes('медальон') || name.includes('подвеск') || name.includes('пыль') || name.includes('идол') || name.includes('тотем') || name.includes('шнурок')) return 'amulet';
+    if (name.includes('ожерель') || name.includes('колье') || name.includes('бус') || name.includes('цеп')) return 'necklace';
+    if (name.includes('печат') || name.includes('монет') || name.includes('знак')) return 'seal_coin';
+    if (name.includes('око') || name.includes('глаз') || name.includes('взор')) return 'evil_eye';
+    if (name.includes('сердц')) return 'heart_gem';
+    if (name.includes('клевер')) return 'clover';
+    if (name.includes('час')) return 'hourglass';
+    if (name.includes('браслет') || name.includes('наруч') || name.includes('пояс') || name.includes('ремень')) return 'bracer';
+    if (name.includes('шар') || name.includes('сфер') || name.includes('кристалл')) return 'crystal_orb';
+    return 'ring';
+  }
+
+  return 'sword';
+}
 
 export const EMOJI_TO_ARCHETYPE = {
   // Weapon
@@ -69,44 +171,76 @@ export const EMOJI_TO_ARCHETYPE = {
   '🔮': 'crystal_ball'
 };
 
-const ARCHETYPE_COMPONENTS = {
+export const ARCHETYPE_COMPONENTS = {
+  // Weapons
+  sword: SwordSvg,
+  blade: BladeSvg,
+  scimitar: ScimitarSvg,
   crossed_swords: CrossedSwordsSvg,
   dagger: DaggerSvg,
+  rapier: RapierSvg,
   axe: AxeSvg,
   hammer: HammerSvg,
-  wand: WandSvg,
+  mace: MaceSvg,
+  scythe: ScytheSvg,
+  spear: SpearSvg,
   trident: TridentSvg,
-  saw: SawSvg,
+  wand: WandSvg,
+  bow: BowSvg,
   pickaxe: PickaxeSvg,
+  saw: SawSvg,
 
+  // Armors
+  full_armor: FullArmorSvg,
   shield_plate: ShieldPlateSvg,
-  gi: GiSvg,
+  cuirass: CuirassSvg,
+  chainmail: ChainmailSvg,
+  carapace: CarapaceSvg,
+  mage_robe: MageRobeSvg,
+  cloak: CloakSvg,
   vest: VestSvg,
+  tunic: TunicSvg,
+  gi: GiSvg,
   coat_lab: CoatLabSvg,
   coat: CoatSvg,
-  tunic: TunicSvg,
 
+  // Helmets
+  knight_helm: KnightHelmSvg,
   helm_soldier: HelmSoldierSvg,
   crown: CrownSvg,
+  diadem: DiademSvg,
+  hood: HoodSvg,
+  wizard_hat: WizardHatSvg,
   tophat: TophatSvg,
-  cap: CapSvg,
-  hat_wide: HatWideSvg,
   mask: MaskSvg,
+  headband: HeadbandSvg,
+  cap: CapSvg,
+  miner_cap: MinerCapSvg,
   goggles: GogglesSvg,
+  fur_cap: FurCapSvg,
+  hat_wide: HatWideSvg,
 
+  // Accessories
   ring: RingSvg,
-  necklace: NecklaceSvg,
+  amulet: AmuletSvg,
   gem_amulet: GemAmuletSvg,
+  necklace: NecklaceSvg,
+  seal_coin: SealCoinSvg,
   coin_amulet: CoinAmuletSvg,
   evil_eye: EvilEyeSvg,
+  heart_gem: HeartGemSvg,
+  crystal_orb: CrystalOrbSvg,
+  crystal_ball: CrystalBallSvg,
+  clover: CloverSvg,
   sparkle_charm: SparkleCharmSvg,
-  crystal_ball: CrystalBallSvg
+  hourglass: HourglassSvg,
+  bracer: BracerSvg
 };
 
 const SLOT_DEFAULT_ARCHETYPE = {
-  weapon: 'crossed_swords',
-  armor: 'shield_plate',
-  helmet: 'helm_soldier',
+  weapon: 'sword',
+  armor: 'full_armor',
+  helmet: 'knight_helm',
   accessory: 'ring'
 };
 
@@ -133,13 +267,19 @@ export default function EquipmentIcon({
   const resolvedSlot = slot || item?.slot || 'weapon';
   const resolvedRarity = rarity || item?.rarity || 'common';
 
-  // Resolve archetype
+  // 1. Explicit archetype prop (e.g. from shop or manual caller)
+  // 2. Semantic name resolution from item.name
+  // 3. Legacy emoji lookup
+  // 4. Default slot archetype
   let key = archetype;
+  if (!key && item?.name) {
+    key = resolveItemArchetype(item, resolvedSlot);
+  }
   if (!key && item?.icon) {
     key = EMOJI_TO_ARCHETYPE[item.icon];
   }
   if (!key) {
-    key = SLOT_DEFAULT_ARCHETYPE[resolvedSlot] || 'crossed_swords';
+    key = SLOT_DEFAULT_ARCHETYPE[resolvedSlot] || 'sword';
   }
 
   const SvgComponent = ARCHETYPE_COMPONENTS[key] || CrossedSwordsSvg;

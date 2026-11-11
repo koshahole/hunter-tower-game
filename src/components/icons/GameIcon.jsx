@@ -1,6 +1,6 @@
 import React from 'react';
 import CurrencyIcon, { SIZE_PRESETS } from './CurrencyIcon';
-import EquipmentIcon, { EMOJI_TO_ARCHETYPE } from './EquipmentIcon';
+import EquipmentIcon, { EMOJI_TO_ARCHETYPE, ARCHETYPE_COMPONENTS } from './EquipmentIcon';
 import PetAvatar from './PetAvatar';
 import MonsterAvatar from './MonsterAvatar';
 import RelicIcon from './RelicIcon';
@@ -64,8 +64,8 @@ export default function GameIcon({
   }
 
   // Equipment Archetypes & Slot Emojis
-  if (EMOJI_TO_ARCHETYPE[cleanKey] || EMOJI_TO_ARCHETYPE[rawKey] || lowerKey in EMOJI_TO_ARCHETYPE) {
-    const arch = EMOJI_TO_ARCHETYPE[cleanKey] || EMOJI_TO_ARCHETYPE[rawKey] || lowerKey;
+  if (ARCHETYPE_COMPONENTS[lowerKey] || EMOJI_TO_ARCHETYPE[cleanKey] || EMOJI_TO_ARCHETYPE[rawKey] || lowerKey in EMOJI_TO_ARCHETYPE) {
+    const arch = ARCHETYPE_COMPONENTS[lowerKey] ? lowerKey : (EMOJI_TO_ARCHETYPE[cleanKey] || EMOJI_TO_ARCHETYPE[rawKey] || lowerKey);
     return <EquipmentIcon archetype={arch} size={size} className={className} inline={inline} {...props} />;
   }
 
