@@ -149,7 +149,10 @@ export default function Battle({
     setIsMonsterAttacking(false);
     setIsPlayerHurt(false);
     setCombo(0);
-    setCombatLog([`ШТУРМ: ЭТАЖ ${floor}! ВРАГ: ${first.name}`]);
+    const initialLog = first.isBoss && first.dialog
+      ? `👑 ${first.name.toUpperCase()}: "${first.dialog}"`
+      : `ШТУРМ: ЭТАЖ ${floor}! ВРАГ: ${first.name}`;
+    setCombatLog([initialLog]);
     setSkills(SKILLS.map(s => ({ ...s, currentCd: 0 })));
 
     if (hasBomb) {
@@ -233,7 +236,11 @@ export default function Battle({
         setMonsterGhostHp(nextMon.maxHp);
         setSyncedMonsterStunned(false);
         setIsAttacking(false);
-        addLog(`⚔️ В БОЙ ВСТУПАЕТ: ${nextMon.name}!`);
+        if (nextMon.isBoss && nextMon.dialog) {
+          addLog(`👑 ${nextMon.name.toUpperCase()}: "${nextMon.dialog}"`);
+        } else {
+          addLog(`⚔️ В БОЙ ВСТУПАЕТ: ${nextMon.name}!`);
+        }
       }, 400);
 
     } else {
@@ -586,20 +593,13 @@ export default function Battle({
             <MonsterAvatar monster={currentMonster} size="full" className="w-full h-full object-contain filter drop-shadow-md select-none" />
           </div>
 
-          <div className="text-center mt-2 px-2 w-full flex flex-col items-center">
+          <div className="text-center mt-2 px-2 w-full flex flex-col items-center min-h-[3.5rem] justify-center">
             <h3 className="font-arcade text-sm sm:text-base text-black uppercase break-words">
               {currentMonster.name}
             </h3>
 
-            {/* Boss Dialogue (shown at encounter start to keep short mobile screens compact) */}
-            {currentMonster.isBoss && currentMonster.dialog && combo === 0 && (
-              <div className="mt-1 bg-neo-yellow text-black border-2 border-black px-3 py-1 shadow-brutal-sm font-sans font-black text-xs max-w-[300px] break-words">
-                "{currentMonster.dialog}"
-              </div>
-            )}
-
             {currentMonster.isBoss && currentMonster.specialSkill && (
-              <div className="mt-1 bg-black text-neo-yellow border border-white px-2.5 py-0.5 font-arcade text-[11px] uppercase inline-flex items-center gap-1">
+              <div className="mt-1 bg-black text-neo-yellow border border-white px-2.5 py-0.5 font-arcade text-[11px] uppercase inline-flex items-center gap-1 shadow-brutal-sm">
                 <GameIcon icon="skull" size="xs" inline />
                 <span>СТИЛЬ: {currentMonster.specialSkill}</span>
               </div>

@@ -213,32 +213,37 @@ export default function Hub({
       <div className="grid grid-cols-2 gap-2.5">
 
         {/* 3-Min Energy Card */}
-        <div className="bg-white border-3 border-black p-2.5 sm:p-3 shadow-brutal flex items-center justify-between gap-1.5 min-w-0">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1 whitespace-nowrap">
-              <span className="font-arcade text-[11px] text-black uppercase">ЭНЕРГИЯ</span>
-              {state.energy < state.maxEnergy && (
-                <span className="bg-black text-neo-yellow text-[10px] font-black px-1 py-0.2 flex items-center gap-0.5 shrink-0 whitespace-nowrap">
-                  <Clock className="w-2.5 h-2.5" />
-                  <span>{formatTimer(secondsLeft)}</span>
-                </span>
-              )}
-            </div>
-            <div className="font-arcade text-base sm:text-lg text-black mt-0.5 flex items-center gap-1 whitespace-nowrap">
-              <span>{state.energy} / {state.maxEnergy}</span>
-              <CurrencyIcon type="energy" size="xs" inline />
-            </div>
+        <div className="bg-white border-3 border-black p-2.5 sm:p-3 shadow-brutal flex flex-col justify-between gap-1.5 min-w-0">
+          {/* Top Row: Label + Countdown Timer */}
+          <div className="flex items-center justify-between gap-1 min-w-0">
+            <span className="font-arcade text-[11px] text-black uppercase truncate">ЭНЕРГИЯ</span>
+            {state.energy < state.maxEnergy && (
+              <span className="bg-black text-neo-yellow text-[10px] font-black px-1.5 py-0.2 flex items-center gap-0.5 shrink-0 whitespace-nowrap">
+                <Clock className="w-2.5 h-2.5 shrink-0" />
+                <span>{formatTimer(secondsLeft)}</span>
+              </span>
+            )}
           </div>
 
-          <button
-            onClick={onOpenStarsShop}
-            title="Пополнить энергию за звезды"
-            className="bg-neo-lime text-black border-2 border-black font-arcade text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-1 shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] shrink-0 whitespace-nowrap flex items-center gap-0.5"
-          >
-            <CurrencyIcon type="energy" size="xs" inline />
-            <span>+10</span>
-            <CurrencyIcon type="star" size="xs" inline />
-          </button>
+          {/* Bottom Row: Counter + Quick Refill Button */}
+          <div className="flex items-center justify-between gap-1.5 min-w-0">
+            <div className="font-arcade text-base sm:text-lg text-black flex items-center gap-1 whitespace-nowrap min-w-0">
+              <span>{state.energy}/{state.maxEnergy}</span>
+              <CurrencyIcon type="energy" size="xs" inline />
+            </div>
+
+            <button
+              onClick={onOpenStarsShop}
+              title="Пополнить энергию за звезды"
+              className="bg-neo-lime text-black border-2 border-black font-arcade text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] shrink-0 whitespace-nowrap flex items-center gap-0.5"
+            >
+              <span>+</span>
+              <CurrencyIcon type="energy" size="xs" inline />
+              <span>/</span>
+              <span>10</span>
+              <CurrencyIcon type="star" size="xs" inline />
+            </button>
+          </div>
         </div>
 
         {/* Floor Record Card */}
