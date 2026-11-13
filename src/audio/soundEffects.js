@@ -270,6 +270,61 @@ class SoundEngine {
       osc.stop(now + idx * 0.08 + 0.18);
     });
   }
+
+  playExplosion() {
+    if (!this.enabled) return;
+    this.init();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+
+    // 1. Heavy low-frequency punch (sawtooth 160Hz -> 30Hz)
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(160, now);
+    osc.frequency.exponentialRampToValueAtTime(30, now + 0.35);
+
+    gain.gain.setValueAtTime(0.45, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.35);
+
+    // 2. Filtered burst of noise for visceral impact
+    try {
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.25);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(900, now);
+      filter.frequency.exponentialRampToValueAtTime(100, now + 0.25);
+
+      const noiseGain = this.ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.4, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+
+      noise.connect(filter);
+      filter.connect(noiseGain);
+      noiseGain.connect(this.ctx.destination);
+
+      noise.start(now);
+    } catch (e) {
+      // Audio buffer fallback safe
+    }
+  }
 }
 
 export const sounds = new SoundEngine();

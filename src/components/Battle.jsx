@@ -69,6 +69,7 @@ export default function Battle({
   const [isMonsterHurt, setIsMonsterHurt] = useState(false);
   const [isMonsterAttacking, setIsMonsterAttacking] = useState(false);
   const [isPlayerHurt, setIsPlayerHurt] = useState(false);
+  const [isBombExploding, setIsBombExploding] = useState(false);
   const [battleState, setBattleState] = useState('fighting');
   const [confirmRetreat, setConfirmRetreat] = useState(false);
 
@@ -79,6 +80,7 @@ export default function Battle({
   const battleStateRef = useRef('fighting');
   const turnTimeoutRef = useRef(null);
   const prevInitialHpRef = useRef(initialHp);
+  const bombedMonsterIdsRef = useRef(new Set());
 
   const setSyncedPlayerHp = (nextHp) => {
     const clamped = Math.max(0, Math.min(playerStats.maxHp, nextHp));
@@ -120,27 +122,21 @@ export default function Battle({
     }
   }, [initialHp, playerStats.maxHp]);
 
-  // Initialize floor pack and relic triggers
+  // Initialize floor pack and combat state
   useEffect(() => {
     if (turnTimeoutRef.current) clearTimeout(turnTimeoutRef.current);
 
     const pack = generateFloorMonsters(floor);
     setMonsterPack(pack);
     setMonsterIdx(0);
+    bombedMonsterIdsRef.current = new Set();
     setAccumulatedGold(0);
     setAccumulatedCrystals(0);
     setDroppedItems([]);
 
     const first = pack[0];
-    const hasBomb = runArtifacts?.some(a => a.id === 'infernal_bomb');
-    let startHp = first.maxHp;
-    if (hasBomb) {
-      const burn = Math.floor(first.maxHp * 0.2);
-      startHp = Math.max(1, first.maxHp - burn);
-    }
-
-    setMonsterHp(startHp);
-    setMonsterGhostHp(startHp);
+    setMonsterHp(first.maxHp);
+    setMonsterGhostHp(first.maxHp);
     setSyncedBattleState('fighting');
     setIsAttacking(false);
     setSyncedDefending(false);
@@ -154,14 +150,45 @@ export default function Battle({
       : `ШТУРМ: ЭТАЖ ${floor}! ВРАГ: ${first.name}`;
     setCombatLog([initialLog]);
     setSkills(SKILLS.map(s => ({ ...s, currentCd: 0 })));
-
-    if (hasBomb) {
-      setTimeout(() => {
-        addFloatingText(`💣 -${Math.floor(first.maxHp * 0.2)}`, 'crit', false);
-        addLog(`💣 ОГНЕННАЯ БОМБА СЖИГАЕТ 20% HP ВРАГА!`);
-      }, 300);
-    }
   }, [floor]);
+
+  // Infernal Bomb Relic trigger: detonates on EVERY monster entering battle across all floors
+  useEffect(() => {
+    if (battleStateRef.current !== 'fighting') return;
+    if (!currentMonster || !currentMonster.id) return;
+
+    const hasBomb = runArtifacts?.some(a => a.id === 'infernal_bomb');
+    if (!hasBomb) return;
+    if (bombedMonsterIdsRef.current.has(currentMonster.id)) return;
+
+    // Immediately mark as bombed so no duplicate explosions happen
+    bombedMonsterIdsRef.current.add(currentMonster.id);
+
+    // 250ms delay: allows the player to see the monster enter at 100% HP before the blast
+    const timer = setTimeout(() => {
+      if (battleStateRef.current !== 'fighting') return;
+
+      const burn = Math.max(1, Math.floor(currentMonster.maxHp * 0.2));
+      setMonsterHp(prev => {
+        if (prev <= 0) return 0;
+        return Math.max(1, prev - burn);
+      });
+
+      setIsBombExploding(true);
+      setTimeout(() => setIsBombExploding(false), 550);
+
+      setIsMonsterHurt(true);
+      setTimeout(() => setIsMonsterHurt(false), 300);
+
+      sounds.playExplosion();
+      hapticImpact('heavy');
+
+      addFloatingText(`💣 -${burn}`, 'crit', false);
+      addLog(`💣 ОГНЕННАЯ БОМБА СЖИГАЕТ 20% HP ВРАГА (-${burn})!`);
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [floor, monsterIdx, currentMonster?.id, runArtifacts]);
 
   // Sync ghost HP bars
   useEffect(() => {
@@ -587,10 +614,22 @@ export default function Battle({
           )}
 
           {/* Monster Avatar Frame */}
-          <div className={`w-28 h-28 sm:w-32 sm:h-32 battle-compact-avatar border-4 border-black shadow-brutal-lg flex items-center justify-center p-2.5 ${
+          <div className={`relative w-28 h-28 sm:w-32 sm:h-32 battle-compact-avatar border-4 border-black shadow-brutal-lg flex items-center justify-center p-2.5 overflow-hidden ${
             currentMonster.isBoss ? 'bg-neo-pink' : (currentMonster.isLeader ? 'bg-neo-yellow' : 'bg-white')
           }`}>
             <MonsterAvatar monster={currentMonster} size="full" className="w-full h-full object-contain filter drop-shadow-md select-none" />
+
+            {/* Infernal Bomb Visual Detonation Flash */}
+            {isBombExploding && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+                <div className="absolute inset-0 bg-red-600/40 mix-blend-color-dodge animate-ping" />
+                <div className="absolute inset-0 bg-neo-yellow/30 animate-pulse" />
+                <div className="relative font-arcade text-3xl sm:text-4xl animate-damage-pop flex items-center justify-center drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)]">
+                  <span>💣</span>
+                  <span className="text-neo-yellow text-xs sm:text-sm font-black bg-black px-1 border border-white ml-1">BOOM!</span>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="text-center mt-2 px-2 w-full flex flex-col items-center min-h-[3.5rem] justify-center">
