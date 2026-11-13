@@ -53,6 +53,9 @@ export const BOSSES = {
     name: 'Бездна-Дракон',
     title: 'Пожиратель Эфира',
     avatar: '🐲🖤',
+    hp: 220000,
+    atk: 980,
+    def: 245,
     hpMultiplier: 10.5,
     atkMultiplier: 3.2,
     specialSkill: 'Дыхание Эфира • Испытание экватора',
@@ -64,6 +67,9 @@ export const BOSSES = {
     name: 'Кибер-Титан',
     title: 'Протокол Уничтожения',
     avatar: '🤖⚡',
+    hp: 350000,
+    atk: 1250,
+    def: 310,
     hpMultiplier: 12.0,
     atkMultiplier: 3.6,
     specialSkill: 'Тяжёлая кибер-броня • Плотный урон',
@@ -75,6 +81,9 @@ export const BOSSES = {
     name: 'Мидас Проклятый',
     title: 'Золотой Идол',
     avatar: '👑🪙',
+    hp: 550000,
+    atk: 1550,
+    def: 385,
     hpMultiplier: 14.0,
     atkMultiplier: 4.0,
     specialSkill: 'Золотой идол • Крупная награда 🪙',
@@ -86,6 +95,9 @@ export const BOSSES = {
     name: 'Падший Архангел',
     title: 'Судья Башни',
     avatar: '🪽⚡',
+    hp: 850000,
+    atk: 1850,
+    def: 460,
     hpMultiplier: 17.0,
     atkMultiplier: 4.5,
     specialSkill: 'Небесный вердикт • Мощные атаки',
@@ -97,6 +109,9 @@ export const BOSSES = {
     name: 'Теневой Монарх',
     title: 'Властитель Теней',
     avatar: '👤🗡️',
+    hp: 1350000,
+    atk: 2450,
+    def: 610,
     hpMultiplier: 20.0,
     atkMultiplier: 5.0,
     specialSkill: 'Теневой натиск • Элитный страж',
@@ -108,6 +123,9 @@ export const BOSSES = {
     name: 'Владыка Башни (Творец)',
     title: 'Создатель Испытаний',
     avatar: '👑👁️🌌',
+    hp: 2100000,
+    atk: 3100,
+    def: 775,
     hpMultiplier: 28.0,
     atkMultiplier: 6.0,
     specialSkill: 'Творец Башни • Финальный босс',
@@ -164,7 +182,7 @@ export function generateFloorMonsters(floor) {
       maxHp: baseHp,
       hp: baseHp,
       atk: baseAtk,
-      def: Math.floor(baseAtk * 0.25),
+      def: bossData.def || Math.floor(baseAtk * 0.25),
       specialSkill: bossData.specialSkill,
       dialog: bossData.dialog,
       goldReward: Math.floor(bossData.goldReward * (1 + (floor / 100))),
@@ -189,9 +207,12 @@ export function generateFloorMonsters(floor) {
     const roleHpMult = isLeader ? 1.6 : (idx === 0 ? 0.9 : 1.15);
     const roleAtkMult = isLeader ? 1.25 : 1.0;
 
-    // Hardcore Scaling: Mob HP on floor 1 is ~95-170 HP (requires 8-15 hits without weapon)
-    const baseHp = Math.max(85, Math.floor((90 * Math.pow(1.082, floor - 1) + floor * 12) * roleHpMult));
-    const baseAtk = Math.max(12, Math.floor((12 * Math.pow(1.06, floor - 1) + Math.floor(floor * 0.8)) * roleAtkMult));
+    // Hardcore Scaling with progressive curve stabilization beyond floor 70 to keep end-game beatable
+    const effectiveFloorHp = floor <= 70 ? (floor - 1) : 69 + (floor - 70) * 0.6;
+    const effectiveFloorAtk = floor <= 70 ? (floor - 1) : 69 + (floor - 70) * 0.55;
+
+    const baseHp = Math.max(85, Math.floor((90 * Math.pow(1.082, effectiveFloorHp) + floor * 12) * roleHpMult));
+    const baseAtk = Math.max(12, Math.floor((12 * Math.pow(1.06, effectiveFloorAtk) + Math.floor(floor * 0.8)) * roleAtkMult));
     const gold = Math.max(5, Math.floor((8 * Math.pow(1.05, floor) + 3 + Math.random() * 4) * (isLeader ? 1.6 : 1.0)));
     const crystals = isLeader && Math.random() < 0.25 ? Math.max(1, Math.floor(floor / 10)) : 0;
 
