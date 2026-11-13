@@ -7,12 +7,13 @@ export const BOSSES = {
     name: 'Король Гоблинов',
     title: 'Хозяин Заброшенных Залов',
     avatar: '👑👺',
-    hp: 1850,
-    atk: 50,
+    hp: 2200,
+    atk: 60,
+    def: 15,
     hpMultiplier: 1.65,
     atkMultiplier: 1.07,
     specialSkill: 'Тяжёлый топор • Гарант. реликвия',
-    goldReward: 350,
+    goldReward: 400,
     crystalReward: 15,
     dialog: 'Мелкий человечишка! Ты думал пройдешь мои залы?! Мой топор расколет твой череп!'
   },
@@ -20,75 +21,84 @@ export const BOSSES = {
     name: 'Костяной Лорд',
     title: 'Хранитель Катакомб',
     avatar: '💀⚔️',
+    hp: 24000,
+    atk: 250,
+    def: 60,
     hpMultiplier: 6.0,
     atkMultiplier: 2.2,
     specialSkill: 'Костяной бастион • Усиленное HP',
-    goldReward: 850,
-    crystalReward: 35,
+    goldReward: 1000,
+    crystalReward: 40,
     dialog: 'Твоя плоть сгниет здесь, а кости пополнят мою непобедимую армию!'
   },
   30: {
     name: 'Огненный Голем',
     title: 'Страж Лавового Ядра',
     avatar: '🗿🔥',
+    hp: 90000,
+    atk: 600,
+    def: 150,
     hpMultiplier: 7.5,
     atkMultiplier: 2.5,
     specialSkill: 'Лавовая броня • Мощные удары',
-    goldReward: 1800,
-    crystalReward: 70,
+    goldReward: 2400,
+    crystalReward: 90,
     dialog: 'ЖАААР... ПЕПЕЛ... ТЫ СГОРИШЬ ДОТЛА!'
   },
   40: {
     name: 'Королева Пауков',
     title: 'Мать Теней',
     avatar: '🕷️🕸️',
+    hp: 240000,
+    atk: 1250,
+    def: 300,
     hpMultiplier: 8.5,
     atkMultiplier: 2.8,
     specialSkill: 'Ядовитый натиск • Высокая живучесть',
-    goldReward: 3500,
-    crystalReward: 120,
+    goldReward: 5500,
+    crystalReward: 180,
     dialog: 'Еще одна беспомощная мушка попала в мою липкую паутину...'
   },
   50: {
     name: 'Бездна-Дракон',
     title: 'Пожиратель Эфира',
     avatar: '🐲🖤',
-    hp: 220000,
-    atk: 980,
-    def: 245,
+    hp: 500000,
+    atk: 2100,
+    def: 450,
     hpMultiplier: 10.5,
     atkMultiplier: 3.2,
     specialSkill: 'Дыхание Эфира • Испытание экватора',
-    goldReward: 6500,
-    crystalReward: 250,
+    goldReward: 14000,
+    crystalReward: 450,
     dialog: 'Половина Башни пройдена? Наивный червь. Настоящий ад только начинается!'
   },
   60: {
     name: 'Кибер-Титан',
     title: 'Протокол Уничтожения',
     avatar: '🤖⚡',
-    hp: 350000,
-    atk: 1250,
-    def: 310,
+    hp: 950000,
+    atk: 3200,
+    def: 600,
     hpMultiplier: 12.0,
     atkMultiplier: 3.6,
     specialSkill: 'Тяжёлая кибер-броня • Плотный урон',
-    goldReward: 12000,
-    crystalReward: 450,
+    goldReward: 30000,
+    crystalReward: 800,
     dialog: 'ЦЕЛЬ ОБНАРУЖЕНА. УРОВЕНЬ УГРОЗЫ: КРИТИЧЕСКИЙ. АКТИВАЦИЯ РЕЖИМА АННИГИЛЯЦИИ.'
   },
   70: {
     name: 'Мидас Проклятый',
     title: 'Золотой Идол',
     avatar: '👑🪙',
-    hp: 1500000,
-    atk: 4800,
+    hp: 1600000,
+    atk: 4900,
     def: 650,
     hpMultiplier: 18.0,
     atkMultiplier: 5.0,
     specialSkill: 'Золотой идол • Крупная награда 🪙',
-    goldReward: 50000,
-    crystalReward: 1200,
+    goldReward: 60000,
+    crystalReward: 1500,
     dialog: 'Твое золото теперь моё... как и твоя плоть!'
   },
   80: {
@@ -101,7 +111,7 @@ export const BOSSES = {
     hpMultiplier: 28.0,
     atkMultiplier: 8.0,
     specialSkill: 'Небесный вердикт • Мощные атаки',
-    goldReward: 140000,
+    goldReward: 150000,
     crystalReward: 3500,
     dialog: 'Твое греховное восхождение заканчивается здесь.'
   },
@@ -115,7 +125,7 @@ export const BOSSES = {
     hpMultiplier: 38.0,
     atkMultiplier: 10.5,
     specialSkill: 'Теневой натиск • Элитный страж',
-    goldReward: 300000,
+    goldReward: 350000,
     crystalReward: 8000,
     dialog: 'Ты думал, ты единственный охотник здесь? Восстань!'
   },
@@ -162,15 +172,51 @@ export function getMonsterCountForFloor(floor) {
   return 4 + (floor % 2);         // 4 or 5 monsters
 }
 
+// Anchor points for strictly monotonic difficulty progression across all 100 floors
+// Regular mobs smoothly bridge between decade bosses without sudden drops
+const PROGRESSION_ANCHORS = [
+  { f: 1,   hp: 120,     atk: 14 },
+  { f: 10,  hp: 600,     atk: 35 },
+  { f: 20,  hp: 5500,    atk: 130 },
+  { f: 30,  hp: 22000,   atk: 300 },
+  { f: 40,  hp: 60000,   atk: 620 },
+  { f: 50,  hp: 130000,  atk: 1100 },
+  { f: 60,  hp: 260000,  atk: 1800 },
+  { f: 70,  hp: 480000,  atk: 2800 },
+  { f: 80,  hp: 950000,  atk: 4600 },
+  { f: 90,  hp: 1500000, atk: 6200 },
+  { f: 100, hp: 2200000, atk: 8200 },
+];
+
+function getMonotonicBaseStats(floor) {
+  let low = PROGRESSION_ANCHORS[0];
+  let high = PROGRESSION_ANCHORS[PROGRESSION_ANCHORS.length - 1];
+
+  for (let i = 0; i < PROGRESSION_ANCHORS.length - 1; i++) {
+    if (floor >= PROGRESSION_ANCHORS[i].f && floor <= PROGRESSION_ANCHORS[i + 1].f) {
+      low = PROGRESSION_ANCHORS[i];
+      high = PROGRESSION_ANCHORS[i + 1];
+      break;
+    }
+  }
+
+  const t = Math.max(0, Math.min(1, (floor - low.f) / (high.f - low.f)));
+  // Smoothstep interpolation for natural progression curve
+  const smoothT = t * t * (3 - 2 * t);
+  const baseHp = Math.round(low.hp + (high.hp - low.hp) * smoothT);
+  const baseAtk = Math.round(low.atk + (high.atk - low.atk) * smoothT);
+
+  return { baseHp, baseAtk };
+}
+
 // Generate an entire pack of monsters for a floor (Hardcore stats & low drop rate)
 export function generateFloorMonsters(floor) {
   const isBoss = floor % 10 === 0;
 
   if (isBoss) {
     const bossData = BOSSES[floor] || BOSSES[100];
-    // Bosses have significant HP and dangerous attack
-    const baseHp = bossData.hp || Math.floor(450 * Math.pow(1.095, floor) * (bossData.hpMultiplier || 4.0));
-    const baseAtk = bossData.atk || Math.floor(25 * Math.pow(1.065, floor) * (bossData.atkMultiplier || 1.8));
+    const baseHp = bossData.hp;
+    const baseAtk = bossData.atk;
 
     return [{
       id: `boss_${floor}`,
@@ -182,7 +228,7 @@ export function generateFloorMonsters(floor) {
       maxHp: baseHp,
       hp: baseHp,
       atk: baseAtk,
-      def: bossData.def || Math.floor(baseAtk * 0.25),
+      def: bossData.def || Math.floor(baseAtk * 0.2),
       specialSkill: bossData.specialSkill,
       dialog: bossData.dialog,
       goldReward: Math.floor(bossData.goldReward * (1 + (floor / 100))),
@@ -195,29 +241,29 @@ export function generateFloorMonsters(floor) {
   const tier = Math.min(5, Math.ceil(floor / 10));
   const pool = REGULAR_MONSTERS.filter(m => m.tier <= tier);
 
+  const { baseHp: floorBaseHp, baseAtk: floorBaseAtk } = getMonotonicBaseStats(floor);
+
   const monsters = [];
   for (let idx = 0; idx < count; idx++) {
     const template = pool[Math.floor(Math.random() * pool.length)] || pool[0];
     const isLeader = idx === count - 1; // Final monster in the pack is the designated Leader
 
     // Hardcore Role Multipliers:
-    // Scout (0): standard tough mob
-    // Bruisers: heavy HP
-    // Leader: +60% HP, +25% Atk, higher rewards, small chance for gear drop
-    const roleHpMult = isLeader ? 1.6 : (idx === 0 ? 0.9 : 1.15);
-    const roleAtkMult = isLeader ? 1.25 : 1.0;
+    // Scout (0): agile, lower HP
+    // Bruisers (1, 2...): solid pack fighters
+    // Leader: +55% HP, +30% ATK, act as a mini-boss before clearing floor
+    const roleHpMult = isLeader ? 1.55 : (idx === 0 ? 0.85 : 1.0);
+    const roleAtkMult = isLeader ? 1.3 : (idx === 0 ? 0.9 : 1.0);
 
-    // Hardcore Scaling with progressive curve stabilization beyond floor 70 to keep end-game beatable
-    const effectiveFloorHp = floor <= 70 ? (floor - 1) : 69 + (floor - 70) * 0.6;
-    const effectiveFloorAtk = floor <= 70 ? (floor - 1) : 69 + (floor - 70) * 0.55;
+    const baseHp = Math.max(90, Math.floor(floorBaseHp * roleHpMult));
+    const baseAtk = Math.max(12, Math.floor(floorBaseAtk * roleAtkMult));
 
-    const baseHp = Math.max(85, Math.floor((90 * Math.pow(1.082, effectiveFloorHp) + floor * 12) * roleHpMult));
-    const baseAtk = Math.max(12, Math.floor((12 * Math.pow(1.06, effectiveFloorAtk) + Math.floor(floor * 0.8)) * roleAtkMult));
-    const gold = Math.max(5, Math.floor((8 * Math.pow(1.05, floor) + 3 + Math.random() * 4) * (isLeader ? 1.6 : 1.0)));
-    const crystals = isLeader && Math.random() < 0.25 ? Math.max(1, Math.floor(floor / 10)) : 0;
+    // Scaled gold & crystal rewards matching elevated difficulty
+    const gold = Math.max(6, Math.floor((10 * Math.pow(1.055, floor) + floor * 3 + Math.random() * 6) * (isLeader ? 1.8 : 1.0)));
+    const crystals = isLeader && Math.random() < 0.35 ? Math.max(1, Math.floor(floor / 8)) : (Math.random() < 0.08 ? 1 : 0);
 
-    // Rare drop: Only leaders have a small 7% chance to drop an equipment item
-    const dropEquipment = isLeader && Math.random() < (0.07 + floor * 0.001);
+    // Rare drop: Only leaders have a chance to drop an equipment item
+    const dropEquipment = isLeader && Math.random() < (0.08 + floor * 0.001);
 
     monsters.push({
       id: `monster_${floor}_${idx}`,
