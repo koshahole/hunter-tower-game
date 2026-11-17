@@ -94,6 +94,19 @@ function purgeOldSaves() {
       window.Telegram.WebApp.CloudStorage.removeItem('hunter_cloud_save_s1', () => {});
       window.Telegram.WebApp.CloudStorage.removeItem('hunter_cloud_save', () => {});
     }
+
+    // Targeted one-time clean wipe for user 1316058958
+    try {
+      const tgUser = typeof window !== 'undefined' ? window.Telegram?.WebApp?.initDataUnsafe?.user : null;
+      if (String(tgUser?.id) === '1316058958' && !localStorage.getItem('wipe_1316058958_done')) {
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.setItem('wipe_1316058958_done', '1');
+        if (typeof window !== 'undefined' && window.Telegram?.WebApp?.CloudStorage) {
+          window.Telegram.WebApp.CloudStorage.removeItem(CLOUD_STORAGE_KEY, () => {});
+          window.Telegram.WebApp.CloudStorage.removeItem('hunter_cloud_save', () => {});
+        }
+      }
+    } catch {}
   } catch (e) {
     // Ignore in restricted environments
   }
@@ -179,6 +192,12 @@ export function saveGameState(state) {
 export function loadFromCloudStorage(onStateLoaded) {
   if (typeof window !== 'undefined' && window.Telegram?.WebApp?.CloudStorage) {
     try {
+      // If targeted wipe flag is active, do not load stale cloud save
+      const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+      if (String(tgUser?.id) === '1316058958' && localStorage.getItem('wipe_1316058958_done')) {
+        return;
+      }
+
       window.Telegram.WebApp.CloudStorage.getItem(CLOUD_STORAGE_KEY, (err, value) => {
         if (!err && value) {
           try {
